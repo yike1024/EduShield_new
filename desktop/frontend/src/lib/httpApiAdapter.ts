@@ -86,7 +86,12 @@ class HttpApiClient {
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
-      return response.json();
+      // reasonix 的 submit/cancel/approve 返回 202/204 且无 body，
+      // response.json() 会抛 "Unexpected end of JSON input"。
+      // 改用 text + 判断空体：空体返回 undefined，其余按 JSON 解析。
+      const text = await response.text();
+      if (!text) return undefined as unknown as T;
+      return JSON.parse(text) as T;
     } catch (error) {
       console.error('HTTP API request failed:', error);
       throw error;

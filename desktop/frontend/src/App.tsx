@@ -24,6 +24,7 @@ import {
   FileJson,
   GitBranch,
   MessageSquare,
+  Network,
   Settings as SettingsIcon,
   Pencil,
   Trash2,
@@ -61,6 +62,7 @@ import { Tooltip } from "./components/Tooltip";
 import { StartupSplash } from "./components/StartupSplash";
 import { OnboardingOverlay } from "./components/OnboardingOverlay";
 import { AppChrome } from "./components/AppChrome";
+import { AisocDashboard } from "./components/AisocDashboard";
 import { ShortcutsCheatsheet } from "./components/ShortcutsCheatsheet";
 import { ProjectTree } from "./components/ProjectTree";
 import { WorktreeBadge } from "./components/WorktreeBadge";
@@ -915,7 +917,7 @@ function fence(label: string, value: string): string {
 }
 
 function sessionItemsToMarkdown(title: string, items: Item[], live?: LiveStream): string {
-  const lines: string[] = [`# ${title.trim() || "Reasonix session"}`, ""];
+  const lines: string[] = [`# ${title.trim() || "EduShield session"}`, ""];
   for (const item of materializeLiveItems(items, live)) {
     switch (item.kind) {
       case "user":
@@ -1068,6 +1070,7 @@ export default function App() {
   const settingsFocus = useOverlayStore((s) => s.settingsFocus);
   const setSettingsFocus = useOverlayStore((s) => s.setSettingsFocus);
   const [desktopLayoutStyle, setDesktopLayoutStyle] = useState<DesktopLayoutStyle>("workbench");
+  const [viewMode, setViewMode] = useState<"chat" | "aisoc">("chat");
   const [safeMode, setSafeMode] = useState(false);
   const singleSurfaceLayout = desktopLayoutStyle === "workbench" || desktopLayoutStyle === "creation";
   const [startupUpdateChecksEnabled, setStartupUpdateChecksEnabled] = useState<boolean | null>(null);
@@ -3292,6 +3295,11 @@ export default function App() {
         !sidebarWorkbench && !sidebarCreation ? "app--classic" : "",
       ].filter(Boolean).join(" ")}
     >
+      {viewMode === "aisoc" && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 40, background: "var(--bg, #05080d)" }}>
+          <AisocDashboard onExit={() => setViewMode("chat")} />
+        </div>
+      )}
       <div
         ref={layoutRef}
         className={[
@@ -3345,7 +3353,7 @@ export default function App() {
             <>
               <div className="sidebar__head" aria-hidden={sidebarCollapsed}>
                 <div className="sidebar__brand sidebar__brand--workbench">
-                  <img src={logoWordmark} alt="Reasonix" className="sidebar__brand-logo sidebar__brand-logo--workbench" draggable={false} />
+                  <img src={logoWordmark} alt="EduShield" className="sidebar__brand-logo sidebar__brand-logo--workbench" draggable={false} />
                 </div>
               </div>
 
@@ -3360,12 +3368,20 @@ export default function App() {
                   <MessageSquare size={18} aria-hidden="true" />
                   <span>{t("topbar.newSession")}</span>
                 </button>
+                <button
+                  className="sidebar__quick-action"
+                  type="button"
+                  onClick={() => setViewMode("aisoc")}
+                >
+                  <Network size={18} aria-hidden="true" />
+                  <span>AiSOC 大脑</span>
+                </button>
               </div>
             </>
           ) : (
             <>
               <div className="sidebar__brand" aria-hidden={sidebarCollapsed}>
-                <img src={logoWordmark} alt="Reasonix" className="sidebar__brand-logo" draggable={false} />
+                <img src={logoWordmark} alt="EduShield" className="sidebar__brand-logo" draggable={false} />
               </div>
 
               <button
@@ -3805,7 +3821,7 @@ export default function App() {
             enabled={startupUpdateChecksEnabled === true}
             onShowReleaseNotes={(latest) => {
               const version = latest.replace(/^(?:desktop-)?v/, "");
-              void openExternal(`https://reasonix.io/changelog/v${version}/`);
+              void openExternal(`https://edushield.io/changelog/v${version}/`);
             }}
           />
 

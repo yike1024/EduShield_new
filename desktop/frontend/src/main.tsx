@@ -12,6 +12,11 @@ import { initFontFamily } from "./lib/fontFamily";
 import { initTextSize } from "./lib/textSize";
 import { initTheme } from "./lib/theme";
 import "./styles.css";
+import "./aisoc.css";
+import "./styles/design-system.css";
+import "./styles/morandi-theme.css";
+import "./styles/console-theme.css";
+import "./styles/organic-motion.css";
 
 // Install first so startup/runtime failures paint a useful error instead of a
 // featureless webview background, with the recent console trail attached.

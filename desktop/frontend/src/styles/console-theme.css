@@ -1,0 +1,321 @@
+/*
+ * Console — Edushield security-core visual direction.
+ *
+ * Aligned with the EDUSHIELD startup splash: near-black blue stage, dark navy
+ * panels, electric-blue primary, neon-cyan secondary, and gold/neon-green
+ * signal accents. Sharper radii and cyan hairlines evoke a terminal HUD.
+ * Light and dark variants are supplied for OS appearance switching.
+ */
+
+:root[data-theme-style="console"] {
+  --stage: #05080d;
+  --surface: #080e17;
+  --surface-2: #0b1424;
+  --surface-3: #060b12;
+  --panel: #080e17;
+  --bg: #05080d;
+  --bg-soft: #070c14;
+  --bg-elev: #0a1220;
+  --bg-elev-2: #0e1a2e;
+  --sidebar-bg: #070c14;
+  --sidebar-hover: #0d1626;
+  --sidebar-active: rgba(0, 229, 255, 0.14);
+  --chat-bg: #05080d;
+  --workspace-preview-bg: #070c14;
+  --workspace-files-bg: #080e17;
+  --workspace-files-hover: #0d1626;
+  --workspace-selection-bg: rgba(0, 229, 255, 0.14);
+  --workspace-selection-fg: #9be8ff;
+  --workspace-selection-bar: #00e5ff;
+  --border: rgba(0, 229, 255, 0.16);
+  --border-2: rgba(0, 229, 255, 0.30);
+  --border-soft: rgba(0, 229, 255, 0.08);
+  --text: #e8f0f7;
+  --text-2: #9fb4c8;
+  --text-3: #5b7085;
+  --fg: #e8f0f7;
+  --fg-dim: #9fb4c8;
+  --fg-faint: #5b7085;
+  --accent: #0057ff;
+  --accent-fg: #eaf2ff;
+  --accent-text: #ffffff;
+  --accent-soft: rgba(0, 87, 255, 0.18);
+  --accent-strong: #00e5ff;
+  --ok: #00ff9d;
+  --warn: #ffd700;
+  --err: #ff5c7a;
+  --danger: #ff2d55;
+  --danger-fg: #ffffff;
+  --shell-accent: #00e5ff;
+  --control-primary-bg: var(--accent);
+  --control-primary-fg: var(--accent-fg);
+  --control-disabled-bg: #0e1a2e;
+  --control-disabled-fg: #5b7085;
+  --chat-user-bg: color-mix(in srgb, var(--accent) 16%, var(--bg-elev-2));
+  --chat-user-border: color-mix(in srgb, var(--accent) 28%, var(--border-soft));
+  --chat-user-fg: var(--fg);
+  --chat-user-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 12%, transparent);
+  --button-bg: color-mix(in srgb, var(--bg-elev-2) 70%, var(--bg-soft));
+  --button-bg-hover: color-mix(in srgb, var(--bg-elev-2) 90%, var(--bg-soft));
+  --button-border: var(--border);
+  --button-border-hover: var(--border-2);
+  --button-fg: var(--fg);
+  --button-muted-fg: var(--fg-dim);
+  --pill-bg: color-mix(in srgb, var(--bg-elev-2) 62%, transparent);
+  --pill-border: var(--border);
+  --pill-fg: var(--fg-dim);
+  --pill-hover-bg: var(--bg-elev-2);
+  --pill-plan-bg: var(--accent-soft);
+  --pill-plan-border: color-mix(in srgb, var(--accent) 26%, var(--border));
+  --pill-yolo-bg: var(--danger);
+  --pill-yolo-bg-hover: color-mix(in srgb, var(--danger) 90%, var(--fg));
+  --pill-yolo-border: var(--danger);
+  --pill-yolo-border-hover: color-mix(in srgb, var(--danger) 90%, var(--fg));
+  --pill-yolo-fg: var(--danger-fg);
+  --mode-auto-bg: #0057ff;
+  --mode-auto-border: #2a74ff;
+  --mode-auto-fg: #ffffff;
+  --mode-plan-bg: var(--accent-soft);
+  --mode-plan-border: color-mix(in srgb, var(--accent) 34%, var(--border));
+  --mode-plan-fg: var(--accent);
+  --mode-yolo-bg: #ff2d55;
+  --mode-yolo-border: #ff5273;
+  --mode-yolo-fg: #ffffff;
+  --add-bg: rgba(0, 255, 157, 0.12);
+  --add-fg: #2dffb0;
+  --del-bg: rgba(255, 45, 85, 0.12);
+  --del-fg: #ff5273;
+  --code-bg: #070c14;
+  --focus-ring: 0 0 0 3px rgba(0, 229, 255, 0.22);
+  --grad: linear-gradient(120deg, var(--accent), var(--accent-strong));
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-2: 0 14px 40px rgba(0, 0, 0, 0.55);
+  --r-s: 4px;
+  --r: 6px;
+  --r-l: 8px;
+  --radius: 6px;
+}
+
+:root[data-theme="light"][data-theme-style="console"] {
+  --stage: #e9eef6;
+  --surface: #f5f8fc;
+  --surface-2: #ffffff;
+  --surface-3: #eef2f8;
+  --panel: #ffffff;
+  --bg: #eef2f8;
+  --bg-soft: #e9eef6;
+  --bg-elev: #ffffff;
+  --bg-elev-2: #f7fafd;
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: #eef2f8;
+  --sidebar-active: rgba(0, 87, 255, 0.10);
+  --chat-bg: #eef2f8;
+  --workspace-preview-bg: #ffffff;
+  --workspace-files-bg: #ffffff;
+  --workspace-files-hover: #eef2f8;
+  --workspace-selection-bg: rgba(0, 87, 255, 0.10);
+  --workspace-selection-fg: #0b3f99;
+  --workspace-selection-bar: #0057ff;
+  --border: rgba(10, 30, 60, 0.10);
+  --border-2: rgba(10, 30, 60, 0.18);
+  --border-soft: rgba(10, 30, 60, 0.06);
+  --text: #0a1420;
+  --text-2: #44556b;
+  --text-3: #8592a4;
+  --fg: #0a1420;
+  --fg-dim: #44556b;
+  --fg-faint: #8592a4;
+  --accent: #0050e6;
+  --accent-fg: #ffffff;
+  --accent-text: #ffffff;
+  --accent-soft: rgba(0, 80, 230, 0.10);
+  --accent-strong: #0078d4;
+  --ok: #00875a;
+  --warn: #9a7200;
+  --err: #c61a3f;
+  --danger: #c61a3f;
+  --danger-fg: #ffffff;
+  --shell-accent: #00875a;
+  --control-primary-bg: var(--accent);
+  --control-primary-fg: var(--accent-fg);
+  --control-disabled-bg: #e9eef6;
+  --control-disabled-fg: #8592a4;
+  --chat-user-bg: color-mix(in srgb, var(--accent) 10%, var(--bg-elev-2));
+  --chat-user-border: color-mix(in srgb, var(--accent) 22%, var(--border-soft));
+  --chat-user-fg: var(--fg);
+  --chat-user-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 10%, transparent);
+  --button-bg: #ffffff;
+  --button-bg-hover: #f7fafd;
+  --button-border: rgba(10, 30, 60, 0.10);
+  --button-border-hover: rgba(10, 30, 60, 0.18);
+  --button-fg: var(--fg);
+  --button-muted-fg: var(--fg-dim);
+  --pill-bg: #ffffff;
+  --pill-border: rgba(10, 30, 60, 0.10);
+  --pill-fg: var(--fg-dim);
+  --pill-hover-bg: #f7fafd;
+  --pill-plan-bg: var(--accent-soft);
+  --pill-plan-border: color-mix(in srgb, var(--accent) 22%, var(--border));
+  --pill-yolo-bg: var(--danger);
+  --pill-yolo-bg-hover: color-mix(in srgb, var(--danger) 90%, var(--fg));
+  --pill-yolo-border: var(--danger);
+  --pill-yolo-border-hover: color-mix(in srgb, var(--danger) 90%, var(--fg));
+  --pill-yolo-fg: var(--danger-fg);
+  --mode-auto-bg: #0050e6;
+  --mode-auto-border: #2a74e6;
+  --mode-auto-fg: #ffffff;
+  --mode-plan-bg: var(--accent-soft);
+  --mode-plan-border: color-mix(in srgb, var(--accent) 30%, var(--border));
+  --mode-plan-fg: var(--accent);
+  --mode-yolo-bg: #c61a3f;
+  --mode-yolo-border: #d43a5c;
+  --mode-yolo-fg: #ffffff;
+  --add-bg: rgba(0, 135, 90, 0.10);
+  --add-fg: #00875a;
+  --del-bg: rgba(198, 26, 63, 0.10);
+  --del-fg: #c61a3f;
+  --code-bg: #f7fafd;
+  --focus-ring: 0 0 0 3px rgba(0, 80, 230, 0.16);
+  --grad: linear-gradient(120deg, var(--accent), var(--accent-strong));
+  --shadow-1: 0 1px 2px rgba(10, 30, 60, 0.06);
+  --shadow-2: 0 12px 34px rgba(10, 30, 60, 0.10);
+  --r-s: 4px;
+  --r: 6px;
+  --r-l: 8px;
+  --radius: 6px;
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme-style="console"]:not([data-theme]) {
+    --stage: #e9eef6;
+    --surface: #f5f8fc;
+    --surface-2: #ffffff;
+    --surface-3: #eef2f8;
+    --panel: #ffffff;
+    --bg: #eef2f8;
+    --bg-soft: #e9eef6;
+    --bg-elev: #ffffff;
+    --bg-elev-2: #f7fafd;
+    --sidebar-bg: #ffffff;
+    --sidebar-hover: #eef2f8;
+    --sidebar-active: rgba(0, 87, 255, 0.10);
+    --chat-bg: #eef2f8;
+    --workspace-preview-bg: #ffffff;
+    --workspace-files-bg: #ffffff;
+    --workspace-files-hover: #eef2f8;
+    --workspace-selection-bg: rgba(0, 87, 255, 0.10);
+    --workspace-selection-fg: #0b3f99;
+    --workspace-selection-bar: #0057ff;
+    --border: rgba(10, 30, 60, 0.10);
+    --border-2: rgba(10, 30, 60, 0.18);
+    --border-soft: rgba(10, 30, 60, 0.06);
+    --text: #0a1420;
+    --text-2: #44556b;
+    --text-3: #8592a4;
+    --fg: #0a1420;
+    --fg-dim: #44556b;
+    --fg-faint: #8592a4;
+    --accent: #0050e6;
+    --accent-fg: #ffffff;
+    --accent-text: #ffffff;
+    --accent-soft: rgba(0, 80, 230, 0.10);
+    --accent-strong: #0078d4;
+    --ok: #00875a;
+    --warn: #9a7200;
+    --err: #c61a3f;
+    --danger: #c61a3f;
+    --danger-fg: #ffffff;
+    --shell-accent: #00875a;
+    --control-primary-bg: var(--accent);
+    --control-primary-fg: var(--accent-fg);
+    --control-disabled-bg: #e9eef6;
+    --control-disabled-fg: #8592a4;
+    --chat-user-bg: color-mix(in srgb, var(--accent) 10%, var(--bg-elev-2));
+    --chat-user-border: color-mix(in srgb, var(--accent) 22%, var(--border-soft));
+    --chat-user-fg: var(--fg);
+    --chat-user-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 10%, transparent);
+    --button-bg: #ffffff;
+    --button-bg-hover: #f7fafd;
+    --button-border: rgba(10, 30, 60, 0.10);
+    --button-border-hover: rgba(10, 30, 60, 0.18);
+    --button-fg: var(--fg);
+    --button-muted-fg: var(--fg-dim);
+    --pill-bg: #ffffff;
+    --pill-border: rgba(10, 30, 60, 0.10);
+    --pill-fg: var(--fg-dim);
+    --pill-hover-bg: #f7fafd;
+    --pill-plan-bg: var(--accent-soft);
+    --pill-plan-border: color-mix(in srgb, var(--accent) 22%, var(--border));
+    --pill-yolo-bg: var(--danger);
+    --pill-yolo-bg-hover: color-mix(in srgb, var(--danger) 90%, var(--fg));
+    --pill-yolo-border: var(--danger);
+    --pill-yolo-border-hover: color-mix(in srgb, var(--danger) 90%, var(--fg));
+    --pill-yolo-fg: var(--danger-fg);
+    --mode-auto-bg: #0050e6;
+    --mode-auto-border: #2a74e6;
+    --mode-auto-fg: #ffffff;
+    --mode-plan-bg: var(--accent-soft);
+    --mode-plan-border: color-mix(in srgb, var(--accent) 30%, var(--border));
+    --mode-plan-fg: var(--accent);
+    --mode-yolo-bg: #c61a3f;
+    --mode-yolo-border: #d43a5c;
+    --mode-yolo-fg: #ffffff;
+    --add-bg: rgba(0, 135, 90, 0.10);
+    --add-fg: #00875a;
+    --del-bg: rgba(198, 26, 63, 0.10);
+    --del-fg: #c61a3f;
+    --code-bg: #f7fafd;
+    --focus-ring: 0 0 0 3px rgba(0, 80, 230, 0.16);
+    --grad: linear-gradient(120deg, var(--accent), var(--accent-strong));
+    --shadow-1: 0 1px 2px rgba(10, 30, 60, 0.06);
+    --shadow-2: 0 12px 34px rgba(10, 30, 60, 0.10);
+    --r-s: 4px;
+    --r: 6px;
+    --r-l: 8px;
+    --radius: 6px;
+  }
+}
+
+/* Creation-screen title gradient, matched to the splash blue→cyan→violet ramp. */
+:root[data-theme="dark"][data-theme-style="console"] .app--creation {
+  --accent-title-grad: linear-gradient(90deg, #00e5ff 0%, #0057ff 48%, #20004d 100%);
+}
+
+:root[data-theme="light"][data-theme-style="console"] .app--creation {
+  --accent-title-grad: linear-gradient(90deg, #0078d4 0%, #0050e6 48%, #0a1420 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme-style="console"]:not([data-theme]) .app--creation {
+    --accent-title-grad: linear-gradient(90deg, #00e5ff 0%, #0057ff 48%, #20004d 100%);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme-style="console"]:not([data-theme]) .app--creation {
+    --accent-title-grad: linear-gradient(90deg, #0078d4 0%, #0050e6 48%, #0a1420 100%);
+  }
+}
+
+/* Theme-card swatches for the settings picker. */
+.theme-card__swatches[data-theme-style-card="console"] .theme-card__swatch--bg {
+  background: #05080d;
+}
+.theme-card__swatches[data-theme-style-card="console"] .theme-card__swatch--surface {
+  background: #0a1220;
+}
+.theme-card__swatches[data-theme-style-card="console"] .theme-card__swatch--accent {
+  background: linear-gradient(120deg, #0057ff, #00e5ff);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .theme-card__swatches[data-theme-style-card="console"] .theme-card__swatch--bg {
+    background: #eef2f8;
+  }
+  :root:not([data-theme]) .theme-card__swatches[data-theme-style-card="console"] .theme-card__swatch--surface {
+    background: #ffffff;
+  }
+  :root:not([data-theme]) .theme-card__swatches[data-theme-style-card="console"] .theme-card__swatch--accent {
+    background: linear-gradient(120deg, #0050e6, #0078d4);
+  }
+}

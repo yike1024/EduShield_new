@@ -1,0 +1,349 @@
+/*
+ * Organic Motion — fluid, breathing interaction layer (safe variant).
+ *
+ * Loaded after morandi-theme.css. Adds warmer, more human motion and
+ * micro-interactions across the app while preserving the existing token
+ * contracts. All animations respect prefers-reduced-motion.
+ */
+
+/* ── organic motion tokens ──────────────────────────────────────────────── */
+:root[data-theme-style] {
+  --ease-breath: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-flow: cubic-bezier(0.22, 0.72, 0.26, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-instant: 80ms;
+  --dur-quick: 150ms;
+  --dur-fluid: 280ms;
+  --dur-slow: 520ms;
+  --glow-accent: 0 0 0 1px rgba(143, 163, 176, 0.12),
+    0 18px 46px rgba(143, 163, 176, 0.1);
+  --glow-soft: 0 8px 30px rgba(143, 163, 176, 0.08);
+  --lift-shadow: 0 4px 14px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+:root[data-theme="light"][data-theme-style="morandi"] {
+  --glow-accent: 0 0 0 1px rgba(93, 122, 138, 0.1),
+    0 18px 46px rgba(93, 122, 138, 0.08);
+  --glow-soft: 0 8px 30px rgba(93, 122, 138, 0.06);
+  --lift-shadow: 0 4px 14px rgba(20, 22, 28, 0.06),
+    0 1px 2px rgba(20, 22, 28, 0.04);
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme-style="morandi"]:not([data-theme]) {
+    --glow-accent: 0 0 0 1px rgba(93, 122, 138, 0.1),
+      0 18px 46px rgba(93, 122, 138, 0.08);
+    --glow-soft: 0 8px 30px rgba(93, 122, 138, 0.06);
+    --lift-shadow: 0 4px 14px rgba(20, 22, 28, 0.06),
+      0 1px 2px rgba(20, 22, 28, 0.04);
+  }
+}
+
+/* ── keyframes ──────────────────────────────────────────────────────────── */
+@keyframes organic-breathe {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    opacity: 0.985;
+    transform: translateY(-0.5px) scale(1.002);
+  }
+}
+
+@keyframes organic-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes organic-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes organic-pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(143, 163, 176, 0);
+  }
+  50% {
+    box-shadow: 0 0 18px 4px rgba(143, 163, 176, 0.14);
+  }
+}
+
+@keyframes thinking-wave {
+  0%, 100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+/* ── ambient breathing on primary surfaces ──────────────────────────────── */
+.app-chrome,
+.composer-card,
+.welcome,
+.sidebar,
+.workspace-panel,
+.context-panel,
+.settings-panel,
+.modal__content,
+.command-palette {
+  animation: organic-breathe 10s var(--ease-breath) infinite;
+  will-change: transform, opacity;
+}
+
+/* ── composer: organic focus glow and hover lift ────────────────────────── */
+.composer-card {
+  transition: box-shadow var(--dur-fluid) var(--ease-flow),
+    transform var(--dur-fluid) var(--ease-flow),
+    border-color var(--dur-quick) var(--ease-flow);
+}
+
+.composer-card:hover {
+  box-shadow: var(--glow-soft);
+}
+
+.composer-card:focus-within {
+  box-shadow: var(--glow-accent);
+  transform: translateY(-1px);
+}
+
+.composer__input {
+  transition: background-color var(--dur-quick) var(--ease-flow),
+    box-shadow var(--dur-fluid) var(--ease-flow);
+}
+
+/* ── liquid buttons: springier, more alive ──────────────────────────────── */
+.liquid-button,
+.composer__btn--send,
+.msg-edit__btn--primary,
+.bot-detail__primary {
+  transition: transform var(--dur-quick) var(--ease-spring),
+    box-shadow var(--dur-quick) var(--ease-flow),
+    border-color var(--dur-quick) var(--ease-flow);
+}
+
+.liquid-button:hover,
+.composer__btn--send:hover,
+.msg-edit__btn--primary:hover,
+.bot-detail__primary:hover {
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: var(--lift-shadow);
+}
+
+.liquid-button:active,
+.composer__btn--send:active,
+.msg-edit__btn--primary:active,
+.bot-detail__primary:active {
+  transform: translateY(0) scale(0.99);
+  transition-duration: var(--dur-instant);
+}
+
+/* ── message bubbles: hover lift and organic entrance ───────────────────── */
+.msg {
+  animation: organic-fade-up var(--dur-slow) var(--ease-out-expo) both;
+}
+
+.msg--user .msg__body:not(.msg__body--editing),
+.msg--assistant .msg__body {
+  transition: transform var(--dur-fluid) var(--ease-flow),
+    box-shadow var(--dur-fluid) var(--ease-flow),
+    border-color var(--dur-quick) var(--ease-flow);
+}
+
+.msg--user .msg__body:not(.msg__body--editing):hover,
+.msg--assistant .msg__body:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--lift-shadow);
+}
+
+/* ── message meta actions: staggered reveal on hover ────────────────────── */
+.msg-meta__btn,
+.msg-meta .copybtn {
+  opacity: 0.7;
+  transform: translateY(2px);
+  transition: opacity var(--dur-quick) var(--ease-flow),
+    transform var(--dur-quick) var(--ease-spring),
+    background-color var(--dur-quick) var(--ease-flow);
+}
+
+.msg__body:hover .msg-meta__btn,
+.msg__body:hover .msg-meta .copybtn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── sidebar: gentler hover slide and active glow ───────────────────────── */
+.sidebar__navitem,
+.sidebar__new {
+  transition: transform var(--dur-quick) var(--ease-flow),
+    background-color var(--dur-quick) var(--ease-flow),
+    border-color var(--dur-quick) var(--ease-flow);
+}
+
+.sidebar__navitem:hover,
+.sidebar__new:hover {
+  transform: translateX(2px);
+}
+
+.sidebar__navitem[aria-current="true"],
+.sidebar__navitem[aria-current="page"] {
+  animation: organic-pulse-glow 4s var(--ease-breath) infinite;
+}
+
+/* ── panels and cards: subtle depth on hover ────────────────────────────── */
+.workspace-panel,
+.context-panel,
+.settings-panel,
+.modal__content,
+.command-palette,
+.tool-card,
+.process-card {
+  transition: box-shadow var(--dur-fluid) var(--ease-flow),
+    transform var(--dur-fluid) var(--ease-flow);
+}
+
+.workspace-panel:hover,
+.context-panel:hover,
+.settings-panel:hover,
+.command-palette:hover {
+  box-shadow: var(--glow-soft);
+}
+
+.tool-card:hover,
+.process-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--lift-shadow);
+}
+
+/* ── welcome: floating brand and staggered cards ───────────────────────── */
+.welcome__brand-logo {
+  animation: organic-float 6s var(--ease-breath) infinite;
+  will-change: transform;
+}
+
+.welcome__ex,
+.welcome-creation__card {
+  transition: transform var(--dur-quick) var(--ease-spring),
+    border-color var(--dur-quick) var(--ease-flow),
+    background-color var(--dur-quick) var(--ease-flow),
+    box-shadow var(--dur-quick) var(--ease-flow);
+}
+
+.welcome__ex:hover,
+.welcome-creation__card:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: var(--lift-shadow);
+}
+
+.welcome__examples,
+.welcome-creation__cards {
+  animation: organic-fade-up var(--dur-slow) var(--ease-out-expo) both;
+}
+
+/* ── thinking / streaming indicator ─────────────────────────────────────── */
+.thinking-dot,
+.typing-dot,
+.stream-cursor,
+.loading-dot {
+  animation: thinking-wave 1.2s var(--ease-flow) infinite;
+}
+
+.thinking-dot:nth-child(2),
+.typing-dot:nth-child(2),
+.loading-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.thinking-dot:nth-child(3),
+.typing-dot:nth-child(3),
+.loading-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* ── command palette / modal entrance ───────────────────────────────────── */
+.command-palette[data-state="open"],
+.modal__content[data-state="open"] {
+  animation: organic-fade-up var(--dur-slow) var(--ease-out-expo) both;
+}
+
+/* ── attachment chips and pills ─────────────────────────────────────────── */
+.msg-attachment,
+.composer-attachment,
+.pill {
+  transition: transform var(--dur-quick) var(--ease-spring),
+    box-shadow var(--dur-quick) var(--ease-flow),
+    border-color var(--dur-quick) var(--ease-flow);
+}
+
+.msg-attachment:hover,
+.composer-attachment:hover,
+.pill:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--lift-shadow);
+}
+
+/* ── status bar and top chrome ──────────────────────────────────────────── */
+.status-bar,
+.app-chrome__top {
+  transition: background-color var(--dur-quick) var(--ease-flow),
+    box-shadow var(--dur-quick) var(--ease-flow);
+}
+
+/* ── reduced motion: collapse everything ────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .app-chrome,
+  .composer-card,
+  .welcome,
+  .sidebar,
+  .workspace-panel,
+  .context-panel,
+  .settings-panel,
+  .modal__content,
+  .command-palette,
+  .msg,
+  .welcome__brand-logo,
+  .thinking-dot,
+  .typing-dot,
+  .stream-cursor,
+  .loading-dot,
+  .sidebar__navitem[aria-current="true"],
+  .sidebar__navitem[aria-current="page"] {
+    animation: none !important;
+  }
+
+  .composer-card,
+  .composer-card:focus-within,
+  .liquid-button,
+  .composer__btn--send,
+  .msg-edit__btn--primary,
+  .bot-detail__primary,
+  .msg--user .msg__body:not(.msg__body--editing),
+  .msg--assistant .msg__body,
+  .welcome__ex,
+  .welcome-creation__card,
+  .tool-card,
+  .process-card,
+  .msg-attachment,
+  .composer-attachment,
+  .pill,
+  .sidebar__navitem,
+  .sidebar__new {
+    transform: none !important;
+  }
+}

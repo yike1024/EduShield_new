@@ -4,9 +4,12 @@
  * 前端呈现什么 = 大脑有什么。
  */
 
-// 基础URL配置 - 通过 Vite 代理避免 CORS
-// 开发环境走 /aisoc-brain 代理，生产环境可通过环境变量配置
-const BRAIN_API_BASE = (import.meta.env.VITE_BRAIN_API_URL as string) || '/aisoc-brain/api';
+// 基础URL配置 - 直连大脑 FastAPI（6657）
+// frontend-api.md 明确：CORS 已全开，前端任意端口直连即可。
+// Wails 生产环境（8082）没有 Vite dev 代理，相对路径 /aisoc-brain/api 会 404，
+// 导致任务无法发送；故默认直连 127.0.0.1:6657。
+// 仍可用 VITE_BRAIN_API_URL 覆盖（如部署到 cpolar/nginx 暴露的对外地址）。
+const BRAIN_API_BASE = (import.meta.env.VITE_BRAIN_API_URL as string) || 'http://127.0.0.1:6657/api';
 
 /** 域标识（文档 §4.1：logaudit / pentest；前端保留四部件展示） */
 export type TaskDomain = 'pentest' | 'logaudit' | 'threatintel' | 'incident';

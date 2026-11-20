@@ -6,7 +6,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { asArray } from "./array";
 import { addBreadcrumb } from "./breadcrumbs";
-import { app, onEvent, onReady, onRuntimeRebuilt } from "./bridge";
+import { app, onEvent, onReady, onRuntimeRebuilt, isWailsRuntime } from "./bridge";
+import { getWebApi, shouldUseWebApi } from "./webApiProxy";
+import type { ComposerRoute } from "../components/Composer";
 import { invalidateCache } from "./composerHistory";
 import { formatGuardianAssessmentNotice } from "./guardianEvents";
 import { createRafBatch } from "./rafBatch";
@@ -24,6 +26,7 @@ import type {
   HistoryPage,
   JobView,
   MemoryCitation,
+  MemoryCompilerStats,
   MemoryView,
   Meta,
   Mode,
@@ -180,6 +183,12 @@ interface State {
   sessionCost: number;
   sessionCurrency: string;
   retry?: { attempt: number; max: number };
+  // Latest Memory v5 participation stats from the memory_compiler_stats event.
+  // Content-free counts (injected/usefulIR/references/tokens) so the UI can
+  // show whether memory was actually injected into the last turn's context,
+  // or was suppressed (injected=false) — previously the event was dropped and
+  // the memory panel looked permanently "not working".
+  memoryCompilerStats?: MemoryCompilerStats;
   seq: number;
   sessionGen: number;
   // Monotonic count of usage events from ANY source (executor, subagent,
@@ -404,6 +413,9 @@ function latestCanonicalTodoToolIndex(items: Item[]): number {
 }
 
 function compactArchivedToolItems(items: Item[]): Item[] {
+  // 浏览器模式（非 Wails）下没有 Go 后端提供 ToolResultForTab 懒加载，
+  // 一旦丢弃 output 就再也拿不回来 → 展开时空白。因此非 Wails 环境不归档。
+  if (!isWailsRuntime()) return items;
   const canonicalTodoIndex = latestCanonicalTodoToolIndex(items);
   return items.map((item, index) => {
     if (item.kind !== "tool" || item.status === "running") return item;
@@ -750,9 +762,15 @@ function applyEvent(s: State, e: WireEvent): State {
     if (e.kind === "turn_done") return { ...s, discardTurn: false, running: false, turnActive: false, pendingPrompt: false, cancelRequested: false, cancellable: false, currentAssistant: undefined, live: undefined };
     return s;
   }
-  if (e.kind === "memory_compiler_stats" || e.kind === "mcp_surface_ready") {
+  if (e.kind === "mcp_surface_ready") {
     // Background-only events must not confirm an optimistic user bubble.
     return s;
+  }
+  if (e.kind === "memory_compiler_stats") {
+    // Content-free participation stats; must not confirm an optimistic bubble
+    // either, but they DO update the UI's memory-injection indicator.
+    if (!e.memoryCompiler) return s;
+    return { ...s, memoryCompilerStats: e.memoryCompiler };
   }
   if (s.pendingUser !== undefined && e.kind !== "turn_done") {
     s = flushPendingUser(s);
@@ -902,9 +920,15 @@ function applyEvent(s: State, e: WireEvent): State {
           if (it.kind === "tool" && it.status === "running") { idx = i; break; }
         }
       }
+      const isPartial = t.partial === true; // tool_progress 转来的增量帧
       if (idx >= 0) {
         const it = next[idx];
         if (it.kind === "tool") {
+          // partial 帧不归档：命令仍在跑，保持 running 状态和现有 output（webApiProxy 已累积）
+          if (isPartial && !t.err) {
+            next[idx] = { ...it, output: t.output, truncated: t.truncated };
+            return { ...s, items: next };
+          }
           // Archive immediately: collapsed cards only show tool name + command
           // subject (from args). Drop output entirely; full data is loaded on
           // demand via app.ToolResultForTab when the card is expanded.
@@ -912,6 +936,9 @@ function applyEvent(s: State, e: WireEvent): State {
           const summary = t.err ? undefined : existing.summary || summarize(existing.name, existing.args, t.output);
           next[idx] = {
             ...existing,
+            // 透传模式下部分调用只有 progress + result（无 dispatch），命令参数仅随 result 到达，
+            // 此时用 t.args 补齐；已有 args 不覆盖。
+            args: typeof t.args === "string" && t.args ? t.args : existing.args,
             status: t.err ? "error" : "done",
             output: t.output,
             error: t.err,
@@ -1003,6 +1030,19 @@ function applyEvent(s: State, e: WireEvent): State {
         turnActive: true,
         cancellable: true,
       });
+    }
+    case "ask_answered": {
+      // D-2（2026-11-19 交接）：任务执行中的提问由任务事件总线推送（webApiProxy.onTaskEvent），
+      // 回答后 / 任务进入终态时收起卡片。ask_id 缺省表示「该 tab 的提问都已结束」。
+      if (!s.ask) return s;
+      const askId = typeof e.payload?.ask_id === "string" ? e.payload.ask_id : undefined;
+      if (askId && s.ask.id !== askId) return s;
+      return {
+        ...s,
+        ask: undefined,
+        pendingPrompt: Boolean(s.approval),
+        resolvedPromptId: askId ?? s.ask.id,
+      };
     }
     case "guardian_assessment": {
       if (!e.guardian) return s;
@@ -1670,7 +1710,7 @@ function settingSwitchNoticeText(
   if (lower.includes("finish or cancel") && lower.includes(`before changing ${setting}`)) {
     return t(keys.busy);
   }
-  if (lower.includes("already open in another reasonix window") || lower.includes("session lease held")) {
+  if (lower.includes("already open in another edushield window") || lower.includes("session lease held")) {
     return t(keys.leaseHeld);
   }
   if (lower.includes("workspace is still starting")) {
@@ -2309,7 +2349,7 @@ export function useController() {
     replayPendingPromptsForActiveTab(activeTabId);
   }, [activeTabId]);
 
-  const sendToTab = useCallback(async (tabId: string, displayText: string, submitText = displayText, originalText?: string, structured?: import("./invocationDisplay").StructuredInvocationSubmit) => {
+  const sendToTab = useCallback(async (tabId: string, displayText: string, submitText = displayText, originalText?: string, structured?: import("./invocationDisplay").StructuredInvocationSubmit, route?: ComposerRoute) => {
     if (!tabId) throw new Error(t("composer.workspaceStarting"));
     const seq = getOrCreateState(statesRef.current, tabId).seq;
     const display = displayText.trim();
@@ -2318,7 +2358,20 @@ export function useController() {
     dispatchTo(tabId, { type: "user", text: displayText, submitText: display !== submit ? submit : undefined, seq });
     invalidateCache();
     try {
-      const submitPromise = structured
+      // 「聊天 / 任务」两层交互（交接 docs/handoff/20261102-caoyike-composer-agent-routing.md）：
+      // 浏览器版把 mode + domain 交给大脑 /api/chat/stream 真路由；桌面端（Wails 引擎）
+      // 没有这两个参数，仍走原 Submit 路径（Composer 会退回 trigger 前缀方案）。
+      // structured（invocations）语义在 brain 路径里会丢，一律回落到引擎路径。
+      const routed = route && !structured && shouldUseWebApi() ? route : null;
+      const submitPromise = routed
+        ? getWebApi().AisocSubmitForTab(tabId, submit, {
+            mode: routed.mode,
+            // 「综合」= 不传 domain，交给大脑按内容判定。
+            domain: routed.agent === "auto" ? undefined : routed.agent,
+            passThrough: true,
+            sessionId: tabId,
+          })
+        : structured
         ? app.SubmitInvocationsToTab(tabId, structured.display.trim(), structured.input.trim(), structured.invocations)
         : original
         ? app.SubmitEditedDisplayToTab(tabId, display, submit, original)

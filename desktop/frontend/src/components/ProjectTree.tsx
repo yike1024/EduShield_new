@@ -29,7 +29,7 @@ interface ProjectTreeProps {
   imTopicSources?: Record<string, ProjectTreeImTopicSource>;
   variant?: ProjectTreeVariant;
   onOpenTopic: (scope: string, workspaceRoot: string, topicId: string, sessionPath?: string) => Promise<void> | void;
-  onAddProject: () => Promise<void>;
+  onAddProject: () => Promise<void> | void;
   onCreateTopic?: (scope: string, workspaceRoot: string) => Promise<void> | void;
   onCreateDeliveryWorktree?: (workspaceRoot: string) => Promise<void> | void;
   onRenameTopic?: (topicId: string, title: string) => Promise<void> | void;
@@ -1009,8 +1009,11 @@ export function ProjectTree({
 
   const commitRenameTopic = async (topicId: string) => {
     const title = topicDraft.trim();
+    if (!title) {
+      showToast(t("projectTree.nameRequired"), "warn");
+      return;
+    }
     setEditingTopic(null);
-    if (!title) return;
     try {
       if (onRenameTopic) await onRenameTopic(topicId, title);
       else await app.RenameTopic(topicId, title);
@@ -1023,8 +1026,11 @@ export function ProjectTree({
 
   const commitRenameProject = async (root: string) => {
     const title = projectDraft.trim();
+    if (!title) {
+      showToast(t("projectTree.nameRequired"), "warn");
+      return;
+    }
     setEditingProject(null);
-    if (!title) return;
     try {
       await app.RenameProject(root, title);
       await refresh();

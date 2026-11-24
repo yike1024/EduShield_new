@@ -230,13 +230,13 @@ func TestNormalizeCommandRepairsOnlyPowerShellFileEscapedQuotes(t *testing.T) {
 		},
 		{
 			name:    "pwsh file path with spaces",
-			command: `pwsh.exe -NoProfile -NonInteractive -File \"C:\Program Files\Reasonix Hooks\archive attachments.ps1\"`,
-			want:    `pwsh.exe -NoProfile -NonInteractive -File "C:\Program Files\Reasonix Hooks\archive attachments.ps1"`,
+			command: `pwsh.exe -NoProfile -NonInteractive -File \"C:\Program Files\EduShield Hooks\archive attachments.ps1\"`,
+			want:    `pwsh.exe -NoProfile -NonInteractive -File "C:\Program Files\EduShield Hooks\archive attachments.ps1"`,
 		},
 		{
 			name:    "doubly escaped copied quotes",
-			command: `pwsh -File \\\"C:\Program Files\Reasonix Hooks\archive attachments.ps1\\\" \"arg with spaces\"`,
-			want:    `pwsh -File "C:\Program Files\Reasonix Hooks\archive attachments.ps1" "arg with spaces"`,
+			command: `pwsh -File \\\"C:\Program Files\EduShield Hooks\archive attachments.ps1\\\" \"arg with spaces\"`,
+			want:    `pwsh -File "C:\Program Files\EduShield Hooks\archive attachments.ps1" "arg with spaces"`,
 		},
 		{
 			name:    "powershell executable path copied with escaped quotes",
@@ -245,8 +245,8 @@ func TestNormalizeCommandRepairsOnlyPowerShellFileEscapedQuotes(t *testing.T) {
 		},
 		{
 			name:    "well formed file command stays unchanged",
-			command: `powershell -NoProfile -File "C:\Program Files\Reasonix Hooks\archive attachments.ps1"`,
-			want:    `powershell -NoProfile -File "C:\Program Files\Reasonix Hooks\archive attachments.ps1"`,
+			command: `powershell -NoProfile -File "C:\Program Files\EduShield Hooks\archive attachments.ps1"`,
+			want:    `powershell -NoProfile -File "C:\Program Files\EduShield Hooks\archive attachments.ps1"`,
 		},
 		{
 			name:    "command mode may intentionally contain escaped quotes",
@@ -295,8 +295,8 @@ func TestNormalizeCommandRepairsOnlyPowerShellFileEscapedQuotes(t *testing.T) {
 
 func TestLoadNormalizesPowerShellFileEscapedQuotes(t *testing.T) {
 	home := t.TempDir()
-	bad := `powershell -File \"C:\Program Files\Reasonix Hooks\archive attachments.ps1\"`
-	want := `powershell -File "C:\Program Files\Reasonix Hooks\archive attachments.ps1"`
+	bad := `powershell -File \"C:\Program Files\EduShield Hooks\archive attachments.ps1\"`
+	want := `powershell -File "C:\Program Files\EduShield Hooks\archive attachments.ps1"`
 	writeSettings(t, home, hookSettingsWithCommand(t, SessionStart, bad))
 
 	hooks := Load(LoadOptions{HomeDir: home})
@@ -309,7 +309,7 @@ func TestLoadNormalizesPowerShellFileEscapedQuotes(t *testing.T) {
 }
 
 func TestRepairablePowerShellFileArgs(t *testing.T) {
-	command := `powershell -NoProfile -NonInteractive -File \"C:\Program Files\Reasonix Hooks\archive attachments.ps1\" -Mode \"startup\"`
+	command := `powershell -NoProfile -NonInteractive -File \"C:\Program Files\EduShield Hooks\archive attachments.ps1\" -Mode \"startup\"`
 	name, args, ok := repairablePowerShellFileArgs(command)
 	if !ok {
 		t.Fatalf("repairablePowerShellFileArgs(%q) ok = false, want true", command)
@@ -317,7 +317,7 @@ func TestRepairablePowerShellFileArgs(t *testing.T) {
 	if name != "powershell" {
 		t.Fatalf("name = %q, want powershell", name)
 	}
-	wantArgs := []string{"-NoProfile", "-NonInteractive", "-File", `C:\Program Files\Reasonix Hooks\archive attachments.ps1`, "-Mode", "startup"}
+	wantArgs := []string{"-NoProfile", "-NonInteractive", "-File", `C:\Program Files\EduShield Hooks\archive attachments.ps1`, "-Mode", "startup"}
 	if strings.Join(args, "\x00") != strings.Join(wantArgs, "\x00") {
 		t.Fatalf("args = %#v, want %#v", args, wantArgs)
 	}
@@ -496,7 +496,7 @@ func TestLoadExpandsReasonixPluginRootBeforeShellLaunch(t *testing.T) {
 }
 
 func TestExpandPluginRootSupportsClaudeReasonixAndCmdAliases(t *testing.T) {
-	root := `C:\Program Files\Reasonix\plugins\impeccable`
+	root := `C:\Program Files\EduShield\plugins\impeccable`
 	for _, token := range []string{
 		"${CLAUDE_PLUGIN_ROOT}", "$CLAUDE_PLUGIN_ROOT", "%CLAUDE_PLUGIN_ROOT%",
 		"${REASONIX_PLUGIN_ROOT}", "$REASONIX_PLUGIN_ROOT", "%REASONIX_PLUGIN_ROOT%",
@@ -675,14 +675,14 @@ func TestReasonixHomeOverridesGlobalHookPaths(t *testing.T) {
 	writeSettings(t, home, `{"hooks":{"PostToolUse":[{"command":"echo old"}]}}`)
 
 	if got := GlobalSettingsPath(""); got != filepath.Join(reasonixHome, SettingsFilename) {
-		t.Fatalf("GlobalSettingsPath = %q, want Reasonix home", got)
+		t.Fatalf("GlobalSettingsPath = %q, want EduShield home", got)
 	}
 	if got := TrustPath(""); got != filepath.Join(reasonixHome, TrustFilename) {
-		t.Fatalf("TrustPath = %q, want Reasonix home", got)
+		t.Fatalf("TrustPath = %q, want EduShield home", got)
 	}
 	hooks := Load(LoadOptions{})
 	if len(hooks) != 1 || hooks[0].Command != "echo rx" {
-		t.Fatalf("Load hooks = %+v, want Reasonix home hook only", hooks)
+		t.Fatalf("Load hooks = %+v, want EduShield home hook only", hooks)
 	}
 }
 
@@ -719,7 +719,7 @@ func TestReasonixHomeDoesNotFallBackToLegacyWhenIsolated(t *testing.T) {
 		t.Fatalf("Trust: %v", err)
 	}
 	if _, err := os.Stat(filepath.Join(reasonixHome, TrustFilename)); err != nil {
-		t.Fatalf("Trust should write current Reasonix home trust file: %v", err)
+		t.Fatalf("Trust should write current EduShield home trust file: %v", err)
 	}
 }
 
@@ -785,40 +785,40 @@ func TestMatchesToolTranslatesClaudeToolNames(t *testing.T) {
 		return ResolvedHook{HookConfig: HookConfig{Match: match, PayloadFormat: "claude"}, Event: PreToolUse}
 	}
 	if !MatchesTool(claude("Bash"), "bash") {
-		t.Error(`Claude matcher "Bash" should match Reasonix tool "bash"`)
+		t.Error(`Claude matcher "Bash" should match EduShield tool "bash"`)
 	}
 	if !MatchesTool(claude("Write|Edit"), "write_file") {
-		t.Error(`Claude matcher "Write|Edit" should match Reasonix tool "write_file"`)
+		t.Error(`Claude matcher "Write|Edit" should match EduShield tool "write_file"`)
 	}
 	if !MatchesTool(claude("Write|Edit"), "edit_file") {
-		t.Error(`Claude matcher "Write|Edit" should match Reasonix tool "edit_file"`)
+		t.Error(`Claude matcher "Write|Edit" should match EduShield tool "edit_file"`)
 	}
 	if MatchesTool(claude("Bash"), "write_file") {
-		t.Error(`Claude matcher "Bash" must not match Reasonix tool "write_file"`)
+		t.Error(`Claude matcher "Bash" must not match EduShield tool "write_file"`)
 	}
-	// A native (non-Claude) hook's matcher stays in Reasonix's own vocabulary.
+	// A native (non-Claude) hook's matcher stays in EduShield's own vocabulary.
 	native := ResolvedHook{HookConfig: HookConfig{Match: "bash"}, Event: PreToolUse}
 	if MatchesTool(native, "Bash") {
 		t.Error("native hook matcher must not be interpreted against Claude tool names")
 	}
 	// The subagent tool was renamed "Task" -> "Agent" by Claude; a matcher
-	// using either name must still fire against Reasonix's "task" tool.
+	// using either name must still fire against EduShield's "task" tool.
 	if !MatchesTool(claude("Agent"), "task") {
-		t.Error(`Claude matcher "Agent" (current name) should match Reasonix tool "task"`)
+		t.Error(`Claude matcher "Agent" (current name) should match EduShield tool "task"`)
 	}
 	if !MatchesTool(claude("Task"), "task") {
-		t.Error(`Claude matcher "Task" (legacy alias) should still match Reasonix tool "task"`)
+		t.Error(`Claude matcher "Task" (legacy alias) should still match EduShield tool "task"`)
 	}
 	if !MatchesTool(claude("AskUserQuestion"), "ask") {
-		t.Error(`Claude matcher "AskUserQuestion" should match Reasonix tool "ask"`)
+		t.Error(`Claude matcher "AskUserQuestion" should match EduShield tool "ask"`)
 	}
 	for _, name := range []string{"bash_output", "wait"} {
 		if !MatchesTool(claude("TaskOutput"), name) || !MatchesTool(claude("BashOutput"), name) {
-			t.Errorf(`current "TaskOutput" and legacy "BashOutput" matchers should match Reasonix tool %q`, name)
+			t.Errorf(`current "TaskOutput" and legacy "BashOutput" matchers should match EduShield tool %q`, name)
 		}
 	}
 	if !MatchesTool(claude("TaskStop"), "kill_shell") || !MatchesTool(claude("KillShell"), "kill_shell") {
-		t.Error(`current "TaskStop" and legacy "KillShell" matchers should match Reasonix tool "kill_shell"`)
+		t.Error(`current "TaskStop" and legacy "KillShell" matchers should match EduShield tool "kill_shell"`)
 	}
 }
 
@@ -853,11 +853,11 @@ func TestClaudeFacingToolNameUsesCurrentNames(t *testing.T) {
 		}
 		claude := ResolvedHook{HookConfig: HookConfig{Match: "Agent", PayloadFormat: "claude"}, Event: PreToolUse}
 		if !MatchesTool(claude, name) {
-			t.Errorf(`Claude matcher "Agent" should match Reasonix tool %q`, name)
+			t.Errorf(`Claude matcher "Agent" should match EduShield tool %q`, name)
 		}
 		legacy := ResolvedHook{HookConfig: HookConfig{Match: "Task", PayloadFormat: "claude"}, Event: PreToolUse}
 		if !MatchesTool(legacy, name) {
-			t.Errorf(`legacy Claude matcher "Task" should still match Reasonix tool %q`, name)
+			t.Errorf(`legacy Claude matcher "Task" should still match EduShield tool %q`, name)
 		}
 	}
 }
@@ -913,7 +913,7 @@ func TestClaudeFacingToolInputAdaptsMappedTools(t *testing.T) {
 }
 
 // TestClaudeFacingToolInputResolvesAbsolutePaths checks the Claude file-tool
-// contract ("file_path must be absolute"): a relative Reasonix path resolves
+// contract ("file_path must be absolute"): a relative EduShield path resolves
 // against the payload cwd — the same root the tool itself resolves against —
 // so a prefix-matching guard sees the path the tool actually accesses.
 func TestClaudeFacingToolInputResolvesAbsolutePaths(t *testing.T) {
@@ -1010,7 +1010,7 @@ func TestDecideOutcome(t *testing.T) {
 		{"timeout-nonblocking", Stop, "", SpawnResult{TimedOut: true}, DecisionWarn},
 		{"spawn-error", PreToolUse, "", SpawnResult{SpawnErr: os.ErrNotExist}, DecisionError},
 		// Claude's own PermissionRequest contract blocks on exit 2/timeout the
-		// same way PreToolUse does; native Reasonix PermissionRequest hooks
+		// same way PreToolUse does; native EduShield PermissionRequest hooks
 		// (format == "") stay advisory-only, verified above.
 		{"claude-permission-exit2-blocks", PermissionRequest, "claude", SpawnResult{ExitCode: 2}, DecisionBlock},
 		{"claude-permission-timeout-blocks", PermissionRequest, "claude", SpawnResult{TimedOut: true}, DecisionBlock},
@@ -1268,7 +1268,7 @@ func TestRunClaudePayloadAndDirectArgs(t *testing.T) {
 		t.Fatalf("Claude payload = %#v", payload)
 	}
 	if payload["tool_name"] != "Bash" {
-		t.Fatalf("Claude payload tool_name = %v, want the Claude vocabulary name Bash for Reasonix tool bash", payload["tool_name"])
+		t.Fatalf("Claude payload tool_name = %v, want the Claude vocabulary name Bash for EduShield tool bash", payload["tool_name"])
 	}
 	response, ok := payload["tool_response"].(map[string]any)
 	if !ok || response["stdout"] != "remote: denied" || response["stderr"] != "exit 1" || response["interrupted"] != false {
@@ -1282,7 +1282,7 @@ func TestRunClaudePayloadAndDirectArgs(t *testing.T) {
 // TestRunClaudeWriteFileGuardFiresAndSeesFilePath is an end-to-end check that
 // a Claude plugin's "block writes to secrets" style PreToolUse guard —
 // matcher "Write", reading .tool_input.file_path — actually fires against a
-// Reasonix write_file call and sees the absolute target path Claude's
+// EduShield write_file call and sees the absolute target path Claude's
 // file-tool contract specifies.
 func TestRunClaudeWriteFileGuardFiresAndSeesFilePath(t *testing.T) {
 	cwd := t.TempDir()
@@ -1296,7 +1296,7 @@ func TestRunClaudeWriteFileGuardFiresAndSeesFilePath(t *testing.T) {
 		ToolArgs: json.RawMessage(`{"path":"secrets/.env","content":"KEY=1"}`),
 	}, hooks, func(_ context.Context, in SpawnInput) SpawnResult { input = in; return SpawnResult{ExitCode: 0} })
 	if input.Command == "" {
-		t.Fatal(`matcher "Write" did not fire for Reasonix tool "write_file"`)
+		t.Fatal(`matcher "Write" did not fire for EduShield tool "write_file"`)
 	}
 	var payload map[string]any
 	if err := json.Unmarshal([]byte(input.Stdin), &payload); err != nil {
@@ -1310,12 +1310,12 @@ func TestRunClaudeWriteFileGuardFiresAndSeesFilePath(t *testing.T) {
 		t.Fatalf(`tool_input.file_path = %v, want absolute %q (a prefix-matching guard must see the path the tool accesses)`, toolInput["file_path"], want)
 	}
 	if _, hasPath := toolInput["path"]; hasPath {
-		t.Fatalf("tool_input still has Reasonix's \"path\" key: %#v", toolInput)
+		t.Fatalf("tool_input still has EduShield's \"path\" key: %#v", toolInput)
 	}
 }
 
 // TestRunClaudeAgentGuardFiresAndSeesRequiredFields covers the full matcher to
-// stdin path for a dedicated Reasonix subagent wrapper. Claude Agent requires
+// stdin path for a dedicated EduShield subagent wrapper. Claude Agent requires
 // both prompt and description even though the wrapper only accepts task.
 func TestRunClaudeAgentGuardFiresAndSeesRequiredFields(t *testing.T) {
 	hooks := []ResolvedHook{{
@@ -1328,7 +1328,7 @@ func TestRunClaudeAgentGuardFiresAndSeesRequiredFields(t *testing.T) {
 		ToolArgs: json.RawMessage(`{"task":"audit the auth changes"}`),
 	}, hooks, func(_ context.Context, in SpawnInput) SpawnResult { input = in; return SpawnResult{ExitCode: 0} })
 	if input.Command == "" {
-		t.Fatal(`matcher "Agent" did not fire for Reasonix tool "security_review"`)
+		t.Fatal(`matcher "Agent" did not fire for EduShield tool "security_review"`)
 	}
 	var payload map[string]any
 	if err := json.Unmarshal([]byte(input.Stdin), &payload); err != nil {

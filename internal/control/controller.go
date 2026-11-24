@@ -812,7 +812,7 @@ const planApprovalTool = "exit_plan_mode"
 const SandboxEscapeApprovalTool = "sandbox_escape"
 
 // ManagedConfigWriteApprovalTool is the internal Tool name used for per-write
-// approval when a file tool targets a Reasonix-managed config file outside the
+// approval when a file tool targets an EduShield-managed config file outside the
 // workspace write roots. It is a fresh human decision: config files control
 // providers, sandbox rules, permissions, and MCP servers for future sessions,
 // so YOLO/auto approval must never answer it.
@@ -4913,7 +4913,7 @@ func sandboxEscapeApprovalReason(reason string) string {
 	return reason
 }
 
-// managedConfigWriteApprover routes a file tool's Reasonix-managed config write
+// managedConfigWriteApprover routes a file tool's EduShield-managed config write
 // through the fresh-human approval prompt (see ManagedConfigWriteApprovalTool).
 // A session grant is tool-wide (mirroring sandbox_escape): one "allow for this
 // session" covers the rest of the repair flow across the handful of managed
@@ -5457,11 +5457,11 @@ func (c *Controller) requestApprovalDecisionWithOptions(ctx context.Context, too
 	// Claude's PermissionRequest contract answers the dialog on the plugin's
 	// behalf (auto-allow/auto-deny) instead of merely observing it, so a
 	// decision here must preempt the prompt rather than just notify — this
-	// runs synchronously and before the dialog is shown. Native Reasonix
+	// runs synchronously and before the dialog is shown. Native EduShield
 	// PermissionRequest hooks stay advisory-only (see claudePermissionBlocking).
 	//
 	// A hook's auto-allow must never stand in for a fresh human decision:
-	// sandbox escapes, Reasonix config writes, memory remember/forget, and
+	// sandbox escapes, EduShield config writes, memory remember/forget, and
 	// plan approval (RequiresFreshHumanApprovalTool) are deliberately excluded
 	// from YOLO/auto-approval and Guardian too, so a broadly-matched plugin
 	// hook returning "allow" can't silently rubber-stamp them. A deny still

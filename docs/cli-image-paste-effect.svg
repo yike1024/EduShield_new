@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-label="CLI image paste attachment effect">
   <rect width="1200" height="675" fill="#353647"/>
-  <text x="44" y="62" fill="#d9def5" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="30" font-weight="700">Reasonix CLI image paste</text>
+  <text x="44" y="62" fill="#d9def5" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="30" font-weight="700">EduShield CLI image paste</text>
   <text x="44" y="100" fill="#aeb4d2" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="18">Clipboard images become queued attachments, shown as compact labels instead of raw file paths.</text>
 
   <rect x="44" y="142" width="1112" height="118" rx="2" fill="#2b2d31"/>

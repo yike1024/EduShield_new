@@ -95,17 +95,17 @@ var English = Messages{
 	MCPReviewerUnavailableReason:           "The configured automatic approval reviewer is unavailable or returned no verdict. This call needs a fresh human decision; Auto/YOLO approval and session grants cannot answer it.",
 	MCPReviewerUnavailableDeclined:         "the user declined this MCP tool call after the automatic reviewer was unavailable - do not retry it; ask how they would like to proceed.",
 	PlanModeBashTrustSubjectFmt:            "Trust %q as a read-only command prefix while planning\nCommand: %s",
-	PlanModeBashTrustReason:                "This bash command is not in Reasonix's built-in read-only set. Confirm only if this exact prefix is read-only for planning and research. Auto/YOLO approval cannot answer this trust prompt.",
+	PlanModeBashTrustReason:                "This bash command is not in EduShield's built-in read-only set. Confirm only if this exact prefix is read-only for planning and research. Auto/YOLO approval cannot answer this trust prompt.",
 	PlanModeBashTrustDeclined:              "the user declined to trust this bash command as read-only for plan mode - do not retry it; continue with other trusted read-only tools or ask how to proceed.",
 	SandboxEscapeSubjectFallback:           "run shell command unconfined once",
 	SandboxEscapeSubjectPrefix:             "run unconfined once: ",
 	SandboxEscapeWrapReason:                "Windows does not provide an OS-level Bash sandbox for this command. Run it unconfined one time? This bypasses OS isolation for this command only.",
 	SandboxEscapeRuntimeReason:             "The OS sandbox could not start this command. Run it unconfined one time? This bypasses OS isolation for this command only.",
 	SandboxEscapeDeclined:                  "the user declined to run this command without the OS sandbox - do not retry it unconfined; ask how they would like to proceed.",
-	ApprovalToolLabelConfigWrite:           "Reasonix config write",
-	ConfigWriteSubjectPrefix:               "write Reasonix config: ",
-	ConfigWriteReason:                      "This write targets a Reasonix-managed configuration file outside the workspace. It can change providers, sandbox rules, permissions, and MCP servers for future sessions, so it needs your explicit approval.",
-	ConfigWriteDeclined:                    "the user declined this Reasonix config write - do not retry it; ask how they would like to proceed.",
+	ApprovalToolLabelConfigWrite:           "EduShield config write",
+	ConfigWriteSubjectPrefix:               "write EduShield config: ",
+	ConfigWriteReason:                      "This write targets an EduShield-managed configuration file outside the workspace. It can change providers, sandbox rules, permissions, and MCP servers for future sessions, so it needs your explicit approval.",
+	ConfigWriteDeclined:                    "the user declined this EduShield config write - do not retry it; ask how they would like to proceed.",
 	ConfigWriteApprovalChoices:             "1. Allow once\n2. Allow for this session\n3. Deny\nChoose [1/2/3] (y/a/n also work)",
 	PermissionSavedFmt:                     "permission saved to %s: %s",
 	PermissionAlreadyAllowedFmt:            "permission already covered in %s: %s",
@@ -282,7 +282,7 @@ var English = Messages{
 	ListSkillsHeaderFmt: "skills (%d)",
 	ListSkillsNone:      "skills: none defined — invoke a built-in like /init, or author one with install_skill",
 	ListHooksHeaderFmt:  "hooks (%d active)",
-	ListHooksNone:       "hooks: none active — configure in .reasonix/settings.json (project, after trust) or <Reasonix home>/settings.json (global)",
+	ListHooksNone:       "hooks: none active — configure in .reasonix/settings.json (project, after trust) or <EduShield home>/settings.json (global)",
 	ListMcpHeader:       "mcp servers",
 	ListMcpNone:         "mcp: no servers connected — add one in reasonix.toml ([[plugins]]) or a project .mcp.json",
 
@@ -504,7 +504,7 @@ Examples:
   echo "explain this code" | reasonix run
 
 Configuration:
-  Resolution: flag > ./reasonix.toml > <Reasonix home>/config.toml > built-in defaults
+  Resolution: flag > ./reasonix.toml > <EduShield home>/config.toml > built-in defaults
   Secrets come from the environment via api_key_env (e.g. DEEPSEEK_API_KEY).
   Run 'reasonix setup' to scaffold a config; see docs/SPEC.md.
 `,

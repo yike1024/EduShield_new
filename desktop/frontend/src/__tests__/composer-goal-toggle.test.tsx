@@ -47,6 +47,20 @@ function installDom() {
   });
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   globalThis.window = dom.window as unknown as Window & typeof globalThis;
+  // 本文件覆盖 Wails 桌面端的 task-intent（Goal）控件；注入最小 Wails 绑定，
+  // 让 isWailsRuntime() 返回 true（浏览器版该控件不渲染）。
+  const desktopBinding = new Proxy({} as Record<string, unknown>, {
+    get: (_target, prop) => {
+      switch (String(prop)) {
+        case "Commands":
+        case "ListSessions":
+          return async () => [];
+        default:
+          return async () => undefined;
+      }
+    },
+  });
+  (dom.window as unknown as { go?: unknown }).go = { main: { App: desktopBinding } };
   globalThis.document = dom.window.document;
   Object.defineProperty(globalThis, "navigator", { configurable: true, value: dom.window.navigator });
   globalThis.Node = dom.window.Node;
@@ -1504,13 +1518,13 @@ console.log("\ncomposer goal toggle");
         <UserMessage
           id="h3"
           text={"Compare these commands\n/other-command"}
-          submitText={"/reasonix-develop Compare these commands\n/other-command"}
+          submitText={"/edushield-develop Compare these commands\n/other-command"}
         />
       </LocaleProvider>,
     );
     await flushTimers();
   });
-  ok(document.querySelector(".invocation-display--message")?.textContent?.includes("Reasonix Develop") === true, "history recovery ignores slash-prefixed lines inside the task body");
+  ok(document.querySelector(".invocation-display--message")?.textContent?.includes("EduShield Develop") === true, "history recovery ignores slash-prefixed lines inside the task body");
 
   await act(async () => {
     root.render(

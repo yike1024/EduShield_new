@@ -6,7 +6,7 @@
 &nbsp;·&nbsp;
 <a href="./SPEC.md">规格</a>
 
-Hooks 让 Reasonix 在会话、用户输入、工具调用、模型返回、压缩上下文等节点执行本地 shell 命令。桌面端在“设置 -> Hooks”里提供图形化编辑入口，本质上读写同一份 `settings.json`。
+Hooks 让 EduShield 在会话、用户输入、工具调用、模型返回、压缩上下文等节点执行本地 shell 命令。桌面端在“设置 -> Hooks”里提供图形化编辑入口，本质上读写同一份 `settings.json`。
 
 > Hook 命令会在本机执行 shell。全局 hooks 默认可信；项目 hooks 必须显式信任项目后才会加载。
 
@@ -14,7 +14,7 @@ Hooks 让 Reasonix 在会话、用户输入、工具调用、模型返回、压�
 
 1. 打开桌面端“设置 -> Hooks”。
 2. 选择范围：
-   - “全局”：保存到 `<Reasonix home>/settings.json`，始终加载；Windows 默认是 `%APPDATA%\reasonix\settings.json`，macOS/Linux 默认是 `~/.reasonix/settings.json`。
+   - “全局”：保存到 `<EduShield home>/settings.json`，始终加载；Windows 默认是 `%APPDATA%\reasonix\settings.json`，macOS/Linux 默认是 `~/.reasonix/settings.json`。
    - “项目”：保存到当前工作区的 `.reasonix/settings.json`，必须点击“信任此工作区”后才会加载。
 3. 在 JSON 配置框里编辑 `hooks`。
 4. 保存后，重启桌面端，让新配置进入会话。`/new` 只开启新对话，不会重新读取 hooks 配置。
@@ -34,7 +34,7 @@ Hooks 让 Reasonix 在会话、用户输入、工具调用、模型返回、压�
     ],
     "Stop": [
       {
-        "command": "echo Reasonix turn finished"
+        "command": "echo EduShield turn finished"
       }
     ]
   }
@@ -45,10 +45,10 @@ Hooks 让 Reasonix 在会话、用户输入、工具调用、模型返回、压�
 
 | 范围 | 文件 | 是否需要信任 | 加载顺序 |
 | --- | --- | --- | --- |
-| 全局 | `<Reasonix home>/settings.json` | 不需要 | 项目 hooks 之后 |
+| 全局 | `<EduShield home>/settings.json` | 不需要 | 项目 hooks 之后 |
 | 项目 | `<workspace>/.reasonix/settings.json` | 需要 | 全局 hooks 之前 |
 
-项目 hooks 的信任状态不写在项目文件里，而是写在用户自己的 `<Reasonix home>/trust.json`。这样克隆来的仓库不能靠提交 `.reasonix/settings.json` 自动执行命令。
+项目 hooks 的信任状态不写在项目文件里，而是写在用户自己的 `<EduShield home>/trust.json`。这样克隆来的仓库不能靠提交 `.reasonix/settings.json` 自动执行命令。
 
 同一个事件下，项目 hooks 先运行，全局 hooks 后运行；同一范围内按数组顺序运行。阻塞型事件遇到第一个阻塞 hook 后，会停止继续执行后面的 hook。
 
@@ -66,7 +66,7 @@ Hooks 让 Reasonix 在会话、用户输入、工具调用、模型返回、压�
       { "command": "node ~/.reasonix/hooks/check-prompt.js" }
     ],
     "Stop": [
-      { "command": "osascript -e 'display notification \"Turn done\" with title \"Reasonix\"'" }
+      { "command": "osascript -e 'display notification \"Turn done\" with title \"EduShield\"'" }
     ]
   }
 }
@@ -105,10 +105,10 @@ Hooks 让 Reasonix 在会话、用户输入、工具调用、模型返回、压�
 `match` 是锚定正则：`"file"` 不会匹配 `read_file`，需要写成 `".*file"`。正则非法时该 hook 不会触发。
 
 `command` 默认通过平台 shell 执行：macOS/Linux 使用 `sh -c`，Windows 使用
-`cmd /c`。如果 Windows hook 自己显式写了裸命令 `sh -c` 或 `bash -c`，Reasonix
+`cmd /c`。如果 Windows hook 自己显式写了裸命令 `sh -c` 或 `bash -c`，EduShield
 会查找 Git for Windows 自带的 Bash 并直接使用它；带目录的显式解释器路径保持不变。
 找不到 Git Bash 时会返回可操作的依赖提示。Hook stdout/stderr 中的 Windows 旧代码页
-文本会转换为 UTF-8，避免中文错误信息显示成乱码。stdin 是 Reasonix 写入的一行 JSON，
+文本会转换为 UTF-8，避免中文错误信息显示成乱码。stdin 是 EduShield 写入的一行 JSON，
 见下面的 payload 表。
 
 ## 配置里的事件 key
@@ -132,7 +132,7 @@ Hooks 让 Reasonix 在会话、用户输入、工具调用、模型返回、压�
 
 ## Hook 命令收到的 payload
 
-Reasonix 会把一行 JSON 写入 hook 命令的 stdin。所有 payload 都至少有：
+EduShield 会把一行 JSON 写入 hook 命令的 stdin。所有 payload 都至少有：
 
 | key | 类型 | 说明 |
 | --- | --- | --- |
@@ -170,7 +170,7 @@ stdout 和 stderr 会被捕获、去掉首尾空白，并限制单路输出最�
 
 特殊 stdout 行为：
 
-- `PostLLMCall`：exit 0 且 stdout 非空时，stdout 会替换用户看到的 reasoning。若 provider 的 reasoning 带签名，Reasonix 会保留原始 signed reasoning 用于后续请求，同时仍展示 hook 转换后的文本。
+- `PostLLMCall`：exit 0 且 stdout 非空时，stdout 会替换用户看到的 reasoning。若 provider 的 reasoning 带签名，EduShield 会保留原始 signed reasoning 用于后续请求，同时仍展示 hook 转换后的文本。
 - `SessionStart`：exit 0 且 stdout 非空时，stdout 会作为一次性 `<hook-context event="SessionStart">` 注入下一轮真实用户输入。纯文本 stdout 会原样作为上下文；也可以输出 Claude Code / Codex 兼容 JSON：
 
   ```json
@@ -200,7 +200,7 @@ stdout 和 stderr 会被捕获、去掉首尾空白，并限制单路输出最�
 }
 ```
 
-这适合把插件或工作流的 bootstrap 说明带入会话。比如 Superpowers 不需要内置到 Reasonix；可以让它自己的 `hooks/session-start-codex` 在 `SessionStart` 输出 `additionalContext`，或让插件根目录 `CLAUDE.md` 被插件包兼容层直接作为 `SessionStart` 上下文读取，Reasonix 会在下一轮把这段说明注入模型上下文。插件包兼容层也会读取 `.claude/settings.json` 里的 command hooks，并按同名事件映射到 Reasonix hooks。Reasonix 默认允许 `max_subagent_depth = 2`，因此 Superpowers 的父会话或第一层 workflow subagent 可以再派发 reviewer/implementer subagent；第二层不会继续获得递归委派工具。若要恢复旧的单层边界，设 `agent.max_subagent_depth = 1`。这会改变子代理可见工具面，可能影响子代理请求的 prompt cache，但不会把 Superpowers 写进 Reasonix 的稳定 system prompt。
+这适合把插件或工作流的 bootstrap 说明带入会话。比如 Superpowers 不需要内置到 EduShield；可以让它自己的 `hooks/session-start-codex` 在 `SessionStart` 输出 `additionalContext`，或让插件根目录 `CLAUDE.md` 被插件包兼容层直接作为 `SessionStart` 上下文读取，EduShield 会在下一轮把这段说明注入模型上下文。插件包兼容层也会读取 `.claude/settings.json` 里的 command hooks，并按同名事件映射到 EduShield hooks。EduShield 默认允许 `max_subagent_depth = 2`，因此 Superpowers 的父会话或第一层 workflow subagent 可以再派发 reviewer/implementer subagent；第二层不会继续获得递归委派工具。若要恢复旧的单层边界，设 `agent.max_subagent_depth = 1`。这会改变子代理可见工具面，可能影响子代理请求的 prompt cache，但不会把 Superpowers 写进 EduShield 的稳定 system prompt。
 
 ## 示例：阻止危险 bash 命令
 

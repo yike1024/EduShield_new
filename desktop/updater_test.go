@@ -46,7 +46,7 @@ func TestNormalizeVersion(t *testing.T) {
 
 func TestUpdateSiblingNamesCoverEveryReplacedEntryPoint(t *testing.T) {
 	windows := strings.Join(updateSiblingNames("windows"), "\x00")
-	for _, want := range []string{"reasonix-guard.exe", "reasonix-launcher.exe", "reasonix-update-helper.exe", "Reasonix.exe"} {
+	for _, want := range []string{"reasonix-guard.exe", "reasonix-launcher.exe", "reasonix-update-helper.exe", "EduShield.exe"} {
 		if !strings.Contains(windows, want) {
 			t.Errorf("Windows release unit omits %q: %q", want, windows)
 		}
@@ -169,7 +169,7 @@ func TestSaveCachedUpdateMarksEvaluateDownloaded(t *testing.T) {
 
 	data := []byte("verified artifact")
 	asset := update.Asset{
-		URL:    "https://dl.reasonix.io/desktop-v9.9.9/Reasonix-linux-amd64.tar.gz",
+		URL:    "https://dl.reasonix.io/desktop-v9.9.9/EduShield-linux-amd64.tar.gz",
 		Size:   int64(len(data)),
 		SHA256: sha256Hex(data),
 	}
@@ -200,7 +200,7 @@ func TestCachedUpdateRejectsTamperedArtifact(t *testing.T) {
 
 	data := []byte("verified artifact")
 	asset := update.Asset{
-		URL:    "https://dl.reasonix.io/desktop-v9.9.9/Reasonix-linux-amd64.tar.gz",
+		URL:    "https://dl.reasonix.io/desktop-v9.9.9/EduShield-linux-amd64.tar.gz",
 		Size:   int64(len(data)),
 		SHA256: sha256Hex(data),
 	}
@@ -227,7 +227,7 @@ func TestCachedUpdateRejectsDifferentChannel(t *testing.T) {
 
 	data := []byte("verified artifact")
 	asset := update.Asset{
-		URL:    "https://dl.reasonix.io/desktop-v9.9.9/Reasonix-linux-amd64.tar.gz",
+		URL:    "https://dl.reasonix.io/desktop-v9.9.9/EduShield-linux-amd64.tar.gz",
 		Size:   int64(len(data)),
 		SHA256: sha256Hex(data),
 	}

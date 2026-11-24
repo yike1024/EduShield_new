@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/logo.svg" alt="Reasonix" width="640"/>
+  <img src="docs/logo.svg" alt="EduShield" width="640"/>
 </p>
 
 <p align="center">
@@ -17,7 +17,7 @@
 </p>
 
 > [!IMPORTANT]
-> **Reasonix 1.0 is a ground-up rewrite in Go** — this branch (`main-v2`) is the new default and where development happens now.
+> **EduShield 1.0 is a ground-up rewrite in Go** — this branch (`main-v2`) is the new default and where development happens now.
 > The earlier `0.x` TypeScript releases are **legacy**, living on the [`v1`](https://github.com/esengine/DeepSeek-Reasonix/tree/v1) branch (maintenance only).
 > See the **[migration guide](./docs/MIGRATING.md)**. `npm i -g reasonix` stays the install command — `1.0.0`+ delivers the Go binary, `0.x` is the legacy TS build.
 
@@ -88,7 +88,7 @@ make cross      # -> dist/ (darwin|linux|windows × amd64|arm64)
 ```sh
 reasonix setup                      # manage providers in the user config
 reasonix setup --local              # optional: manage ./reasonix.toml
-export DEEPSEEK_API_KEY=sk-...      # or let setup save it to Reasonix home .env
+export DEEPSEEK_API_KEY=sk-...      # or let setup save it to EduShield home .env
 reasonix                            # then run /init to generate AGENTS.md (project memory)
 reasonix run "implement the TODOs in main.go"
 reasonix run --model deepseek-pro "add unit tests for this function"
@@ -111,15 +111,15 @@ api_key_env = "DEEPSEEK_API_KEY"
 ```
 
 Resolution order is **flag > `./reasonix.toml` > the user config file >
-built-in defaults**; starting with **Reasonix v1.8.1**, the user file lives at
+built-in defaults**; starting with **EduShield v1.8.1**, the user file lives at
 `~/.reasonix/config.toml` on macOS/Linux and
 `%AppData%\reasonix\config.toml` on Windows. See
 **[Configuration paths](./docs/CONFIG_PATHS.md)** for migration details and the
 full `config.toml` / `.env` structure. Provider entries name secrets with
-`api_key_env`; the secret values themselves live in Reasonix's global
-`<Reasonix home>/.env`, shared by CLI and desktop. Project `.env` files are not
+`api_key_env`; the secret values themselves live in EduShield's global
+`<EduShield home>/.env`, shared by CLI and desktop. Project `.env` files are not
 provider-key runtime fallbacks, but still feed workspace-scoped, non-provider
-`${VAR}` expansion for MCP/plugin settings without importing Reasonix control
+`${VAR}` expansion for MCP/plugin settings without importing EduShield control
 variables. Permissions, the sandbox, plugins (MCP), slash
 commands, `@` references, and two-model setup are all in the
 **[Guide](./docs/GUIDE.md)**.
@@ -167,7 +167,7 @@ commands, `@` references, and two-model setup are all in the
 
 ## Support
 
-If Reasonix has been useful and you'd like to say thanks, you can. It stays a coffee, not a contract — donations don't buy feature priority or change how issues get triaged.
+If EduShield has been useful and you'd like to say thanks, you can. It stays a coffee, not a contract — donations don't buy feature priority or change how issues get triaged.
 
 - **International** — PayPal: [paypal.me/yuhuahui](https://paypal.me/yuhuahui)
 - **国内** — 微信支付（扫码）
@@ -180,7 +180,7 @@ If Reasonix has been useful and you'd like to say thanks, you can. It stays a co
 
 ## Acknowledgments
 
-A small list of folks whose work has shaped Reasonix the most — the current top
+A small list of folks whose work has shaped EduShield the most — the current top
 20 contributors by commit count. The full contributor graph is on
 [GitHub](https://github.com/esengine/DeepSeek-Reasonix/graphs/contributors?all=1).
 

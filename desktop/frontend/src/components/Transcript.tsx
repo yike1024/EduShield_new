@@ -266,6 +266,7 @@ export function Transcript({
   tabId,
   footerHeight = 0,
   onPrompt,
+  onScenarioPrompt,
   onDeliveryContinue,
   onEditPrompt,
   onRewind,
@@ -292,6 +293,8 @@ export function Transcript({
   tabId?: string;
   footerHeight?: number;
   onPrompt: (text: string) => void;
+  /** 场景卡专用：只把指令填入输入框，不直接发送（用户需补充目标后再发）。 */
+  onScenarioPrompt?: (text: string) => void;
   onDeliveryContinue?: () => void;
   onEditPrompt?: (turn: number, displayText: string, submitText?: string) => boolean | void | Promise<boolean | void>;
   onRewind?: (turn: number, scope: string) => void;
@@ -889,7 +892,9 @@ export function Transcript({
         onTouchMoveCapture={handleTouchMoveIntent}
         onKeyDownCapture={handleKeyScrollIntent}
       >
-        {empty && !hydrating && <Welcome onPrompt={onPrompt} variant={welcomeVariant} />}
+        {empty && !hydrating && (
+          <Welcome onPrompt={onPrompt} onScenarioPrompt={onScenarioPrompt} variant={welcomeVariant} />
+        )}
 
         <LiveStreamContext.Provider value={live}>
           {hasOlderHistory && (

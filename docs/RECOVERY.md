@@ -1,6 +1,6 @@
 # Recovery and Safe Mode
 
-Reasonix includes a small recovery executable, `reasonix-guard`, that does not
+EduShield includes a small recovery executable, `reasonix-guard`, that does not
 load Wails, WebView, plugins, MCP servers, hooks, bots, or session transcripts.
 It remains usable when the desktop shell or a TOML configuration cannot start.
 
@@ -52,13 +52,13 @@ URLs, credentials, proxy structure, MCP commands, permission conflicts, file
 permissions, and derived desktop JSON. `--network` is explicit: it probes the
 provider model endpoint through the configured proxy and classifies connectivity
 and authentication status without storing response bodies. `rebuild` never
-deletes derived state; it quarantines the selected file and lets Reasonix recreate
+deletes derived state; it quarantines the selected file and lets EduShield recreate
 it.
 
 ## Automatic Safe Mode
 
 The desktop records `starting`, `ready`, `healthy`, and `clean-exit` under the
-Reasonix state directory. `ready` begins a 30-second probation period. On the
+EduShield state directory. `ready` begins a 30-second probation period. On the
 third incomplete startup within five minutes, Guard opens a native recovery
 dialog that does not depend on WebView. Safe Mode uses built-in configuration,
 does not restore saved tabs, and disables external integrations for that run. It
@@ -66,7 +66,7 @@ does not rewrite the user's configuration.
 
 ## Update rollback
 
-Before an automatic update, Reasonix retains the complete installed release
+Before an automatic update, EduShield retains the complete installed release
 unit — the desktop executable plus the Guard/launcher binaries the installer
 also replaces (Windows and Linux) — or the application bundle (macOS). The
 backups remain until the replacement build reaches `healthy` or exits cleanly.
@@ -76,7 +76,7 @@ rollback never produces a mixed-version install. When the Windows installer
 itself fails after the desktop has exited, the update helper records the
 failure and relaunches Guard, which performs the same full rollback immediately
 instead of waiting for a crash loop. Update metadata and hashes are stored
-under the Reasonix repair state; arbitrary backup or target paths are rejected,
+under the EduShield repair state; arbitrary backup or target paths are rejected,
 and unhashed backups are refused.
 
 ## Optional AI assistance
@@ -93,5 +93,5 @@ The host displays an operation preview and unified configuration diff, asks for
 confirmation, and executes only those built-in operations. A plan cannot run a
 shell command, edit credentials or session content, or name an arbitrary path.
 
-All state files are additive and optional. Older Reasonix releases ignore them;
+All state files are additive and optional. Older EduShield releases ignore them;
 missing new fields decode to their safe zero values.

@@ -63,7 +63,7 @@ implemented, already resolved), explain that briefly and end your reply with a
 final line containing exactly [no_changes]. Never emit that marker when any
 work, verification, or follow-up remains.`
 
-const executorHandoffMarker = "Reasonix executor handoff"
+const executorHandoffMarker = "EduShield executor handoff"
 
 // plannerFallbackNotice is shown when the planner fails and the turn degrades
 // to executor-only instead of failing outright.
@@ -249,7 +249,7 @@ func (c *Coordinator) SetSandboxEscapeApprover(g sandbox.EscapeApprover) {
 	}
 }
 
-// SetConfigWriteApprover propagates Reasonix-managed config write approvals to
+// SetConfigWriteApprover propagates EduShield-managed config write approvals to
 // both tool-using agents in two-model mode.
 func (c *Coordinator) SetConfigWriteApprover(g tool.ConfigWriteApprover) {
 	if c == nil {

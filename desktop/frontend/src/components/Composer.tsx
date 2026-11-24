@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ClipboardEvent, DragEvent, KeyboardEvent, MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
-import { ArrowRight, ArrowUp, AtSign, Check, ChevronDown, ChevronUp, ChevronsUpDown, CornerDownRight, Equal, Eye, FilePlus2, FileText, Flag, Folder, Gauge, Hash, List, MessageSquare, Plus, Search, Shield, ShieldAlert, ShieldCheck, Square, Target, Trash2, X } from "lucide-react";
+import { ArrowRight, ArrowUp, AtSign, Check, ChevronDown, ChevronUp, ChevronsUpDown, CornerDownRight, Equal, Eye, FilePlus2, FileSearch, FileText, Flag, Folder, Gauge, Hash, List, MessageSquare, Network, Plus, Radar, Search, Shield, ShieldAlert, ShieldCheck, Sparkles, Square, Target, TerminalSquare, Trash2, X } from "lucide-react";
 import { asArray } from "../lib/array";
 import { filterAtMatches } from "../lib/atMatches";
 import { DedupIndex, sha256 } from "../lib/attachDedup";
-import { app, onFilesDropped } from "../lib/bridge";
+import { app, isWailsRuntime, onFilesDropped } from "../lib/bridge";
 import { canUsePromptHistory, isFnKeyEvent, promptHistoryDirectionFromEvent } from "../lib/composerKeyboard";
 import { cacheGeneration, loadOlder } from "../lib/composerHistory";
+import { getWebApi, shouldUseWebApi } from "../lib/webApiProxy";
 import { SPINNER_WORDS, useI18n } from "../lib/i18n";
 import { detectShortcutPlatform, formatShortcutCombo, matchesShortcut } from "../lib/keyboardShortcuts";
 import { fallbackCopyText } from "../lib/clipboard";
@@ -19,7 +20,7 @@ import {
   type ComposerInvocation,
   type StructuredInvocationSubmit,
 } from "../lib/invocationDisplay";
-import { clearLayoutSize, loadOptionalLayoutSize, saveLayoutSize } from "../lib/layoutPreferences";
+import { saveLayoutSize } from "../lib/layoutPreferences";
 import { createRafResizeUpdater } from "../lib/resizeDrag";
 import { useToast } from "../lib/toast";
 import { type CollaborationMode, type CommandInfo, type ComposerInsertRequest, type ContextInfo, type DirEntry, type EffortInfo, type HistoryMessage, type Mode, type PromptHistoryEntry, type SessionMeta, type SessionReference, type SlashArgItem, type SlashArgsResult, type TokenMode, type ToolApprovalMode, type BalanceInfo } from "../lib/types";
@@ -76,9 +77,9 @@ const LONG_PASTE_MIN_CHARS = 2000;
 const LONG_PASTE_MIN_LINES = 20;
 const COMPOSER_MIN_HEIGHT = 104;
 const COMPOSER_MAX_HEIGHT = 360;
-// Height reserved for the in-card run strip while a turn runs; applied via a
-// CSS calc so --composer-height always stays in "logical height" space.
-const COMPOSER_RUN_STRIP_RESERVED = 30;
+// 固定初始高度：前端联调/录屏时不再从 localStorage 还原历史高度，
+// 避免输入区在页面加载或窗口变化时出现上下伸缩。
+const COMPOSER_DEFAULT_HEIGHT = 166;
 const COMPOSER_MAX_VIEWPORT_RATIO = 0.4;
 const COMPOSER_AUTO_RESERVED_HEIGHT = 58;
 const PROMPT_HISTORY_PREFETCH_REMAINING = 3;
@@ -87,6 +88,65 @@ const PROMPT_HISTORY_PREFETCH_REMAINING = 3;
 // Enter (submit) gets eaten too.
 const IME_CONFIRM_GRACE_MS = 100;
 const FILE_REF_SEARCH_CACHE_TTL_MS = 5000;
+
+// --- AiSOC 智能体选择器 ---
+// Composer 底部 Agent 选择器支持 4 种模式，与浮动 Popover / AiSOC Dashboard 共用一套 trigger 前缀。
+// 'auto' 不加前缀（原 chat 流），其他 3 个加 trigger 词前缀以路由到对应领域。
+export type ComposerChatAgent = "auto" | "pentest" | "logaudit" | "intel";
+
+export const COMPOSER_AGENT_OPTIONS: Array<{
+  id: ComposerChatAgent;
+  label: string;
+  shortLabel: string;
+  icon: typeof Network;
+  // trigger 词前缀（auto 为空）。大脑端识别这些 trigger 词来路由任务：
+  //   - "渗透测试" / "pentest" → /api/tasks domain=pentest
+  //   - "日志审计" / "logaudit" → /api/tasks domain=logaudit
+  //   - "情报收集" / "intel"    → /api/tasks domain=intel
+  triggerPrefix: string;
+  tooltip: string;
+}> = [
+  { id: "auto",    label: "自动",       shortLabel: "auto",    icon: Sparkles,      triggerPrefix: "",         tooltip: "自动路由（不强制 Agent）" },
+  { id: "pentest", label: "渗透测试", shortLabel: "渗透",   icon: TerminalSquare, triggerPrefix: "渗透测试 ", tooltip: "渗透测试智能体（路由到 pentest 任务）" },
+  { id: "logaudit",label: "日志审计", shortLabel: "审计",   icon: FileSearch,     triggerPrefix: "日志审计 ", tooltip: "日志审计智能体（路由到 logaudit 任务）" },
+  { id: "intel",   label: "情报收集", shortLabel: "情报",   icon: Radar,          triggerPrefix: "情报收集 ", tooltip: "情报收集智能体（路由到 intel 任务）" },
+];
+
+// 「聊天 / 任务」两层交互（交接文档 docs/handoff/20261102-caoyike-composer-agent-routing.md）。
+// - mode=chat：只对话，不下发任务；
+// - mode=task：下发到 Agent（agent=auto 表示由大脑判定域，不传 domain）。
+export type ComposerMode = "chat" | "task";
+
+export type ComposerRoute = {
+  mode: ComposerMode;
+  agent: ComposerChatAgent;
+};
+
+// Composer 暴露的 imperative handle。
+// App.tsx 浮动 Popover / 全局快捷键通过 Composer 的 singleton controller 调用：
+//   - setAgent(agent): 仅切换 Agent 模式（不发送）
+//   - focus(): focus 输入框（用于"先选 Agent 再输入"场景）
+//   - getCurrentText(): 读当前 input 文本（用于判定是否可"直接发送"）
+//   - setAgentAndSend(agent): 选 Agent 并立即以当前 draft 提交
+export type ComposerHandle = {
+  setAgent: (agent: ComposerChatAgent) => void;
+  focus: () => void;
+  getCurrentText: () => string;
+  setAgentAndSend: (agent: ComposerChatAgent) => Promise<void>;
+  /** 仅写入输入框草稿（不发送）：供场景卡等“预填”入口使用。 */
+  setText: (text: string) => void;
+};
+
+// Composer 实例在 mount 时通过 setComposerController 把 handle 拏到 module-level singleton；
+// App.tsx 浮动 Popover / 顶部工具栏通过 getComposerController() 调用。
+// 使用 singleton 而不是 forwardRef 是为了不动现有 Composer 函数签名（3840 行老代码）。
+let _composerController: ComposerHandle | null = null;
+export function setComposerController(handle: ComposerHandle | null) {
+  _composerController = handle;
+}
+export function getComposerController(): ComposerHandle | null {
+  return _composerController;
+}
 
 type PastedBlock = {
   label: string;
@@ -338,10 +398,6 @@ function composerAutoInputMaxHeight(extraReservedHeight = 0): number {
   return Math.max(32, composerMaxHeight() - COMPOSER_AUTO_RESERVED_HEIGHT - extraReservedHeight);
 }
 
-function loadComposerHeight(): number | null {
-  return loadOptionalLayoutSize("composerHeight", clampComposerHeight);
-}
-
 function fmtTokens(n: number): string {
   if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
   return String(n);
@@ -557,7 +613,7 @@ export function Composer({
   imageInputEnabled?: boolean;
   tabId?: string;
   effort?: EffortInfo;
-  onSend: (displayText: string, submitText?: string, tabId?: string, structured?: StructuredInvocationSubmit) => void | Promise<void>;
+  onSend: (displayText: string, submitText?: string, tabId?: string, structured?: StructuredInvocationSubmit, route?: ComposerRoute) => void | Promise<void>;
   onInvocationMetadataChange?: (metadata: Record<string, { kind: "skill" | "subagent"; color?: string }>) => void;
   onSteer?: (submitText: string, tabId?: string) => void | Promise<void>;
   // Returns the un-sent text when cancelling before the server replied (so it can
@@ -646,10 +702,21 @@ export function Composer({
   const [active, setActive] = useState(0);
   const [dismissed, setDismissed] = useState(false);
   const [dragOver, setDragOver] = useState(false);
-  const [composerHeight, setComposerHeight] = useState<number | null>(loadComposerHeight);
+  // 固定高度模式：默认 166px，不再从 localStorage 还原历史高度，也不做自动
+  // 文本高度测量；仅保留拖动/键盘调整，避免联调时输入区反复上下伸缩。
+  const [composerHeight, setComposerHeight] = useState<number | null>(COMPOSER_DEFAULT_HEIGHT);
   const [composerResizing, setComposerResizing] = useState(false);
   const [textareaAutoHeight, setTextareaAutoHeight] = useState<number | null>(null);
   const [textareaAutoOverflow, setTextareaAutoOverflow] = useState(false);
+  //  AiSOC Agent 模式选择（浮动 Popover / Composer 底部按钮组共享）。
+  // 浏览器版按「聊天 / 任务」两层提交：mode 决定是否建任务，agent 决定任务域；
+  // 仅 Wails 桌面端保留 trigger 前缀注入（引擎路径没有 mode/domain 参数）。
+  const [chatAgent, setChatAgent] = useState<ComposerChatAgent>("auto");
+  const chatAgentRef = useRef<ComposerChatAgent>("auto");
+  chatAgentRef.current = chatAgent;
+  const [composerMode, setComposerMode] = useState<ComposerMode>("chat");
+  const composerModeRef = useRef<ComposerMode>("chat");
+  composerModeRef.current = composerMode;
   const [intentMenuOpen, setIntentMenuOpen] = useState(false);
   const [intentMenuClosing, setIntentMenuClosing] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -1680,7 +1747,19 @@ export function Composer({
       const invocationText = serializeInvocationSubmit(trimmedText, trimmedDraft.invocations);
       const baseSubmitText = [expandPastedBlocks(invocationText, currentPastedBlocks), refs].filter(Boolean).join(" ");
       const submitBase = sessionContext ? `${sessionContext}${baseSubmitText}` : baseSubmitText;
-      const submitText = [submitBase, selectedTextContext].filter(Boolean).join("\n\n");
+      // AiSOC Agent 前缀注入：仅 Wails 桌面端引擎路径需要（引擎没有 mode/domain 参数）。
+      // 浏览器版改为把 route 透传给上层，由大脑 chat/stream 的 mode + domain 真路由，
+      // 不再把「渗透测试」这类 trigger 词拼进用户 prompt。
+      const activeAgent = chatAgentRef.current;
+      const agentPrefix = !isWailsRuntime() || activeAgent === "auto"
+        ? ""
+        : (COMPOSER_AGENT_OPTIONS.find((o) => o.id === activeAgent)?.triggerPrefix ?? "");
+      const alreadyHasPrefix = agentPrefix && (baseSubmitText.startsWith(agentPrefix.trim()));
+      const submitBaseWithAgent = (agentPrefix && !alreadyHasPrefix && baseSubmitText)
+        ? `${agentPrefix}${submitBase}`
+        : submitBase;
+      const submitText = [submitBaseWithAgent, selectedTextContext].filter(Boolean).join("\n\n");
+      const route: ComposerRoute = { mode: composerModeRef.current, agent: chatAgentRef.current };
       const structuredInput = [expandPastedBlocks(trimmedText, currentPastedBlocks), refs].filter(Boolean).join(" ");
       const structured = trimmedDraft.invocations.length > 0 ? {
         display: [invocationText, displayRefs].filter(Boolean).join(invocationText && displayRefs ? " " : ""),
@@ -1704,7 +1783,7 @@ export function Composer({
         clearSubmittedDraft(submitDraftKey);
         return;
       }
-      await onSend(displayText, submitText, submitTabId, structured);
+      await onSend(displayText, submitText, submitTabId, structured, route);
       clearSubmittedDraft(submitDraftKey);
     } catch (error) {
       showToast(error instanceof Error ? error.message : String(error), "warn");
@@ -1729,7 +1808,7 @@ export function Composer({
     updateGuidanceSendingIdForDraft(targetDraftKey, item.id);
     try {
       if (running && onSteer) await onSteer(submitText, targetTabId);
-      else await onSend(displayText, submitText, targetTabId, item.structured);
+      else await onSend(displayText, submitText, targetTabId, item.structured, { mode: composerModeRef.current, agent: chatAgentRef.current });
       updatePendingGuidanceForDraft(targetDraftKey, (items) => items.filter((queued) => queued.id !== item.id));
       window.setTimeout(() => {
         takeSelfDispatchedGuidance(submitText, targetDraftKey);
@@ -2238,12 +2317,6 @@ export function Composer({
     replacePastedBlockLabel(block, block.text);
   };
 
-  useEffect(() => {
-    const onResize = () => setComposerHeight((height) => (height === null ? null : clampComposerHeight(height)));
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
   const measureTextareaAutoHeight = useCallback(() => {
     if (composerHeight !== null) {
       setTextareaAutoHeight(null);
@@ -2296,8 +2369,10 @@ export function Composer({
   };
 
   const resetComposerHeight = () => {
-    setComposerHeight(null);
-    clearLayoutSize("composerHeight");
+    // Double-click restores the pinned default height (not the removed auto
+    // mode) so the card stays stable after a reset too.
+    setComposerHeight(COMPOSER_MIN_HEIGHT);
+    saveComposerHeight(COMPOSER_MIN_HEIGHT);
   };
 
   const onComposerResizeStart = (e: ReactPointerEvent<HTMLButtonElement>) => {
@@ -2765,17 +2840,14 @@ export function Composer({
     }
   };
 
-  // When the run strip is visible inside a user-resized card, the card grows
-  // by the strip's reserved height so the meta row stays fully visible.
-  // --composer-height carries only the user's logical height; the reservation
-  // is a separate variable consumed by the CSS calc, so the live resize drag
-  // (which writes raw logical heights) stays consistent with this render path.
-  const showRunStrip = Boolean(retry || running);
+  // 卡片外高固定为 --composer-height；运行条出现/消失不再追加 reserved 高度，
+  // 避免发送或结束时整个输入区上下伸缩。
   const composerCardStyle = composerHeight === null
     ? undefined
     : ({
         "--composer-height": `${composerHeight}px`,
-        "--composer-run-strip-reserved": `${showRunStrip ? COMPOSER_RUN_STRIP_RESERVED : 0}px`,
+        // 运行条不再改变卡片外高：输入区高度固定，避免发送/结束时整块上下伸缩。
+        "--composer-run-strip-reserved": "0px",
       } as CSSProperties);
   const textareaStyle = composerHeight === null && textareaAutoHeight !== null
     ? ({ height: `${textareaAutoHeight}px`, overflowY: textareaAutoOverflow ? "auto" : "hidden" } as CSSProperties)
@@ -2920,17 +2992,46 @@ export function Composer({
   const runTicker = !retry && !pauseWorkClock && running && turnStartAt
     ? (() => {
         const elapsedMs = Math.max(0, now - turnStartAt - waitAccumMs);
-        const words = SPINNER_WORDS[locale];
-        const word = words[Math.floor(elapsedMs / 3000) % words.length];
+        // 仅 Web 版（webApiProxy）能从 streamStats 拿到流式进度；桌面 Wails 走 Go controller
+        // 这条路径拿不到 TTFB/累计字符数，回落到底集计时 + tokens。
+        const streamStats = shouldUseWebApi() && tabId ? getWebApi().getStreamStats(tabId) : null;
+        const phase = streamStats?.phase ?? 'idle';
+        const receivedChars = streamStats?.receivedChars ?? 0;
+        const ttfbMs = streamStats?.ttfbMs ?? null;
         const liveTokens = (turnTokens ?? 0) + Math.round((turnArgChars ?? 0) / 4);
         const tok = liveTokens > 0 ? ` · ↓ ${fmtTokens(liveTokens)} ${t("status.tokens")}` : "";
-        return `${word}… ${fmtElapsed(elapsedMs)}${tok}`;
+        // 文案三阶段：
+        //  waiting_ttfb → "正在连接大脑… 0:12"（明确告知是 AI 后端 + 计时）
+        //  streaming     → "正在接收回答… 0:18 · 已接收 142 字"
+        //  final/error   → "正在整理回答… 0:25 · 已接收 142 字"（表示即将完成）
+        //  fallback      → 用现有 SPINNER_WORDS 保持桌面端行为不变
+        let phrase: string;
+        if (phase === 'waiting_ttfb') {
+          phrase = `正在连接大脑… ${fmtElapsed(elapsedMs)}`;
+        } else if (phase === 'streaming') {
+          phrase = `正在接收回答… ${fmtElapsed(elapsedMs)} · 已接收 ${receivedChars} 字`;
+        } else if (phase === 'final') {
+          phrase = `正在整理回答… ${fmtElapsed(elapsedMs)} · 已接收 ${receivedChars} 字`;
+        } else {
+          const words = SPINNER_WORDS[locale];
+          const word = words[Math.floor(elapsedMs / 3000) % words.length];
+          phrase = `${word}… ${fmtElapsed(elapsedMs)}`;
+        }
+        // TTFB 单独补充（“首字节 0:12”后），仅 waiting/streaming 阶段有价值
+        if ((phase === 'waiting_ttfb' || phase === 'streaming') && ttfbMs != null && ttfbMs > 0) {
+          phrase += ` · 首字节 ${fmtElapsed(ttfbMs)}`;
+        }
+        return `${phrase}${tok}`;
       })()
     : null;
   const submitEmpty = !text.trim() && attachments.length === 0 && workspaceRefs.length === 0 &&
     !invocations.some((invocation) => invocation.command.kind === "skill");
   const submitBlocked = submitting || pendingPaste > 0 || (submitEmpty && !(goalModeOn && !activeGoal)) || disabled || (!running && submitDisabled) || readOnly;
-  const submitTooltip = running ? t("composer.queueGuidance") : t("composer.send");
+  const submitTooltip = running
+    ? t("composer.queueGuidance")
+    : composerMode === "task"
+    ? t("composer.sendTask")
+    : t("composer.send");
   const composerPlaceholder = readOnly
     ? t("composer.readOnlyChannel")
     : disabled
@@ -2943,6 +3044,12 @@ export function Composer({
   const hiddenGuidanceCount = Math.max(0, pendingGuidance.length - 2);
   const visibleGuidance = guidanceExpanded ? pendingGuidance : pendingGuidance.slice(0, 2);
   const showGuidanceExpander = pendingGuidance.length > 2;
+  // 浏览器版（serve_frontend.py + webApiProxy，非 Wails）下，model / effort / more 没有真实后端语义：
+  // model 只写 localStorage（大脑仍用服务端 DEEPSEEK_MODEL），effort 选完会回弹 auto，more 是 effort 的折叠入口。
+  // 这里直接不渲染（不是 CSS 隐藏），避免点了没反应的按钮；Wails 桌面端行为不变。
+  // intent / profile / approval 三个控件保留（见 composer-hide-model-effort.patch）。
+  // 注意：不能用 hasEffort 判断——浏览器版 Effort() 恒返回 supported: true。
+  const desktopRuntime = isWailsRuntime();
   const composerMetaClass = [
     "composer-meta",
     hasEffort ? "composer-meta--has-effort" : "composer-meta--no-effort",
@@ -2987,6 +3094,45 @@ export function Composer({
       onSelect: selectAllComposerText,
     },
   ];
+
+  //  AiSOC Agent 选择器 —— 把 Composer 的 imperative handle 掇到 module-level singleton。
+  // App.tsx 浮动 Popover / 顶部快捷键通过 getComposerController() 调用 setAgent/setAgentAndSend。
+  // mount 时注册，unmount 时清理。StrictMode 下会重入注册（最末一个实例生效）。
+  useEffect(() => {
+    setComposerController({
+      setAgent: (agent) => {
+        chatAgentRef.current = agent;
+        setChatAgent(agent);
+      },
+      focus: () => {
+        requestAnimationFrame(() => focusComposerInput());
+      },
+      getCurrentText: () => textRef.current,
+      setText: (next) => {
+        setTextCaretEnd(next);
+      },
+      setAgentAndSend: async (agent) => {
+        chatAgentRef.current = agent;
+        setChatAgent(agent);
+        // 直接指定 Agent 语义上就是「下发任务」。
+        composerModeRef.current = "task";
+        setComposerMode("task");
+        // 下一帧 + focus（让按钮高亮先更新）
+        requestAnimationFrame(() => {
+          focusComposerInput();
+          // 再次让帧拿到最新 state（React batch）
+          requestAnimationFrame(() => {
+            void submit();
+          });
+        });
+      },
+    });
+    return () => {
+      // 仅在 unmount 时清空；如果多个 Composer 重入 mount（StrictMode），
+      // 最后仍调用 cleanup 那个是最末个实例，无冲击。
+      setComposerController(null);
+    };
+  }, [submit, focusComposerInput]);
 
   return (
     <div
@@ -3309,7 +3455,7 @@ export function Composer({
                   onMouseMove={() => setActive(i)}
                 >
                   <MessageSquare size={13} className="filemenu__icon" />
-                  <span className="slashmenu__name">{PAST_CHATS_MENU_ITEM}</span>
+                  <span className="slashmenu__name">{t("composer.contentReferenceSessions")}</span>
                 </button>
               ) : (
                 <button
@@ -3757,6 +3903,65 @@ export function Composer({
                 </button>
               </div>
             </div>
+            {/*  「聊天 / 任务」两层交互（交接文档 20261102-caoyike-composer-agent-routing.md）
+                第一层：模式（聊天=不派任务 / 任务=下发到 Agent），默认聊天；
+                第二层：仅任务模式显示任务域（综合 / 渗透 / 审计 / 情报），默认综合。
+                选中结果通过 onSend 的第 5 个 route 参数透传，不再拼 trigger 前缀。 */}
+            <div className="composer-meta__control composer-meta__control--agent" data-agent={chatAgent} data-route-mode={composerMode}>
+              <div className="composer-route" role="group" aria-label={t("composer.routeTitle")} data-route-mode={composerMode}>
+                <button
+                  type="button"
+                  className={`composer-route__item${composerMode === "chat" ? " composer-route__item--active" : ""}`}
+                  onClick={() => setComposerMode("chat")}
+                  disabled={disabled || running}
+                  aria-pressed={composerMode === "chat"}
+                  title={t("composer.routeChatTitle")}
+                  data-route-mode-option="chat"
+                >
+                  <MessageSquare size={13} />
+                  <span>{t("composer.routeChat")}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`composer-route__item${composerMode === "task" ? " composer-route__item--active" : ""}`}
+                  onClick={() => setComposerMode("task")}
+                  disabled={disabled || running}
+                  aria-pressed={composerMode === "task"}
+                  title={t("composer.routeTaskTitle")}
+                  data-route-mode-option="task"
+                >
+                  <Target size={13} />
+                  <span>{t("composer.routeTask")}</span>
+                </button>
+              </div>
+              {composerMode === "task" && (
+                <div className="composer-modebar composer-modebar--agent" title={t("composer.routeAgentTitle")} data-agent={chatAgent}>
+                  {COMPOSER_AGENT_OPTIONS.map((opt) => {
+                    const Icon = opt.icon;
+                    const active = chatAgent === opt.id;
+                    const label = opt.id === "auto" ? t("composer.agentAuto") : opt.shortLabel;
+                    return (
+                      <Tooltip key={opt.id} label={opt.tooltip}>
+                        <button
+                          type="button"
+                          className={`composer-modebar__item composer-modebar__item--agent-${opt.id}${active ? " composer-modebar__item--active" : ""}`}
+                          onClick={() => setChatAgent(opt.id)}
+                          disabled={disabled || running}
+                          aria-pressed={active}
+                          title={opt.tooltip}
+                          data-agent-option={opt.id}
+                        >
+                          <Icon size={13} />
+                          <span>{label}</span>
+                        </button>
+                      </Tooltip>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            {desktopRuntime && (
+            <>
             <span className="composer-meta__divider" aria-hidden="true" />
             <div className="composer-meta__control composer-meta__control--model">
               {/*
@@ -3805,6 +4010,8 @@ export function Composer({
                   </button>
                 </Tooltip>
               </div>
+            )}
+            </>
             )}
           </div>
         </div>

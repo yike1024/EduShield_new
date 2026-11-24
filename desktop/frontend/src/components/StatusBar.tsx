@@ -1,10 +1,10 @@
 import { type ReactNode } from "react";
-import { Activity, CircleDollarSign, CircleGauge, Database, Folder, GitBranch, Layers, Percent, RefreshCw, Wallet, Zap } from "lucide-react";
+import { Activity, BrainCircuit, CircleDollarSign, CircleGauge, Database, Folder, GitBranch, Layers, Percent, RefreshCw, Wallet, Zap } from "lucide-react";
 import { Tooltip } from "./Tooltip";
 import { useI18n, type Translator } from "../lib/i18n";
 import { formatMoneyLocalized } from "../lib/money";
 import { normalizeStatusBarItems, type StatusBarItemId } from "../lib/statusBarItems";
-import { type BalanceInfo, type ContextInfo, type UsageSourceStats, type WireUsage } from "../lib/types";
+import { type BalanceInfo, type ContextInfo, type MemoryCompilerStats, type UsageSourceStats, type WireUsage } from "../lib/types";
 
 type StatusBarLabelStyle = "icon" | "text";
 
@@ -60,6 +60,25 @@ function formatTokenCount(tokens?: number): string {
 function formatTurnCount(turns: number | undefined, t: Translator): string {
   if (typeof turns !== "number" || turns < 0) return "-";
   return t(turns === 1 ? "history.turnOne" : "history.turnOther", { n: turns });
+}
+
+export function memoryInjectedLabel(t: Translator, s: MemoryCompilerStats): string {
+  if (s.injected) return (s.memoryReferences ?? 0).toLocaleString();
+  return t("status.memorySuppressed");
+}
+
+export function memoryCompilerTooltip(t: Translator, s: MemoryCompilerStats): ReactNode {
+  const lines: string[] = [
+    s.injected ? t("status.memoryInjectedTitle") : t("status.memorySuppressedTitle"),
+    `${t("status.memoryCompiledTokens")}: ${(s.compiledTokens ?? 0).toLocaleString()}`,
+    `${t("status.memoryReferences")}: ${s.memoryReferences ?? 0}`,
+  ];
+  if (s.usefulIR === false) lines.push(t("status.memoryNotUsefulTitle"));
+  return (
+    <span className="statusbar__tooltip-stack">
+      {lines.map((line) => <span key={line}>{line}</span>)}
+    </span>
+  );
 }
 
 const STATUS_SOURCE_ORDER = ["executor", "planner", "subagent", "compaction", "classifier", "title"];
@@ -165,6 +184,7 @@ export function StatusBar({
   workspacePath,
   workspaceName,
   gitBranch,
+  memoryCompilerStats,
 }: {
   context: ContextInfo;
   usage?: WireUsage;
@@ -182,6 +202,8 @@ export function StatusBar({
   workspacePath?: string;
   workspaceName?: string;
   gitBranch?: string;
+  // Memory v5 participation stats; undefined = no compiler activity yet.
+  memoryCompilerStats?: MemoryCompilerStats;
 }) {
   const { locale, t } = useI18n();
   const pct = context.window ? Math.min(100, Math.round((context.used / context.window) * 100)) : null;
@@ -318,6 +340,14 @@ export function StatusBar({
         </span>
       </Tooltip>
     ),
+    memory: memoryCompilerStats ? (
+      <Tooltip label={memoryCompilerTooltip(t, memoryCompilerStats)} className="statusbar__metric statusbar__metric--memory">
+        <span className={`stat statusbar__memory${memoryCompilerStats.injected ? "" : " statusbar__memory--suppressed"}`}>
+          <MetricLabel style={metricLabelStyle} icon={<BrainCircuit size={12} />} label={t("status.memoryLabel")} />
+          <b>{memoryInjectedLabel(t, memoryCompilerStats)}</b>
+        </span>
+      </Tooltip>
+    ) : null,
   };
   const renderedItems = visibleItems
     .map((id) => ({ id, node: itemRenderers[id] }))

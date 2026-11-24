@@ -65,7 +65,7 @@ func TestStampExecutableSupportsWindowsReleaseArchitectures(t *testing.T) {
 				executable:      executable,
 				icon:            icon,
 				numericVersion:  "1.17.13",
-				fileDescription: "Reasonix Launcher",
+				fileDescription: "EduShield Launcher",
 				internalName:    "reasonix-launcher",
 				originalName:    "reasonix-launcher.exe",
 			}

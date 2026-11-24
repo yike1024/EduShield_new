@@ -416,7 +416,7 @@ func runAgent(args []string) int {
 	cont := fs.Bool("continue", false, "resume the most recent saved session")
 	fs.BoolVar(cont, "c", false, "shorthand for --continue")
 	resume := fs.String("resume", "", "resume a specific session file (non-interactive; takes precedence over --continue)")
-	copySession := fs.Bool("copy", false, "with --resume/--continue: duplicate the session and continue in the copy (escape hatch when the original is held by another Reasonix process)")
+	copySession := fs.Bool("copy", false, "with --resume/--continue: duplicate the session and continue in the copy (escape hatch when the original is held by another EduShield process)")
 	effort := fs.String("effort", "", "session reasoning effort override")
 	permissionMode := fs.String("permission-mode", "ask", "permission mode: manual | ask | auto | acceptEdits | dontAsk | plan | bypassPermissions")
 	printOnly := fs.BoolP("print", "p", false, "print only the final response")
@@ -823,7 +823,7 @@ func chatREPL(args []string) int {
 	fs.BoolVar(cont, "c", false, "shorthand for --continue")
 	resume := fs.StringP("resume", "r", "", "resume by session ID/query, or open the picker when no value is given")
 	fs.Lookup("resume").NoOptDefVal = resumePickerSentinel
-	copySession := fs.Bool("copy", false, "with --resume/--continue: duplicate the selected session and continue in the copy (escape hatch when the original is held by another Reasonix process)")
+	copySession := fs.Bool("copy", false, "with --resume/--continue: duplicate the selected session and continue in the copy (escape hatch when the original is held by another EduShield process)")
 	yolo := fs.Bool("dangerously-skip-permissions", false, "YOLO: auto-approve approval-gated tool calls this session; same runtime mode as Ctrl+Y")
 	fs.BoolVar(yolo, "yolo", false, "alias for --dangerously-skip-permissions")
 	dir := fs.String("dir", "", "change to this directory first (project root); config, sandbox and file tools resolve from here")
@@ -1161,7 +1161,7 @@ func reserveNativeScrollbackFrame(w io.Writer, rows int) {
 }
 
 // setupTargets is where the wizard writes: the TOML config and the credential
-// store. Keys always go to Reasonix's global .env so they
+// store. Keys always go to EduShield's global .env so they
 // never land in a project's own .env; only the config location is project-local
 // under --local.
 type setupTargets struct {
@@ -1179,7 +1179,7 @@ func defaultConfigTarget() string {
 }
 
 // defaultEnvTarget is the display target for the reasonix-owned global
-// Reasonix global .env.
+// EduShield global .env.
 func defaultEnvTarget() string {
 	return config.CredentialsTargetDescription()
 }
@@ -1210,7 +1210,7 @@ func displayPath(p string) string {
 
 // setupConfig runs the configuration wizard (the `reasonix setup` command),
 // writing config.toml to the user-global dir (or ./reasonix.toml under --local)
-// and API keys to Reasonix's global .env — never a project's own .env.
+// and API keys to EduShield's global .env — never a project's own .env.
 // Project memory is a separate concern — the in-session `/init` skill generates
 // AGENTS.md (see initHint).
 func setupConfig(args []string) int {
@@ -1665,7 +1665,7 @@ func promptCustomProviderManual() (providerPromptResult, error) {
 // Pre-filled values (baseURL, keyEnv, apiKey) are reused as-is when non-empty
 // so the URL-fetch flow can fall through to manual entry without re-asking
 // the user for information they've already typed. An empty apiKey is allowed
-// — the key step happens later in the wizard and Reasonix's global .env is updated then.
+// — the key step happens later in the wizard and EduShield's global .env is updated then.
 func promptCustomProviderManualWith(in *bufio.Scanner, baseURL, keyEnv, apiKey string) (providerPromptResult, error) {
 	fmt.Println()
 	if baseURL == "" {
@@ -1938,7 +1938,7 @@ func providersWithMissingKeys(cfg *config.Config) []config.ProviderEntry {
 // setup asks whether to re-enter it; Enter keeps and re-pins the existing value.
 // Otherwise the user is asked once per env var (deduped across providers that
 // share one, e.g. both DeepSeek models). Returns KEY=value lines for the
-// Reasonix global .env. Re-pinning keeps hand-edited or previously saved values
+// EduShield global .env. Re-pinning keeps hand-edited or previously saved values
 // aligned with the user's latest setup choice.
 func configureKeys(selected []config.ProviderEntry, r io.Reader, w io.Writer) []string {
 	in := bufio.NewScanner(r)

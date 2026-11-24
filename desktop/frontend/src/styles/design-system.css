@@ -3,7 +3,10 @@
  *
  * This file imports after styles.css and provides:
  *  - Semantic utility classes aligned with DESIGN.md
+ *  - Design-system tokens that reference the theme token set instead of
+ *    hard-coded colors (single source of color = palette layer)
  *  - Improved focus-visible defaults for common interactive elements
+ *  - Breathing hover/ambient motion for every button/control
  *  - prefers-reduced-motion guardrails
  *  - Welcome empty-state polish
  *
@@ -19,7 +22,7 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
   outline: none;
-  box-shadow: var(--focus-ring, 0 0 0 3px rgba(217, 119, 87, 0.35));
+  box-shadow: var(--focus-ring, 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent));
 }
 
 /* Don't override elements that already define their own focus-visible ring. */
@@ -173,6 +176,55 @@ select:focus-visible {
   box-shadow: var(--focus-ring);
 }
 
+/* ── Scenario entries (phishing email triage) ──────────────────────────── */
+.welcome__scenarios {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+  max-width: min(720px, 90cqw);
+}
+
+.welcome__scenario {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  padding: 10px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--fg);
+  font-size: calc(13px * var(--font-scale, 1));
+  line-height: 1.4;
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease, transform 0.12s ease;
+}
+
+.welcome__scenario:hover {
+  border-color: var(--accent-strong);
+  color: var(--fg);
+}
+
+.welcome__scenario:active {
+  transform: translateY(1px);
+}
+
+.welcome__scenario:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.welcome__scenario-title {
+  font-weight: 600;
+}
+
+.welcome__scenario-hint {
+  color: var(--fg-dim);
+  font-size: 0.92em;
+}
+
 /* ── Creation welcome variant ───────────────────────────────────────────── */
 .welcome--creation {
   display: flex;
@@ -262,21 +314,23 @@ select:focus-visible {
 }
 
 /* ── design-system tokens reference (mirrors DESIGN.md) ─────────────────── */
+/* Every --ds-* value is an alias into the theme token set, so the design
+ * system always follows the active palette + mode without duplicating colors. */
 :root {
-  --ds-primary: #d97757;
-  --ds-primary-soft: #e58a6b;
-  --ds-primary-deep: #c26a4d;
-  --ds-on-primary: #1a0f0a;
-  --ds-ink: #f4f5f7;
-  --ds-ink-strong: #ffffff;
-  --ds-body: #c0c4cc;
-  --ds-mute: #858b96;
-  --ds-hairline: #343945;
-  --ds-hairline-soft: #252a34;
-  --ds-canvas: #090a0c;
-  --ds-canvas-soft: #111319;
-  --ds-canvas-elev: #191b22;
-  --ds-canvas-elev-2: #222631;
+  --ds-primary: var(--accent);
+  --ds-primary-soft: var(--accent-strong);
+  --ds-primary-deep: var(--accent);
+  --ds-on-primary: var(--accent-fg);
+  --ds-ink: var(--fg);
+  --ds-ink-strong: var(--fg);
+  --ds-body: var(--fg-dim);
+  --ds-mute: var(--fg-faint);
+  --ds-hairline: var(--border);
+  --ds-hairline-soft: var(--border-soft);
+  --ds-canvas: var(--bg);
+  --ds-canvas-soft: var(--bg-soft);
+  --ds-canvas-elev: var(--bg-elev);
+  --ds-canvas-elev-2: var(--bg-elev-2);
   --ds-rounded-sm: 6px;
   --ds-rounded-md: 8px;
   --ds-rounded-lg: 12px;
@@ -301,7 +355,10 @@ select:focus-visible {
   min-height: 36px;
 }
 
-/* ── Liquid buttons: soft flowing gradient + gentle morph ───────────────── */
+/* ── Liquid buttons: soft accent glow (no blur filter) + gentle morph ───── */
+/* The previous glow used filter: blur(18px) which is expensive and was
+ * removed; a large, low-opacity radial gradient gives the same halo without
+ * a filter, keeping paint cheap and the look clean on every device. */
 .liquid-button,
 .composer__btn--send,
 .msg-edit__btn--primary,
@@ -319,9 +376,8 @@ select:focus-visible {
   position: absolute;
   inset: -50%;
   background:
-    radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--accent) 28%, transparent), transparent 45%),
-    radial-gradient(circle at 70% 70%, color-mix(in srgb, var(--accent-soft) 80%, transparent), transparent 45%);
-  filter: blur(18px);
+    radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 45%),
+    radial-gradient(circle at 70% 70%, color-mix(in srgb, var(--accent-soft) 70%, transparent), transparent 45%);
   opacity: 0;
   transform: translate3d(0, 0, 0) scale(0.85);
   transition: opacity 0.35s ease;
@@ -379,6 +435,10 @@ select:focus-visible {
 }
 
 /* ── Air breathing: low-amplitude ambient motion ────────────────────────── */
+/* Every button/control gets a subtle breathing effect (opacity + slight
+ * scale). Amplitude is deliberately tiny so text stays crisp and layout is
+ * untouched. Inner spinners/dots (which run their own keyframes) are not
+ * affected because they live on child elements. */
 @keyframes breathe-glow {
   0%, 100% {
     opacity: 1;
@@ -395,7 +455,7 @@ select:focus-visible {
   }
   50% {
     opacity: 0.985;
-    transform: scale(1.003);
+    transform: scale(1.002);
   }
 }
 
@@ -420,14 +480,35 @@ select:focus-visible {
   will-change: transform, opacity;
 }
 
+/* Breathing for ALL interactive buttons/controls — subtle, cheap, and paused
+ * while hovered/active so targets stay responsive and text stays readable. */
+button,
+[role="button"],
+.ds-touch-target,
+.welcome__ex,
+.welcome-creation__card {
+  animation: breathe-soft 8s ease-in-out infinite;
+  will-change: opacity;
+}
+
 /* Keep interactive targets usable: pause ambient motion on hover/active. */
+button:hover,
+button:active,
+[role="button"]:hover,
+[role="button"]:active,
+.ds-touch-target:hover,
+.ds-touch-target:active,
+.welcome__ex:hover,
+.welcome__ex:active,
+.welcome-creation__card:hover,
+.welcome-creation__card:active,
 .liquid-button:hover,
-.composer__btn--send:hover,
-.msg-edit__btn--primary:hover,
-.bot-detail__primary:hover,
 .liquid-button:active,
+.composer__btn--send:hover,
 .composer__btn--send:active,
+.msg-edit__btn--primary:hover,
 .msg-edit__btn--primary:active,
+.bot-detail__primary:hover,
 .bot-detail__primary:active {
   animation-play-state: paused;
 }

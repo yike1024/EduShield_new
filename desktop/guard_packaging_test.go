@@ -20,9 +20,9 @@ func TestDesktopPackagesUseGuardAsDefaultLauncher(t *testing.T) {
 		`Contents/Resources/$bundle_icon`,
 		`cp "$portable" "$staging/$BINNAME.exe"`,
 		`-H windowsgui`,
-		`stamp_windows_executable "$guard_out" "Reasonix Guard"`,
-		`stamp_windows_executable "$launcher_out" "Reasonix Launcher"`,
-		`stamp_windows_executable "build/windows/installer/$UPDATE_HELPER" "Reasonix Update Helper"`,
+		`stamp_windows_executable "$guard_out" "EduShield Guard"`,
+		`stamp_windows_executable "$launcher_out" "EduShield Launcher"`,
+		`stamp_windows_executable "build/windows/installer/$UPDATE_HELPER" "EduShield Update Helper"`,
 		`cp "$launcher_out" "$staging/${APPNAME}.exe"`,
 		`cp "$guard_out" "$staging/$GUARDNAME.exe"`,
 	} {
@@ -30,10 +30,10 @@ func TestDesktopPackagesUseGuardAsDefaultLauncher(t *testing.T) {
 			t.Errorf("desktop-build.sh missing guard launcher contract %q", want)
 		}
 	}
-	launcherStamp := strings.Index(build, `stamp_windows_executable "$launcher_out" "Reasonix Launcher"`)
+	launcherStamp := strings.Index(build, `stamp_windows_executable "$launcher_out" "EduShield Launcher"`)
 	portableCopy := strings.Index(build, `cp "$launcher_out" "$staging/${APPNAME}.exe"`)
 	if launcherStamp < 0 || portableCopy < 0 || launcherStamp > portableCopy {
-		t.Fatalf("portable Reasonix.exe must copy the already-stamped launcher (stamp=%d copy=%d)", launcherStamp, portableCopy)
+		t.Fatalf("portable EduShield.exe must copy the already-stamped launcher (stamp=%d copy=%d)", launcherStamp, portableCopy)
 	}
 
 	workflowData, err := os.ReadFile("../.github/workflows/release-desktop.yml")

@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="1200" viewBox="0 0 1560 1200" font-family="Noto Sans CJK SC, Noto Sans CJK JP, WenQuanYi Micro Hei, sans-serif">
+  <defs>
+    <marker id="an" markerWidth="9" markerHeight="9" refX="7.5" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1E40AF"/></marker>
+    <marker id="ao" markerWidth="9" markerHeight="9" refX="7.5" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#EA580C"/></marker>
+    <marker id="ag" markerWidth="8" markerHeight="8" refX="6.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#94A3B8"/></marker>
+  </defs>
+  <rect width="1560" height="1200" fill="#FFFFFF"/>
+  <rect x="24" y="24" width="1512" height="68" rx="14" fill="#172554"/>
+  <text x="52" y="58" font-size="21" font-weight="700" fill="#FFFFFF">ThreatIRSubAgent</text>
+  <rect x="248" y="42" width="92" height="30" rx="15" fill="#FFFFFF"/>
+  <text x="294" y="62" font-size="13" font-weight="700" fill="#172554" text-anchor="middle">port 8090</text>
+  <text x="368" y="62" font-size="14" fill="#BFDBFE">威胁警报 · 应急响应 子智能体 ｜ edushield 校园智盾平台</text>
+  <rect x="1448" y="42" width="56" height="30" rx="15" fill="none" stroke="#93C5FD" stroke-width="1.2"/>
+  <text x="1476" y="62" font-size="12.5" fill="#DBEAFE" text-anchor="middle">v2.0</text>
+  <rect x="40" y="112" width="1480" height="80" rx="12" fill="#DBEAFE" stroke="#1E40AF" stroke-width="1.5"/>
+  <text x="64" y="146" font-size="15" font-weight="700" fill="#1E40AF">接入层</text>
+  <text x="64" y="168" font-size="11" fill="#3B82F6">三入口 · 对等</text>
+  <rect x="250" y="126" width="400" height="52" rx="8" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/>
+  <text x="450" y="148" font-size="13.5" font-weight="700" fill="#0F172A" text-anchor="middle">CLI（__main__.py）</text>
+  <text x="450" y="167" font-size="11" fill="#475569" text-anchor="middle">ingest-file / serve / playbook / confirm / doctor</text>
+  <rect x="674" y="126" width="400" height="52" rx="8" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/>
+  <text x="874" y="148" font-size="13.5" font-weight="700" fill="#0F172A" text-anchor="middle">HTTP REST（server.py）</text>
+  <text x="874" y="167" font-size="11" fill="#475569" text-anchor="middle">/api/tir/* — 10 端点</text>
+  <rect x="1098" y="126" width="400" height="52" rx="8" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/>
+  <text x="1298" y="148" font-size="13.5" font-weight="700" fill="#0F172A" text-anchor="middle">模块导入</text>
+  <text x="1298" y="167" font-size="11" fill="#475569" text-anchor="middle">ThreatIRSubAgent 门面编排</text>
+  <line x1="780" y1="192" x2="780" y2="214" stroke="#1E40AF" stroke-width="2.2" marker-end="url(#an)"/>
+  <rect x="40" y="216" width="1480" height="170" rx="12" fill="#EFF6FF" stroke="#1E40AF" stroke-width="1.5"/>
+  <text x="64" y="245" font-size="15" font-weight="700" fill="#1E40AF">ingest 前置层（v2.0）</text>
+  <text x="264" y="245" font-size="12" fill="#475569">多源安全数据文件 → 标准事件（确定性纯业务代码，不使用模型）</text>
+  <rect x="64" y="258" width="344" height="72" rx="8" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/>
+  <text x="236" y="282" font-size="13" font-weight="700" fill="#0F172A" text-anchor="middle">FormatDetector</text>
+  <text x="236" y="300" font-size="10.5" fill="#475569" text-anchor="middle">扩展名 + Magic + 内容正则 + Schema</text>
+  <text x="236" y="316" font-size="10.5" fill="#475569" text-anchor="middle">多策略置信度识别</text>
+  <line x1="408" y1="294" x2="422" y2="294" stroke="#1E40AF" stroke-width="2" marker-end="url(#an)"/>
+  <rect x="424" y="258" width="344" height="72" rx="8" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/>
+  <text x="596" y="282" font-size="13" font-weight="700" fill="#0F172A" text-anchor="middle">ParserRegistry</text>
+  <text x="596" y="300" font-size="10.5" fill="#475569" text-anchor="middle">23 个解析器插件</text>
+  <text x="596" y="316" font-size="10.5" fill="#475569" text-anchor="middle">置信度 ≥ 0.45 择优</text>
+  <line x1="768" y1="294" x2="782" y2="294" stroke="#1E40AF" stroke-width="2" marker-end="url(#an)"/>
+  <rect x="784" y="258" width="344" height="72" rx="8" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/>
+  <text x="956" y="282" font-size="13" font-weight="700" fill="#0F172A" text-anchor="middle">Pipeline</text>
+  <text x="956" y="300" font-size="10.5" fill="#475569" text-anchor="middle">批量处理流水线</text>
+  <text x="956" y="316" font-size="10.5" fill="#475569" text-anchor="middle">parse_error 降级保真</text>
+  <line x1="1128" y1="294" x2="1142" y2="294" stroke="#1E40AF" stroke-width="2" marker-end="url(#an)"/>
+  <rect x="1144" y="258" width="344" height="72" rx="8" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/>
+  <text x="1316" y="282" font-size="13" font-weight="700" fill="#0F172A" text-anchor="middle">record_to_event</text>
+  <text x="1316" y="300" font-size="10.5" fill="#475569" text-anchor="middle">字段映射 → 统一事件</text>
+  <text x="1316" y="316" font-size="10.5" fill="#475569" text-anchor="middle">source_file + record_index 溯源</text>
+  <text x="64" y="371" font-size="11" font-weight="700" fill="#1E40AF">支持格式：</text>
+  <g font-size="11" fill="#1E40AF">
+    <rect x="150" y="352" width="54" height="26" rx="13" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/><text x="177" y="369" text-anchor="middle">pcap</text>
+    <rect x="212" y="352" width="72" height="26" rx="13" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/><text x="248" y="369" text-anchor="middle">pcapng</text>
+    <rect x="292" y="352" width="72" height="26" rx="13" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/><text x="328" y="369" text-anchor="middle">syslog</text>
+    <rect x="372" y="352" width="50" height="26" rx="13" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/><text x="397" y="369" text-anchor="middle">csv</text>
+    <rect x="430" y="352" width="50" height="26" rx="13" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/><text x="455" y="369" text-anchor="middle">cef</text>
+    <rect x="488" y="352" width="52" height="26" rx="13" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/><text x="514" y="369" text-anchor="middle">leef</text>
+    <rect x="548" y="352" width="62" height="26" rx="13" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/><text x="579" y="369" text-anchor="middle">idmef</text>
+    <rect x="618" y="352" width="56" height="26" rx="13" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/><text x="646" y="369" text-anchor="middle">misp</text>
+    <rect x="682" y="352" width="54" height="26" rx="13" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/><text x="709" y="369" text-anchor="middle">stix</text>
+    <rect x="744" y="352" width="54" height="26" rx="13" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/><text x="771" y="369" text-anchor="middle">yara</text>
+    <rect x="806" y="352" width="54" height="26" rx="13" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/><text x="833" y="369" text-anchor="middle">zeek</text>
+    <rect x="868" y="352" width="84" height="26" rx="13" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/><text x="910" y="369" text-anchor="middle">suricata</text>
+    <rect x="960" y="352" width="80" height="26" rx="13" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/><text x="1000" y="369" text-anchor="middle">netflow</text>
+    <rect x="1048" y="352" width="54" height="26" rx="13" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1"/><text x="1075" y="369" text-anchor="middle">json</text>
+    <text x="1116" y="369" font-size="11" fill="#475569">…</text>
+  </g>
+  <line x1="780" y1="386" x2="780" y2="404" stroke="#EA580C" stroke-width="2.6" marker-end="url(#ao)"/>
+  <rect x="380" y="406" width="800" height="56" rx="28" fill="#EA580C"/>
+  <text x="780" y="430" font-size="15.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">DetectionEvent — 统一输入契约</text>
+  <text x="780" y="450" font-size="11" fill="#FFEDD5" text-anchor="middle">主平台事件 或 ingest 转换结果 ｜ event_id 确定性派生 ｜ 全链路唯一事件模型</text>
+  <path d="M 780 462 L 780 474 L 402 474 L 402 486" fill="none" stroke="#EA580C" stroke-width="2.2" marker-end="url(#ao)"/>
+  <path d="M 780 462 L 780 474 L 1158 474 L 1158 486" fill="none" stroke="#EA580C" stroke-width="2.2" marker-end="url(#ao)"/>
+  <rect x="40" y="490" width="724" height="312" rx="12" fill="#EFF6FF" stroke="#1E40AF" stroke-width="1.8"/>
+  <text x="402" y="520" font-size="16" font-weight="700" fill="#1E40AF" text-anchor="middle">威胁警报 Threat Alerts</text>
+  <rect x="100" y="534" width="604" height="54" rx="8" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1.2"/>
+  <text x="402" y="556" font-size="13.5" font-weight="700" fill="#0F172A" text-anchor="middle">Classifier — 威胁分级</text>
+  <text x="402" y="576" font-size="11" fill="#475569" text-anchor="middle">规则引擎预筛 + 模型研判双轨 → 高 / 中 / 低 · confidence · MITRE · 校园误报抑制</text>
+  <line x1="402" y1="588" x2="402" y2="606" stroke="#1E40AF" stroke-width="2" marker-end="url(#an)"/>
+  <rect x="100" y="610" width="604" height="54" rx="8" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1.2"/>
+  <text x="402" y="632" font-size="13.5" font-weight="700" fill="#0F172A" text-anchor="middle">AlertBuilder — 标准化告警报文</text>
+  <text x="402" y="652" font-size="11" fill="#475569" text-anchor="middle">attack_type · verdict · 建议处置 · 对齐平台统一协议字段</text>
+  <line x1="402" y1="664" x2="402" y2="682" stroke="#1E40AF" stroke-width="2" marker-end="url(#an)"/>
+  <rect x="100" y="686" width="604" height="54" rx="8" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1.2"/>
+  <text x="402" y="708" font-size="13.5" font-weight="700" fill="#0F172A" text-anchor="middle">Notifier — 告警推送</text>
+  <text x="402" y="728" font-size="11" fill="#475569" text-anchor="middle">同步返回 display_md（主对话界面展示）· 可选 webhook</text>
+  <rect x="100" y="756" width="604" height="32" rx="8" fill="#FFFFFF" stroke="#EA580C" stroke-width="1.2" stroke-dasharray="5 3"/>
+  <text x="402" y="777" font-size="11" fill="#C2410C" text-anchor="middle">min_alert_level — 分析 + 输出双重门槛（低于门槛不告警，parse_error 除外）</text>
+  <rect x="796" y="490" width="724" height="312" rx="12" fill="#EFF6FF" stroke="#1E40AF" stroke-width="1.8"/>
+  <text x="1158" y="520" font-size="16" font-weight="700" fill="#1E40AF" text-anchor="middle">应急响应 Incident Response</text>
+  <rect x="856" y="534" width="604" height="54" rx="8" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1.2"/>
+  <text x="1158" y="556" font-size="13.5" font-weight="700" fill="#0F172A" text-anchor="middle">PlaybookGenerator — 处置预案生成</text>
+  <text x="1158" y="576" font-size="11" fill="#475569" text-anchor="middle">按等级模板骨架（遏制→根除→恢复→复盘）+ 模型充实 · SUGGESTION / SIMULATION</text>
+  <line x1="1158" y1="588" x2="1158" y2="606" stroke="#1E40AF" stroke-width="2" marker-end="url(#an)"/>
+  <rect x="856" y="610" width="604" height="54" rx="8" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1.2"/>
+  <text x="1158" y="632" font-size="13.5" font-weight="700" fill="#0F172A" text-anchor="middle">Simulator — 模拟推演</text>
+  <text x="1158" y="652" font-size="11" fill="#475569" text-anchor="middle">每步生成 [simulated] 结果 · AST 强制零真实命令</text>
+  <line x1="1158" y1="664" x2="1158" y2="682" stroke="#1E40AF" stroke-width="2" marker-end="url(#an)"/>
+  <rect x="856" y="686" width="604" height="54" rx="8" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1.2"/>
+  <text x="1158" y="708" font-size="13.5" font-weight="700" fill="#0F172A" text-anchor="middle">ReportBuilder — 应急响应报告</text>
+  <text x="1158" y="728" font-size="11" fill="#475569" text-anchor="middle">主智能体确认指令 Decision(approve / reject) → IncidentReport</text>
+  <rect x="856" y="756" width="604" height="32" rx="8" fill="#FFFFFF" stroke="#EA580C" stroke-width="1.2" stroke-dasharray="5 3"/>
+  <text x="1158" y="777" font-size="11" fill="#C2410C" text-anchor="middle">SUGGESTION：高危动作需人工确认 ｜ SIMULATION：仅推演，不执行</text>
+  <line x1="402" y1="802" x2="402" y2="848" stroke="#94A3B8" stroke-width="1.4" stroke-dasharray="5 3" marker-end="url(#ag)"/>
+  <text x="418" y="830" font-size="10.5" fill="#64748B">结果落盘</text>
+  <line x1="1158" y1="802" x2="1158" y2="848" stroke="#94A3B8" stroke-width="1.4" stroke-dasharray="5 3" marker-end="url(#ag)"/>
+  <text x="1174" y="830" font-size="10.5" fill="#64748B">推理调用</text>
+  <rect x="40" y="852" width="724" height="224" rx="12" fill="#1E40AF"/>
+  <text x="402" y="886" font-size="16" font-weight="700" fill="#FFFFFF" text-anchor="middle">Storage — JSON 本地持久化</text>
+  <rect x="100" y="906" width="604" height="42" rx="8" fill="#FFFFFF"/>
+  <text x="128" y="932" font-size="12.5" font-weight="700" fill="#172554" font-family="ui-monospace, monospace">storage/data/alerts/</text>
+  <text x="680" y="932" font-size="11.5" fill="#475569" text-anchor="end">ThreatAlert 告警留档</text>
+  <rect x="100" y="956" width="604" height="42" rx="8" fill="#FFFFFF"/>
+  <text x="128" y="982" font-size="12.5" font-weight="700" fill="#172554" font-family="ui-monospace, monospace">storage/data/playbooks/</text>
+  <text x="680" y="982" font-size="11.5" fill="#475569" text-anchor="end">ResponsePlaybook 处置预案</text>
+  <rect x="100" y="1006" width="604" height="42" rx="8" fill="#FFFFFF"/>
+  <text x="128" y="1032" font-size="12.5" font-weight="700" fill="#172554" font-family="ui-monospace, monospace">storage/data/reports/</text>
+  <text x="680" y="1032" font-size="11.5" fill="#475569" text-anchor="end">IncidentReport 应急报告</text>
+  <text x="402" y="1066" font-size="11.5" fill="#BFDBFE" text-anchor="middle">原子写 ｜ tir_ 命名空间（独立于主系统数据库）｜ 180 天留档清理</text>
+  <rect x="796" y="852" width="724" height="224" rx="12" fill="#FFFFFF" stroke="#1E40AF" stroke-width="2"/>
+  <text x="1158" y="886" font-size="16" font-weight="700" fill="#1E40AF" text-anchor="middle">ModelGateway — 推理大脑（DeepSeek-Reasonix-Security）</text>
+  <rect x="824" y="906" width="216" height="48" rx="8" fill="#DBEAFE" stroke="#1E40AF" stroke-width="1"/>
+  <text x="932" y="928" font-size="13" font-weight="700" fill="#172554" text-anchor="middle">reasonix-cli 通道</text>
+  <text x="932" y="946" font-size="10.5" fill="#475569" text-anchor="middle">主通道</text>
+  <rect x="1052" y="906" width="216" height="48" rx="8" fill="#DBEAFE" stroke="#1E40AF" stroke-width="1"/>
+  <text x="1160" y="928" font-size="13" font-weight="700" fill="#172554" text-anchor="middle">openai-api 通道</text>
+  <text x="1160" y="946" font-size="10.5" fill="#475569" text-anchor="middle">备用通道</text>
+  <rect x="1280" y="906" width="216" height="48" rx="8" fill="#DBEAFE" stroke="#1E40AF" stroke-width="1"/>
+  <text x="1388" y="928" font-size="13" font-weight="700" fill="#172554" text-anchor="middle">mock 通道</text>
+  <text x="1388" y="946" font-size="10.5" fill="#475569" text-anchor="middle">测试</text>
+  <text x="1158" y="984" font-size="11" fill="#475569" text-anchor="middle">通道健康检查失败 → 自动降级（reasonix-cli → openai-api → mock）</text>
+  <rect x="824" y="1000" width="672" height="48" rx="8" fill="#EFF6FF"/>
+  <text x="1158" y="1020" font-size="11.5" font-weight="700" fill="#1E40AF" text-anchor="middle">AI 仅用于判断 / 生成处：威胁分级研判 · 预案生成 · 报告生成</text>
+  <text x="1158" y="1039" font-size="11" fill="#475569" text-anchor="middle">流程 / 状态 / 存储为确定性业务代码（对齐计划书 3.4 分层原则）</text>
+  <line x1="64" y1="1112" x2="112" y2="1112" stroke="#1E40AF" stroke-width="2.2" marker-end="url(#an)"/>
+  <text x="120" y="1116" font-size="11.5" fill="#475569">数据流</text>
+  <line x1="200" y1="1112" x2="248" y2="1112" stroke="#94A3B8" stroke-width="1.4" stroke-dasharray="5 3" marker-end="url(#ag)"/>
+  <text x="256" y="1116" font-size="11.5" fill="#475569">调用 / 持久化</text>
+  <rect x="370" y="1100" width="18" height="18" rx="9" fill="#EA580C"/>
+  <text x="396" y="1114" font-size="11.5" fill="#475569">统一输入契约</text>
+  <rect x="510" y="1100" width="18" height="18" rx="4" fill="#1E40AF"/>
+  <text x="536" y="1114" font-size="11.5" fill="#475569">持久化存储</text>
+  <rect x="640" y="1100" width="18" height="18" rx="4" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1.4"/>
+  <text x="666" y="1114" font-size="11.5" fill="#475569">确定性业务模块</text>
+  <rect x="810" y="1100" width="18" height="18" rx="4" fill="#FFFFFF" stroke="#EA580C" stroke-width="1.4" stroke-dasharray="4 2"/>
+  <text x="836" y="1114" font-size="11.5" fill="#475569">安全门控 / 模式约束</text>
+  <text x="780" y="1160" font-size="11" fill="#94A3B8" text-anchor="middle">ThreatIRSubAgent v2.0 ｜ 注：两子系统均调用 ModelGateway 完成分级研判与预案/报告生成，产出均经 Storage 持久化（图中示主路径）</text>
+</svg>

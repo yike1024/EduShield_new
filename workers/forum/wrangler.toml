@@ -1,4 +1,4 @@
-# Reasonix Community forum API. Identity from id.reasonix.io; content + anti-abuse
+# EduShield Community forum API. Identity from id.reasonix.io; content + anti-abuse
 # state in its own D1. First deploy:
 #   wrangler d1 create reasonix-forum        # paste database_id below
 #   wrangler d1 execute reasonix-forum --remote --file=schema.sql

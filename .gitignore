@@ -43,7 +43,7 @@ node_modules/
 .pnpm-store/
 .npm/
 
-# Project-local Reasonix state; keep the checked-in review command.
+# Project-local EduShield state; keep the checked-in review command.
 /.reasonix/*
 !/.reasonix/commands/
 !/.reasonix/commands/review.md
@@ -62,3 +62,19 @@ benchmarks/context-maintenance-e2e/run/
 
 # Local scratch
 temp/
+
+# Local scratch data / probe logs (never commit)
+.tmp-*
+*.tar.gz
+/go-local/
+/fetch
+__pycache__/
+*.pyc
+.adapter-logs/
+.reasonix-home/
+.trae/
+desktop/frontend/.trae/
+desktop/frontend/.write-test
+
+# 前端构建历史备份
+desktop/frontend/dist.bak-*/

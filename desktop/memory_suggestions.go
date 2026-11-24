@@ -397,7 +397,7 @@ func workflowCategories() []workflowCategory {
 	return []workflowCategory{
 		{
 			Name:        "reasonix-pr-followup",
-			Description: "Review or update a Reasonix GitHub PR, address feedback, verify, and publish safely.",
+			Description: "Review or update an EduShield GitHub PR, address feedback, verify, and publish safely.",
 			Reason:      "recent history repeatedly touched PR review, bot feedback, commits, or GitHub publication",
 			Keywords:    []string{"pr", "pull request", "github", "review", "机器人", "评审", "提交到pr", "更新pr", "code rabbit", "coderabbit"},
 			Steps: []string{
@@ -409,7 +409,7 @@ func workflowCategories() []workflowCategory {
 		},
 		{
 			Name:        "reasonix-memory-ui",
-			Description: "Iterate on the Reasonix desktop Memory page with source-backed UI decisions and browser verification.",
+			Description: "Iterate on the EduShield desktop Memory page with source-backed UI decisions and browser verification.",
 			Reason:      "recent history repeatedly discussed Memory page layout, labels, filters, and interaction details",
 			Keywords:    []string{"memory", "记忆", "设置-记忆", "memory panel", "指令文件", "归档", "全局", "项目", "添加记忆"},
 			Steps: []string{
@@ -464,7 +464,7 @@ func skillCandidateBody(cat workflowCategory, evidence []string) string {
 	var b strings.Builder
 	title := strings.TrimPrefix(strings.ReplaceAll(cat.Name, "-", " "), "reasonix ")
 	b.WriteString("# " + cases.Title(language.Und).String(title) + "\n\n")
-	b.WriteString("Use this skill when the user asks for this repeated Reasonix workflow.\n\n")
+	b.WriteString("Use this skill when the user asks for this repeated EduShield workflow.\n\n")
 	b.WriteString("## Evidence\n\n")
 	for _, ev := range evidence {
 		b.WriteString("- " + ev + "\n")

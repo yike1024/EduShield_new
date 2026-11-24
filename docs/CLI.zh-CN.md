@@ -1,4 +1,4 @@
-# Reasonix CLI 命令参考
+# EduShield CLI 命令参考
 
 <a href="../README.zh-CN.md">README</a>
 &nbsp;·&nbsp;
@@ -60,7 +60,7 @@ provider，并支持：
 不会直接覆盖。
 
 Provider 定义只保存 `api_key_env` 变量名。即使使用 `--local`，Key 的真实值也始终保存
-在 CLI 与桌面端共用的 Reasonix 全局 `.env` 中。如果变量名已被其他 provider 使用，
+在 CLI 与桌面端共用的 EduShield 全局 `.env` 中。如果变量名已被其他 provider 使用，
 setup 会询问是否共享该凭据；两个 provider 使用不同 Key 时，应改用不同变量名。通过
 setup 添加或删除 provider 时，也会同步维护桌面端 provider access，因此相同模型可以
 直接在桌面端使用。
@@ -135,7 +135,7 @@ reasonix --resume provider-config --copy
   子串。没有匹配或匹配不唯一时会返回明确错误。
 - 为保持兼容，仍接受 `--resume=true` 和 `--resume=false`。
 - `--copy` 不修改原 transcript，而是在新的可写会话中继续。原会话已被另一个
-  Reasonix 进程占用时可以使用它。
+  EduShield 进程占用时可以使用它。
 
 一次性运行可用 `reasonix run --resume PATH "任务"` 指定 session 文件路径。Session
 lease 会阻止桌面端和 CLI 同时写入同一个 transcript。
@@ -177,7 +177,7 @@ reasonix -p "同时更新两个项目" \
   --add-dir ../backend
 ```
 
-相对路径从 workspace 根目录解析，并且必须是已存在的目录。Reasonix 会解析符号链接、
+相对路径从 workspace 根目录解析，并且必须是已存在的目录。EduShield 会解析符号链接、
 去重，并在当前会话中扩展文件写入工具和沙盒 Bash 的写入边界。这些目录只在运行时生效，
 不会写入配置。
 

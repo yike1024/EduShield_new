@@ -17,7 +17,7 @@ import (
 // Load builds the configuration: defaults, then user config, then project
 // config, then MCP servers from Claude Code's .mcp.json, then (lowest priority)
 // the v0.x ~/.reasonix/config.json's mcpServers. Provider api_key_env values
-// resolve from Reasonix's global .env, not from project .env files.
+// resolve from EduShield's global .env, not from project .env files.
 func Load() (*Config, error) {
 	return LoadForRoot(".")
 }
@@ -26,7 +26,7 @@ func Load() (*Config, error) {
 // instead of the current working directory. When root is "" or ".", it behaves
 // like Load(). This is the workspace-aware entry point: desktop tabs use it so
 // each project's reasonix.toml + .mcp.json are resolved independently without
-// changing the process cwd, while provider keys stay rooted in Reasonix home.
+// changing the process cwd, while provider keys stay rooted in EduShield home.
 //
 // Note: LoadForRoot may rewrite legacy MCP `tier` lines on disk (see
 // mergeRuntimeTOMLFile). Callers that must not mutate config files should use
@@ -190,7 +190,7 @@ func loadSafeModeForRoot(root string) *Config {
 // LoadRecoveryDefaultsForRoot returns the same built-in-only configuration used
 // by Safe Mode without reading or migrating user/project TOML. Recovery tools use
 // it to reach an explicitly selected built-in provider when configuration is
-// malformed; provider credentials still resolve only from Reasonix's global
+// malformed; provider credentials still resolve only from EduShield's global
 // credential store.
 func LoadRecoveryDefaultsForRoot(root string) *Config {
 	return loadSafeModeForRoot(root)
@@ -587,7 +587,7 @@ func DesktopProviderAccessDeclared(path string) (bool, error) {
 // LoadForEdit returns a config to seed the `reasonix setup` wizard when reconfiguring:
 // the built-in defaults with the file at path (if present) decoded on top, so a
 // reconfigure preserves the user's existing providers and agent settings instead
-// of resetting to defaults. Reasonix's global .env is loaded so api_key_env
+// of resetting to defaults. EduShield's global .env is loaded so api_key_env
 // resolution works while the wizard decides which keys are still missing.
 func LoadForEdit(path string) *Config {
 	return loadForEdit(path, true, true)

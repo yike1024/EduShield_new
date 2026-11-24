@@ -1,5 +1,5 @@
 // Package builtincontent holds shipped skill markdown that is embedded into the
-// Reasonix binary. Bodies stay out of the system prompt until the skill is
+// EduShield binary. Bodies stay out of the system prompt until the skill is
 // invoked; only the name+description index line is cache-stable.
 package builtincontent
 

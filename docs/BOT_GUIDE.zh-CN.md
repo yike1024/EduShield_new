@@ -1,4 +1,4 @@
-# Reasonix 机器人使用指南
+# EduShield 机器人使用指南
 
 <a href="../README.zh-CN.md">README</a>
 &nbsp;·&nbsp;
@@ -7,7 +7,7 @@
 <a href="./GUIDE.zh-CN.md">通用指南</a>
 
 > 面向桌面端和 CLI 用户。本文说明如何连接飞书、Lark、微信和 QQ 机器人，
-> 如何在 IM 里使用 Reasonix，以及审批、问答、YOLO 和常用命令的交互方式。
+> 如何在 IM 里使用 EduShield，以及审批、问答、YOLO 和常用命令的交互方式。
 
 ## 目录
 
@@ -24,13 +24,13 @@
 
 ## 能做什么
 
-连接机器人后，你可以在飞书、Lark、微信或 QQ 里给 Reasonix 发消息，让桌面端
-Reasonix 或 `reasonix bot start` 进程在本机执行同一套模型、工具、权限与
+连接机器人后，你可以在飞书、Lark、微信或 QQ 里给 EduShield 发消息，让桌面端
+EduShield 或 `reasonix bot start` 进程在本机执行同一套模型、工具、权限与
 沙盒逻辑。
 
 典型场景：
 
-- 让 Reasonix 查代码、读文档、解释错误、整理结论。
+- 让 EduShield 查代码、读文档、解释错误、整理结论。
 - 在 IM 中触发工具调用，并把执行过程和结果回传到聊天窗口。
 - 遇到写文件、执行命令等敏感操作时，在 IM 中审批或拒绝。
 - 对临时测试任务开启 YOLO，跳过普通工具审批。
@@ -56,7 +56,7 @@ Bot gateway 是一套共享的 Go runtime。核心行为在 Windows、macOS 和 
 
 ## 连接四个渠道
 
-打开桌面端 Reasonix，进入 **设置 -> 机器人**。在 **添加 IM Bot** 区域选择
+打开桌面端 EduShield，进入 **设置 -> 机器人**。在 **添加 IM Bot** 区域选择
 渠道并扫码。
 
 ```mermaid
@@ -95,7 +95,7 @@ flowchart LR
 飞书和 Lark 使用同一套能力，但作为两个独立连接保存。你可以给它们设置不同
 模型、工作目录或工具审批模式。Bot 文本回复会以独立 Interactive Card JSON
 2.0 markdown 发送，避免飞书/Lark 平台级引用前缀，同时保留 CommonMark
-格式；如果卡片超过平台限制，Reasonix 会自动降级为纯文本。
+格式；如果卡片超过平台限制，EduShield 会自动降级为纯文本。
 
 Webhook 模式需要配置 verification token。传入事件会 fail-closed 校验：如果
 配置中的 token 为空或缺失，调用方会被拒绝，不会静默开放 webhook。
@@ -150,7 +150,7 @@ Bot。`--dir` 用来把远端消息绑定到某个项目工作区，`--model` �
   （`feishu`、`weixin` 或 `qq`），`domain` 用来区分飞书和 Lark 等变体。
 - `credential.app_id`、`credential.app_secret_env`、`credential.account_id`
   和 `credential.token_env` 指向应用 ID、应用密钥、保存的账号或 token。
-  密钥仍保存在环境变量或 Reasonix 用户凭据中。
+  密钥仍保存在环境变量或 EduShield 用户凭据中。
 - `workspace_root`、`model` 和 `tool_approval_mode` 可以按连接单独设置，
   因此不同 IM 渠道可以路由到不同本地项目或审批模式。
 - `access` 也可以按连接单独设置，包括 `enabled`、`allow_all`、
@@ -192,7 +192,7 @@ reasonix bot pairing reject CODE
 `/projects`、`/use project`、`/sessions`、`/attach session` 和
 `/search all` 也只允许 admin 使用。`/approve` 和 `/deny` 只允许 approver
 或 admin 使用。没有配置角色列表时，为兼容旧配置，已允许的用户保持原有
-命令能力。远端用户进入的是同一个 Reasonix controller、权限策略、工具
+命令能力。远端用户进入的是同一个 EduShield controller、权限策略、工具
 审批模式和沙盒边界，和本地桌面端或 CLI 回合一致。
 
 ```toml
@@ -242,7 +242,7 @@ curl -X POST http://127.0.0.1:37913/send \
 sequenceDiagram
   participant U as "用户"
   participant IM as "飞书 / Lark / 微信 / QQ"
-  participant R as "Reasonix 桌面端或 bot start"
+  participant R as "EduShield 桌面端或 bot start"
   participant T as "本机工具与模型"
 
   U->>IM: "发送需求"
@@ -361,13 +361,13 @@ mid-turn guidance 注入，而不是等完整回合结束。`queue_cap` 和 `que
 
 当适配器提供媒体 URL 时，gateway 会把文件下载到当前工作区的
 `.reasonix/attachments`，并以 `@.reasonix/attachments/...` 形式传给
-Reasonix。保存失败的附件会在 IM 中提示，文本内容仍会继续处理。内置
+EduShield。保存失败的附件会在 IM 中提示，文本内容仍会继续处理。内置
 Feishu、Weixin、QQ 适配器当前仍以文本事件为主，普通 IM 附件抽取可以继续在
 适配器层补齐。
 
 ## 审批与 YOLO
 
-Reasonix 的机器人沿用桌面端权限系统。默认是询问模式：写文件、执行命令等
+EduShield 的机器人沿用桌面端权限系统。默认是询问模式：写文件、执行命令等
 敏感工具调用会先请求确认。
 
 ```mermaid
@@ -400,20 +400,20 @@ YOLO 的边界很重要：
 
 ## 升级后是否需要重新绑定
 
-正常升级或覆盖安装 Reasonix app 后，不需要重新绑定。
+正常升级或覆盖安装 EduShield app 后，不需要重新绑定。
 
 绑定信息保存在用户配置目录，而不是 app 包内：
 
 - Bot 连接、远端 ID、白名单、模型和审批模式保存在用户配置文件。
-- 飞书和 Lark 的密钥保存在 CLI 与桌面端共用的 Reasonix 全局
-  `<Reasonix home>/.env`。
-- 微信扫码后的账号 token 保存在 Reasonix 的用户数据目录。
+- 飞书和 Lark 的密钥保存在 CLI 与桌面端共用的 EduShield 全局
+  `<EduShield home>/.env`。
+- 微信扫码后的账号 token 保存在 EduShield 的用户数据目录。
 - QQ 的 App ID 保存在用户配置文件；App Secret 通过配置的环境变量
-  （默认 `QQ_BOT_APP_SECRET`）保存在 Reasonix 全局凭据文件中。
+  （默认 `QQ_BOT_APP_SECRET`）保存在 EduShield 全局凭据文件中。
 
 需要重新扫码或重新配置的情况：
 
-- 删除了 Reasonix 用户配置目录。
+- 删除了 EduShield 用户配置目录。
 - 换了 macOS 用户或换了机器。
 - 平台侧撤销授权。
 - 微信 token 失效。

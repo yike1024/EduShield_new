@@ -385,7 +385,8 @@ export function formatShortcutComboParts(combo: ShortcutCombo, platform: Shortcu
 }
 
 export function comboFromKeyboardEvent(event: KeyboardShortcutEvent): ShortcutCombo | null {
-  if (isModifierKey(event.key)) return null;
+  // key 缺失（undefined/空串）时无法构成有效组合，直接返回 null 而不是往下传。
+  if (!event.key || isModifierKey(event.key)) return null;
   return normalizeCombo({
     key: event.key,
     ctrl: event.ctrlKey ?? false,
@@ -454,18 +455,21 @@ function normalizeCustomShortcuts(value: unknown): Partial<Record<ShortcutAction
   return out;
 }
 
-function normalizeCombo(combo: ShortcutCombo): ShortcutCombo {
-  const key = normalizeKey(combo.key);
+function normalizeCombo(combo: ShortcutCombo | null | undefined): ShortcutCombo {
+  // 空值保护：合成事件/IME 场景下 event.key 可能为 undefined，
+  // normalizeKey 读取 key.length 前必须先判空，否则在 keydown 监听里抛 TypeError。
+  const key = normalizeKey(combo?.key);
   return {
     key,
-    ctrl: Boolean(combo.ctrl),
-    meta: Boolean(combo.meta),
-    alt: Boolean(combo.alt),
-    shift: Boolean(combo.shift),
+    ctrl: Boolean(combo?.ctrl),
+    meta: Boolean(combo?.meta),
+    alt: Boolean(combo?.alt),
+    shift: Boolean(combo?.shift),
   };
 }
 
-function normalizeKey(key: string): string {
+function normalizeKey(key: string | undefined): string {
+  if (!key) return "";
   if (key === " ") return "Space";
   if (key.length === 1) return key.toLowerCase();
   return key;

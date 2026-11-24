@@ -1,4 +1,4 @@
--- Reasonix accounts: users, sessions, email tokens.
+-- EduShield accounts: users, sessions, email tokens.
 -- Apply: wrangler d1 migrations apply reasonix-accounts --local   (or --remote)
 
 CREATE TABLE IF NOT EXISTS users (

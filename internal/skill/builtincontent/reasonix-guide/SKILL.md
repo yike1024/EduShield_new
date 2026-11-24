@@ -1,10 +1,10 @@
 ---
 name: reasonix-guide
-description: "Troubleshoot and configure Reasonix capabilities: Skills (project/custom/global/builtin priority, discovery dirs), Commands (override order, /dir:file naming), Hooks (11 events, project trust, matchers, timeouts), MCP (reasonix.toml + .mcp.json + plugin packages, auto_start), plugin packages (native/Codex/Claude manifests), and AGENTS.md / instruction docs. Use when the user asks how to configure, debug missing skills/commands/hooks/MCP/plugins, or diagnose capability loading."
+description: "Troubleshoot and configure EduShield capabilities: Skills (project/custom/global/builtin priority, discovery dirs), Commands (override order, /dir:file naming), Hooks (11 events, project trust, matchers, timeouts), MCP (reasonix.toml + .mcp.json + plugin packages, auto_start), plugin packages (native/Codex/Claude manifests), and AGENTS.md / instruction docs. Use when the user asks how to configure, debug missing skills/commands/hooks/MCP/plugins, or diagnose capability loading."
 runAs: inline
 ---
 
-# Reasonix self-diagnostics guide
+# EduShield self-diagnostics guide
 
 This skill is **inlined**. Prefer evidence over guessing.
 
@@ -36,7 +36,7 @@ Winner per skill name (highest first):
 
 1. **project** — `<workspace>/{.reasonix,.agents,.agent,.claude}/skills/`
 2. **custom** — `[skills].paths` (and plugin package skill roots)
-3. **global** — `<Reasonix home>/skills` and home convention dirs
+3. **global** — `<EduShield home>/skills` and home convention dirs
 4. **builtin** — shipped skills (including this guide)
 
 Same name: higher scope wins; lower scopes are **shadowed**. `[skills].disabled_skills` hides a name from List/Read entirely.
@@ -74,7 +74,7 @@ Discovery conventions: `.reasonix`, `.agents`, `.agent`, `.claude` (see `config.
 
 ### Priority
 
-`config.CommandDirsForRoot`: home convention commands → Reasonix home commands → project convention commands. **Later directory overrides earlier** on name clash (`command.Load`).
+`config.CommandDirsForRoot`: home convention commands → EduShield home commands → project convention commands. **Later directory overrides earlier** on name clash (`command.Load`).
 
 Name from path: `git/commit.md` → `/git:commit` (slashes → `:`).
 
@@ -102,9 +102,9 @@ CLI/Desktop Diagnostics → Commands; invoke `/name` in chat.
 
 ### Sources and trust
 
-- Project: `<workspace>/.reasonix/settings.json` — **only when trusted** (`trust.json` under Reasonix home)
+- Project: `<workspace>/.reasonix/settings.json` — **only when trusted** (`trust.json` under EduShield home)
 - Plugin packages: installed enabled packages
-- Global: `<Reasonix home>/settings.json` (always)
+- Global: `<EduShield home>/settings.json` (always)
 
 Match field is an **anchored** regex: `file` does **not** match `read_file`; use `.*file` or `*`. Timeout is **milliseconds** (defaults 5s gating / 30s other).
 
@@ -164,9 +164,9 @@ Env/header values may contain secrets — diagnostics list **keys only**.
 - Codex: `.codex-plugin/plugin.json`
 - Claude: `.claude-plugin/plugin.json` (+ limited Claude compatibility paths)
 
-State: `<Reasonix home>/plugin-packages.json`. Disabled packages do not contribute skills/hooks/MCP.
+State: `<EduShield home>/plugin-packages.json`. Disabled packages do not contribute skills/hooks/MCP.
 
-Unmapped Claude-only features may appear as compatibility warnings — Reasonix does not invent support.
+Unmapped Claude-only features may appear as compatibility warnings — EduShield does not invent support.
 
 ### Checks
 

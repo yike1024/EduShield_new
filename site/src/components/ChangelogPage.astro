@@ -38,8 +38,8 @@ const surfaceLabel = (surface: string) => ({
   plugin: { en: 'Plugins', zh: '插件' },
 }[surface] ?? { en: surface, zh: surface });
 
-const titleEn = `Reasonix v${release.version} release notes`;
-const titleZh = `Reasonix v${release.version} 更新日志`;
+const titleEn = `EduShield v${release.version} release notes`;
+const titleZh = `EduShield v${release.version} 更新日志`;
 const description = release.summary.en;
 ---
 
@@ -74,7 +74,7 @@ const description = release.summary.en;
             <span class="release-channel"><span class="release-channel__dot"></span>{release.channel}</span>
             <time datetime={release.date}>{release.date}</time>
           </div>
-          <p class="release-hero__version">Reasonix / v{release.version}</p>
+          <p class="release-hero__version">EduShield / v{release.version}</p>
           <h1><span class="l-en">{release.title.en}</span><span class="l-zh">{release.title.zh}</span></h1>
           <div class="release-surfaces">
             {release.surfaces.map((surface) => {
@@ -184,7 +184,7 @@ const description = release.summary.en;
         <section id="download" class="release-section release-download">
           <div>
             <p class="release-download__kicker"><span class="l-en">Ready when you are</span><span class="l-zh">准备好即可升级</span></p>
-            <h2><span class="l-en">Ship with a safer Reasonix.</span><span class="l-zh">升级到更可靠的 Reasonix。</span></h2>
+            <h2><span class="l-en">Ship with a safer EduShield.</span><span class="l-zh">升级到更可靠的 EduShield。</span></h2>
           </div>
           <div class="release-download__actions">
             <a class="btn btn-dark" href={release.links.download}><span class="l-en">Download</span><span class="l-zh">下载</span></a>
@@ -201,8 +201,8 @@ const description = release.summary.en;
   </main>
 
   <footer class="release-footer">
-    <a class="brand" href={`${base}/`}><img src={`${base}/logo.svg`} alt="" /><span>Reasonix</span></a>
-    <span>© 2026 Reasonix · MIT</span>
+    <a class="brand" href={`${base}/`}><img src={`${base}/logo.svg`} alt="" /><span>EduShield</span></a>
+    <span>© 2026 EduShield · MIT</span>
     <a href={repo}>GitHub ↗</a>
   </footer>
 

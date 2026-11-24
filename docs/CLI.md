@@ -1,4 +1,4 @@
-# Reasonix CLI Reference
+# EduShield CLI Reference
 
 <a href="../README.md">README</a>
 &nbsp;·&nbsp;
@@ -62,7 +62,7 @@ or CLI changes are retained, while an overlapping change is reported as a
 conflict instead of being overwritten.
 
 Provider definitions contain only the `api_key_env` variable name. Key values
-are stored in the shared Reasonix home `.env`, even with `--local`. When a
+are stored in the shared EduShield home `.env`, even with `--local`. When a
 variable name is already used by another provider, setup asks whether to share
 that credential; choose a different variable name when the providers use
 different keys. Providers added or removed through setup are also added to or
@@ -141,7 +141,7 @@ reasonix --resume provider-config --copy
   error.
 - `--resume=true` and `--resume=false` remain accepted for compatibility.
 - `--copy` leaves the original transcript untouched and continues in a new
-  writable session. Use it when another Reasonix process owns the original.
+  writable session. Use it when another EduShield process owns the original.
 
 For one-shot runs, `reasonix run --resume PATH "task"` accepts a session file
 path. Session leases prevent the desktop app and CLI from writing the same
@@ -188,7 +188,7 @@ reasonix -p "update both projects" \
 ```
 
 Relative paths resolve from the workspace root and must already exist as
-directories. Reasonix resolves symlinks, removes duplicates, and extends the
+directories. EduShield resolves symlinks, removes duplicates, and extends the
 file-writer and sandboxed Bash write boundaries for the session. These additions
 are runtime-only and are not written to configuration.
 

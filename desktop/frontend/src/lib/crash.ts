@@ -683,6 +683,11 @@ function paint(payload: CrashPayload) {
   const send = sendButton(payload);
   if (send) actions.append(send);
   actions.append(copy);
+  const dismiss = document.createElement("button");
+  dismiss.className = "crash-overlay__dismiss";
+  dismiss.textContent = t("crash.dismiss");
+  dismiss.onclick = () => { host?.remove(); };
+  actions.append(dismiss);
   const note = document.createElement("div");
   note.className = "crash-overlay__note";
   note.textContent = t("crash.privacyNote");

@@ -24,7 +24,7 @@ COOKIE_DOMAIN = ".reasonix.io"
 EMAIL_PROVIDER = "resend"
 # From-domain must match a verified Resend domain — send.reasonix.io is verified
 # (DKIM), the apex is not, and Resend rejects sends from an unverified domain.
-MAIL_FROM = "Reasonix <no-reply@send.reasonix.io>"
+MAIL_FROM = "EduShield <no-reply@send.reasonix.io>"
 # Comma-separated emails minted as admins on first sign-up.
 ADMIN_EMAILS = ""
 

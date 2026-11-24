@@ -15,8 +15,8 @@ section: "utils"
 priority: "optional"
 maintainer: "esengine <esengine@users.noreply.github.com>"
 description: |
-  Reasonix desktop — a Wails shell around the Go kernel.
-vendor: "Reasonix Contributors"
+  EduShield desktop — a Wails shell around the Go kernel.
+vendor: "EduShield Contributors"
 homepage: "https://github.com/esengine/DeepSeek-Reasonix"
 license: "MIT"
 # Runtime libraries the WebKitGTK 4.1 build links against (-tags webkit2_41); apt

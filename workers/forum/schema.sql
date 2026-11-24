@@ -1,4 +1,4 @@
--- Reasonix Community forum. Identity comes from id.reasonix.io; this DB holds
+-- EduShield Community forum. Identity comes from id.reasonix.io; this DB holds
 -- forum content plus the anti-abuse state (trust levels, flags, silences).
 -- Apply: wrangler d1 execute reasonix-forum --remote --file=schema.sql
 

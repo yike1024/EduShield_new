@@ -15,6 +15,8 @@ import { t } from "./i18n";
 import { providerRequiresKey } from "./providerModels";
 import { DEFAULT_STATUS_BAR_ITEMS, normalizeStatusBarItems } from "./statusBarItems";
 import { modeHasAutoApproveTools, modeWithAutoApproveTools, modeWithPlan, normalizeCollaborationMode, normalizeMode, normalizeTokenMode, normalizeToolApprovalMode } from "./types";
+import { getHttpClient, checkHttpServiceAvailable } from "./httpApiAdapter";
+import { getWebApi, shouldUseWebApi } from "./webApiProxy";
 
 import type {
   AutoResearchFindingView,
@@ -217,6 +219,8 @@ export interface AppBindings {
   PickWorkspace(): Promise<string>;
   SwitchWorkspace(path: string): Promise<string>;
   RemoveWorkspace(path: string): Promise<void>;
+  /** 17 号方案：浏览器模式新建评估项目（Wails 桌面端可不实现） */
+  CreateProject(input: { name: string; target?: string; description?: string; color?: string }): Promise<{ id: string; name: string; target?: string; description?: string; color?: string }>;
   ContextUsage(): Promise<ContextInfo>;
   ContextUsageForTab(tabID: string): Promise<ContextInfo>;
   Balance(): Promise<BalanceInfo>;
@@ -297,6 +301,9 @@ export interface AppBindings {
   SaveExportFile(path: string, payload: string, base64Encoded: boolean): Promise<void>;
   AttachDropped(path: string): Promise<DroppedItem>;
   AttachmentDataURL(path: string): Promise<string>;
+  /** 21 号方案（可选，仅 web 实现）：取附件的服务端落盘信息（相对 ATTACHMENT_ROOT 路径+大小）。
+   *  附件未镜像成功 / 桌面端 / mock 环境返回 null 或方法不存在，调用方需做 typeof 守卫。 */
+  AttachmentServerInfo?(path: string): Promise<{ serverPath: string; size?: number } | null>;
   Models(): Promise<ModelInfo[]>;
   SetModel(name: string): Promise<void>;
   ModelsForTab(tabID: string): Promise<ModelInfo[]>;
@@ -484,6 +491,133 @@ function realApp(): AppBindings | undefined {
   return typeof window !== "undefined" ? window.go?.main?.App : undefined;
 }
 
+/**
+ * 是否运行在 Wails 桌面壳内（有 Go 后端可提供 ToolResultForTab 等归档数据）。
+ * 浏览器模式（端口 3000）下返回 false——此时工具输出必须保留在前端内存中，
+ * 不能像 Wails 模式那样归档丢弃后再懒加载。
+ */
+export function isWailsRuntime(): boolean {
+  return !!realApp();
+}
+
+// HTTP API可用性检查缓存（避免频繁检查）
+let httpApiAvailable: boolean | null = null;
+let lastHttpApiCheck: number = 0;
+const HTTP_API_CHECK_INTERVAL = 5000; // 5秒检查一次
+
+/**
+ * 检查HTTP API服务是否可用
+ * 在浏览器环境中，如果HTTP服务可用，优先使用真实API而不是mock数据
+ */
+async function checkHttpApiAvailable(): Promise<boolean> {
+  const now = Date.now();
+  if (httpApiAvailable !== null && now - lastHttpApiCheck < HTTP_API_CHECK_INTERVAL) {
+    return httpApiAvailable;
+  }
+
+  lastHttpApiCheck = now;
+  httpApiAvailable = await checkHttpServiceAvailable();
+  return httpApiAvailable;
+}
+
+/**
+ * 获取真实的绑定：优先使用Wails，其次HTTP API，最后mock
+ */
+async function getRealBindingOrHttp(): Promise<AppBindings | null> {
+  // 首先检查Wails环境
+  const wailsApp = realApp();
+  if (wailsApp) {
+    return wailsApp;
+  }
+
+  // 如果不在Wails环境中，检查HTTP API是否可用
+  const httpAvailable = await checkHttpApiAvailable();
+  if (httpAvailable) {
+    console.log('🌐 Using HTTP API instead of mock data');
+    return createHttpApiBinding();
+  }
+
+  console.log('🔧 Falling back to mock data (no Wails or HTTP API available)');
+  return null;
+}
+
+/**
+ * 创建HTTP API绑定
+ * 将HTTP API客户端包装成AppBindings接口
+ */
+function createHttpApiBinding(): AppBindings {
+  const httpClient = getHttpClient();
+  if (!httpClient) {
+    throw new Error('HTTP client not available');
+  }
+
+  // 创建一个符合AppBindings接口的HTTP API包装器
+  return new Proxy({} as AppBindings, {
+    get(_target, prop) {
+      const methodName = String(prop);
+
+      // 为每个方法创建HTTP API调用
+      return async (...args: unknown[]) => {
+        console.log(`🌐 HTTP API Call: ${methodName}`, args);
+
+        try {
+          // 根据方法名调用相应的HTTP API
+          switch (methodName) {
+            case 'Submit':
+              await httpClient.submit(args[0] as string);
+              return;
+            case 'Cancel':
+              await httpClient.cancel();
+              return;
+            case 'Approve':
+              await httpClient.approve(args[0] as string, args[1] as boolean);
+              return;
+            case 'History':
+              return await httpClient.history();
+            case 'Meta':
+              return await httpClient.meta();
+            case 'ContextUsage':
+              return await httpClient.contextUsage();
+            case 'Balance':
+              return await httpClient.balance();
+            case 'Models':
+              return await httpClient.models();
+            case 'Settings':
+              return await httpClient.settings();
+            case 'Capabilities':
+              return await httpClient.capabilities();
+            case 'ListSessions':
+              return await httpClient.sessions();
+            // 添加更多方法映射...
+            case 'SavePastedFile':
+              // web 模式上传附件：直接调 httpClient.savePastedFile（POST 大脑 /save-attachment），
+              // 返回服务端落盘后的相对路径。不再走 default 的 "HTTP API method not implemented" 警告。
+              return await httpClient.savePastedFile(
+                args[0] as string,
+                args[1] as string,
+              );
+            case 'SavePastedImage':
+              // 图片同走同一端点（SaveAttachmentDataURL 也接受 image/* mime），
+              // 但需要拿回预览用 dataURL，跟原来 Wails 桥接口对齐：
+              // 这里直接调 savePastedFile，返回 path；调用方（Composer.attachImageFiles）
+              // 会再用 app.AttachmentDataURL(path) 拿预览。
+              return await httpClient.savePastedFile(
+                args[0] as string,  // name 不可用，传原 dataUrl 作为名字
+                args[0] as string,  // dataUrl
+              );
+            default:
+              console.warn(`HTTP API method not implemented: ${methodName}`);
+              return undefined;
+          }
+        } catch (error) {
+          console.error(`HTTP API error (${methodName}):`, error);
+          throw error;
+        }
+      };
+    },
+  });
+}
+
 let mockSingleton: AppBindings | null = null;
 function getMock(): AppBindings {
   if (!mockSingleton) mockSingleton = makeMockApp();
@@ -492,9 +626,38 @@ function getMock(): AppBindings {
 
 // onEvent subscribes to the agent's typed event stream; returns an unsubscribe.
 export function onEvent(cb: (e: WireEvent) => void): () => void {
+  // 1. 首先检查Wails环境
   if (realApp() && typeof window !== "undefined" && window.runtime) {
     return window.runtime.EventsOn(EVENT_CHANNEL, (payload) => cb(payload as WireEvent));
   }
+
+  // 2. 在浏览器环境中，使用Web API的事件流
+  if (shouldUseWebApi()) {
+    console.log('🌐 Using Web API event stream');
+    const webApi = getWebApi();
+    return webApi.onEvent(cb);
+  }
+
+  // 3. 检查HTTP API是否可用并连接事件流
+  const httpClient = getHttpClient();
+  if (httpClient) {
+    console.log('🌐 Connecting to HTTP API event stream');
+    try {
+      const eventSource = httpClient.connectEventStream(cb, (error) => {
+        console.error('HTTP API event stream error:', error);
+      });
+
+      return () => {
+        if (eventSource) {
+          eventSource.close();
+        }
+      };
+    } catch (error) {
+      console.warn('HTTP API event stream connection failed, falling back to mock:', error);
+    }
+  }
+
+  // 4. 回退到mock订阅
   return mockSubscribe(cb);
 }
 
@@ -681,14 +844,74 @@ function bridgeBreadcrumb(method: string): string {
   return "";
 }
 
+// HTTP API绑定缓存（用于处理异步检查）
+let httpApiBinding: AppBindings | null = null;
+let httpApiCheckInProgress = false;
+let httpApiChecked = false;
+
+/**
+ * 初始化HTTP API绑定（异步检查）
+ */
+async function initHttpApiBinding() {
+  if (httpApiChecked || httpApiCheckInProgress) {
+    return;
+  }
+
+  httpApiCheckInProgress = true;
+  try {
+    const binding = await getRealBindingOrHttp();
+    if (binding) {
+      httpApiBinding = binding;
+      console.log('✅ HTTP API binding initialized');
+    }
+    httpApiChecked = true;
+  } finally {
+    httpApiCheckInProgress = false;
+  }
+}
+
 function elapsedMs(startedAt: number): number {
   const now = typeof performance !== "undefined" ? performance.now() : Date.now();
   return Math.max(0, Math.round(now - startedAt));
 }
 
+/**
+ * 获取当前应该使用的绑定（同步版本）
+ * 优先级: Wails > Web API > HTTP API缓存 > Mock
+ */
+function getCurrentBinding(): AppBindings {
+  // 1. 首先检查Wails环境
+  const wailsApp = realApp();
+  if (wailsApp) {
+    return wailsApp;
+  }
+
+  // 2. 在浏览器环境中，使用Web API（直接调用DeepSeek）
+  if (shouldUseWebApi()) {
+    console.log('🌐 Using Web API (Direct DeepSeek integration)');
+    return getWebApi() as unknown as AppBindings;
+  }
+
+  // 3. 检查HTTP API缓存
+  if (httpApiBinding) {
+    return httpApiBinding;
+  }
+
+  // 4. 启动异步HTTP API检查（不阻塞当前调用）
+  if (!httpApiChecked && !httpApiCheckInProgress) {
+    initHttpApiBinding().catch(err => {
+      console.warn('HTTP API binding initialization failed:', err);
+    });
+  }
+
+  // 5. 回退到mock
+  console.log('🔧 Falling back to mock data (no Wails, Web API, or HTTP API available)');
+  return getMock();
+}
+
 export const app: AppBindings = new Proxy({} as AppBindings, {
   get(_t, prop) {
-    const target = realApp() ?? getMock();
+    const target = getCurrentBinding();
     const v = (target as unknown as Record<string, unknown>)[String(prop)];
     if (typeof v !== "function") return v;
     return (...args: unknown[]) => {
@@ -901,7 +1124,7 @@ const mockProviderPresetTemplates: MockProviderPresetTemplate[] = [
   mockPreset("stepfun", "StepFun", "StepFun coding-plan OpenAI-compatible endpoint.", "STEPFUN_API_KEY", mockProviderTemplate({ name: "stepfun", kind: "openai", baseUrl: "https://api.stepfun.com/step_plan/v1", models: mockStepFunModels, default: "step-3.7-flash", apiKeyEnv: "STEPFUN_API_KEY", supportedEfforts: ["low", "medium", "high"], defaultEffort: "medium" })),
   mockPreset("stepfun-anthropic", "StepFun Anthropic", "StepFun coding-plan Anthropic-compatible endpoint.", "STEPFUN_API_KEY", mockProviderTemplate({ name: "stepfun-anthropic", kind: "anthropic", baseUrl: "https://api.stepfun.com/step_plan", models: mockStepFunModels, default: "step-3.7-flash", apiKeyEnv: "STEPFUN_API_KEY", thinking: "adaptive", supportedEfforts: ["low", "medium", "high"], defaultEffort: "medium" })),
   mockPreset("novita", "NovitaAI", "NovitaAI OpenAI-compatible multi-model gateway.", "NOVITA_API_KEY", mockProviderTemplate({ name: "novita", kind: "openai", baseUrl: "https://api.novita.ai/openai/v1", models: mockNovitaModels, default: "zai-org/glm-5.2", apiKeyEnv: "NOVITA_API_KEY" })),
-  mockPreset("gmi", "GMI Cloud", "GMI Cloud direct multi-model OpenAI-compatible gateway.", "GMI_API_KEY", mockProviderTemplate({ name: "gmi", kind: "openai", baseUrl: "https://api.gmi-serving.com/v1", models: mockGMIModels, default: "zai-org/GLM-5.2-FP8", apiKeyEnv: "GMI_API_KEY", headers: { "User-Agent": "Reasonix" } })),
+  mockPreset("gmi", "GMI Cloud", "GMI Cloud direct multi-model OpenAI-compatible gateway.", "GMI_API_KEY", mockProviderTemplate({ name: "gmi", kind: "openai", baseUrl: "https://api.gmi-serving.com/v1", models: mockGMIModels, default: "zai-org/GLM-5.2-FP8", apiKeyEnv: "GMI_API_KEY", headers: { "User-Agent": "EduShield" } })),
   mockPreset("vercel-ai-gateway", "Vercel AI Gateway", "Vercel AI Gateway via Anthropic-compatible Messages API.", "AI_GATEWAY_API_KEY", mockProviderTemplate({ name: "vercel-ai-gateway", kind: "anthropic", baseUrl: "https://ai-gateway.vercel.sh", models: mockVercelModels, visionModels: ["anthropic/claude-sonnet-4.6", "anthropic/claude-opus-4.8", "openai/gpt-5.4", "openai/gpt-5.4-pro", "moonshotai/kimi-k2.7-code"], default: "anthropic/claude-sonnet-4.6", apiKeyEnv: "AI_GATEWAY_API_KEY", authHeader: true, contextWindow: 1000000 })),
   mockPreset("huggingface", "HuggingFace Router", "HuggingFace Inference Router OpenAI-compatible endpoint.", "HF_TOKEN", mockProviderTemplate({ name: "huggingface", kind: "openai", baseUrl: "https://router.huggingface.co/v1", models: ["zai-org/GLM-5.2", "deepseek-ai/DeepSeek-V3.2", "Qwen/Qwen3.5-72B-Instruct"], default: "zai-org/GLM-5.2", apiKeyEnv: "HF_TOKEN" })),
   mockPreset("nvidia", "NVIDIA NIM", "NVIDIA NIM OpenAI-compatible accelerated inference endpoint.", "NVIDIA_API_KEY", mockProviderTemplate({ name: "nvidia", kind: "openai", baseUrl: "https://integrate.api.nvidia.com/v1", models: ["nvidia/nemotron-3-nano-30b-a3b", "nvidia/nemotron-3-super-120b-a12b", "nvidia/nemotron-3-ultra-550b-a55b", "deepseek-ai/deepseek-v4-pro", "qwen/qwen3.5-397b-a17b"], default: "nvidia/nemotron-3-nano-30b-a3b", apiKeyEnv: "NVIDIA_API_KEY" })),
@@ -1161,7 +1384,7 @@ function makeMockApp(): AppBindings {
       noProxy: "",
       proxy: { type: "socks5", server: "127.0.0.1", port: 7890, username: "", password: "" },
     },
-    agent: { temperature: 0.2, maxSteps: 0, plannerMaxSteps: 0, maxSubagentDepth: 2, systemPrompt: "You are Reasonix, a coding agent.", coldResumePrune: true, reasoningLanguage: "auto" },
+    agent: { temperature: 0.2, maxSteps: 0, plannerMaxSteps: 0, maxSubagentDepth: 2, systemPrompt: "You are EduShield, a coding agent.", coldResumePrune: true, reasoningLanguage: "auto" },
     bot: {
       enabled: !freshMock,
       model: "",
@@ -2043,7 +2266,7 @@ function makeMockApp(): AppBindings {
           tool: {
             id: parentId,
             name: "explore",
-            args: JSON.stringify({ task: "在 Reasonix 前端中检查工具调用图标和嵌套调用展示" }),
+            args: JSON.stringify({ task: "在 EduShield 前端中检查工具调用图标和嵌套调用展示" }),
             readOnly: true,
             profile: { model: "mock-reasonix", effort: "high" },
           },
@@ -2491,6 +2714,10 @@ function makeMockApp(): AppBindings {
       workspaces = workspaces.filter((p) => p !== path);
       const index = mockProjectTree.findIndex((node) => node.root === path);
       if (index >= 0) mockProjectTree.splice(index, 1);
+    },
+    async CreateProject(input: { name: string; target?: string; description?: string; color?: string }) {
+      // dev mock：桌面壳不会走到（Web 形态才有此入口），提供最小实现满足接口
+      return { id: `mock-project-${Date.now()}`, name: input.name, target: input.target, description: input.description, color: input.color };
     },
         async ContextUsage() {
           return { used: 42124, window: 128000, sessionTokens: 34479, compactRatio: 0.8 };
@@ -3102,7 +3329,7 @@ function makeMockApp(): AppBindings {
     },
     async ReadFile(rel: string) {
       const samples: Record<string, string> = {
-        "README.md": "# Reasonix\n\nBrowser-dev workspace preview.\n\n- Chat in the center\n- Browse files on the right\n- Keep sessions on the left\n",
+        "README.md": "# EduShield\n\nBrowser-dev workspace preview.\n\n- Chat in the center\n- Browse files on the right\n- Keep sessions on the left\n",
         "go.mod": "module reasonix\n\ngo 1.23\n",
         "desktop/file.go": "package desktop\n\nfunc main() {\n\tprintln(\"workspace preview\")\n}\n",
         "internal/event.go": "package internal\n\n// mock file used by the browser dev seam\n",
@@ -3276,7 +3503,7 @@ function makeMockApp(): AppBindings {
           {
             path: "REASONIX.md",
             scope: "project",
-            body: "# Reasonix project memory\n\nMock doc shown in the browser dev seam.\n\n## Notes\n\n- prefers concise replies",
+            body: "# EduShield project memory\n\nMock doc shown in the browser dev seam.\n\n## Notes\n\n- prefers concise replies",
           },
           {
             path: "~/.config/reasonix/REASONIX.md",
@@ -3327,9 +3554,9 @@ function makeMockApp(): AppBindings {
           {
             id: "skill-reasonix-pr-followup",
             name: "reasonix-pr-followup",
-            description: "Review or update a Reasonix GitHub PR, address feedback, verify, and publish safely.",
+            description: "Review or update an EduShield GitHub PR, address feedback, verify, and publish safely.",
             scope: "project",
-            body: "# Reasonix PR Followup\n\nUse this skill for repeated Reasonix PR work.\n\n## Workflow\n\n1. Confirm branch and PR state.\n2. Inspect the diff.\n3. Fix actionable feedback.\n4. Verify and update the PR.\n",
+            body: "# EduShield PR Followup\n\nUse this skill for repeated EduShield PR work.\n\n## Workflow\n\n1. Confirm branch and PR state.\n2. Inspect the diff.\n3. Fix actionable feedback.\n4. Verify and update the PR.\n",
             reason: "recent history repeatedly touched PR workflows",
             evidence: ["mock-pr-session: 提交到pr，并更新内容", "mock-review-session: 解决该pr下机器人提出来的问题"],
           },

@@ -1,4 +1,4 @@
-// Package config loads Reasonix's runtime configuration from TOML. Resolution order:
+// Package config loads EduShield's runtime configuration from TOML. Resolution order:
 // flag > project ./reasonix.toml > user config.toml (in the OS user-config dir) > built-in defaults.
 // Secrets come from the environment via api_key_env and are never stored in
 // config files.
@@ -37,7 +37,7 @@ func SkillNameKey(name string) string {
 	return name
 }
 
-// Config is Reasonix's runtime configuration.
+// Config is EduShield's runtime configuration.
 type Config struct {
 	ConfigVersion    int                 `toml:"config_version"`
 	DefaultModel     string              `toml:"default_model"`
@@ -124,7 +124,7 @@ const (
 // DesktopConfig so desktop preferences cannot alter terminal output or prompts.
 type UIConfig struct {
 	Theme          string `toml:"theme"`           // auto|dark|light; empty resolves to auto
-	ThemeStyle     string `toml:"theme_style"`     // graphite|aurora|slate|carbon|nocturne|amber and legacy aliases
+	ThemeStyle     string `toml:"theme_style"`     // console|morandi|graphite|aurora|slate|carbon|nocturne|amber and legacy aliases
 	ShortcutLayout string `toml:"shortcut_layout"` // classic|desktop; accepted for compatibility
 	CloseBehavior  string `toml:"close_behavior"`  // legacy desktop close behavior; prefer desktop.close_behavior
 	ShowReasoning  bool   `toml:"show_reasoning"`  // Ctrl+O / /verbose: show thinking text in CLI; false = collapsed
@@ -138,7 +138,7 @@ type DesktopConfig struct {
 	Language                string   `toml:"language"`                   // auto|en|zh; empty/auto = browser/OS auto-detect
 	LayoutStyle             string   `toml:"layout_style"`               // classic|workbench|creation; desktop layout style
 	Theme                   string   `toml:"theme"`                      // auto|dark|light; empty resolves to auto
-	ThemeStyle              string   `toml:"theme_style"`                // graphite|aurora|slate|carbon|nocturne|amber and legacy aliases
+	ThemeStyle              string   `toml:"theme_style"`                // console|morandi|graphite|aurora|slate|carbon|nocturne|amber and legacy aliases
 	ExternalOpener          string   `toml:"external_opener"`            // preferred installed app used by the desktop Open control
 	CloseBehavior           string   `toml:"close_behavior"`             // quit|background; desktop window close behavior
 	DisplayMode             string   `toml:"display_mode"`               // standard|compact (legacy "minimal" maps to compact); transcript display mode
@@ -231,7 +231,7 @@ func (c *Config) UICursorShape() string {
 
 func normalizeThemeStyle(style string) string {
 	switch strings.ToLower(strings.TrimSpace(style)) {
-	case "graphite", "aurora", "slate", "carbon", "nocturne", "amber", "ember", "midnight", "sandstone", "porcelain", "linen", "glacier":
+	case "console", "morandi", "graphite", "aurora", "slate", "carbon", "nocturne", "amber", "ember", "midnight", "sandstone", "porcelain", "linen", "glacier":
 		return strings.ToLower(strings.TrimSpace(style))
 	default:
 		return ""
@@ -1556,9 +1556,34 @@ func (c *Config) AutoStartPlugins() []PluginEntry {
 }
 
 // DefaultSystemPrompt is used when config provides none.
-const DefaultSystemPrompt = `You are Reasonix, a coding agent.
-Use the available tools when they help you complete the user's request.
-Keep changes focused and responses concise.`
+const DefaultSystemPrompt = `You are EduShield, a cybersecurity agent for security assessment, penetration testing, vulnerability research, and incident response.
+Use available tools; keep findings focused and responses concise.`
+
+// SecurityEthicsPolicy is appended to every system prompt for the cybersecurity
+// agent persona, ensuring legal and ethical guardrails are always present.
+const SecurityEthicsPolicy = `Security ethics and legal compliance:
+- ONLY test targets you have explicit written authorization to test. If authorization is unclear, call the ask tool to confirm before any active probing.
+- Follow responsible disclosure: report findings to the user privately; never exfiltrate or publish vulnerability data.
+- Minimize impact: use the least intrusive method that answers the question; avoid denial-of-service, rate-limit brute-force, and never pivot beyond the authorized scope.
+- Respect data privacy: sensitive data discovered during testing (PII, credentials, keys) must be flagged in findings but never stored, forwarded, or logged beyond the session.
+- Know your jurisdiction: computer fraud and abuse laws vary by country; when in doubt about legality, state the concern and stop.
+- Red-team/offensive tools available via bash are powerful — verify the target and scope before launching them.`
+
+// SecurityToolBridgePolicy describes the bridge between built-in tools and
+// external security tools available on the host (Kali Linux tools, etc.).
+const SecurityToolBridgePolicy = `External security tools (via bash):
+The environment section below lists detected security tools available on this host. Common Kali/security tools you can invoke through bash include:
+- Network scanning: nmap, masscan, fscan, naabu, rustscan, zmap
+- Web testing: sqlmap, burpsuite, nikto, wfuzz, ffuf, dirb, gobuster, whatweb, wafw00f
+- Exploitation: metasploit (msfconsole/msfvenom), searchsploit, exploitdb
+- Password testing: hydra, john, hashcat, medusa
+- Forensics: volatility, autopsy, binwalk, foremost, strings, exiftool
+- OSINT: theHarvester, recon-ng, spiderfoot, maltego
+- Protocol analysis: tcpdump, wireshark/tshark, netcat, socat
+- Wireless: aircrack-ng, reaver, kismet
+- Reverse engineering: ghidra, radare2, objdump, ltrace, strace
+
+Always prefer the dedicated built-in security tools (listed in the Skills index) for structured results; fall back to raw bash invocation of external tools when you need capabilities the built-in tools don't cover, or when the user specifically requests a particular tool. When running external tools via bash, capture and parse their output into structured findings.`
 
 // UserDecisionPolicy is appended to every system prompt, including user-custom
 // prompts, so custom personas cannot accidentally remove the `ask` UI contract.
@@ -1753,7 +1778,7 @@ func (e *ProviderEntry) APIKey() string {
 
 // ResolveAPIKeyFromProcessEnvForProbe pins a setup-time, user-entered key onto
 // this entry for an immediate connectivity probe. Normal runtime resolution does
-// not call this; loaded provider entries still resolve only from Reasonix's
+// not call this; loaded provider entries still resolve only from EduShield's
 // global .env.
 func (e *ProviderEntry) ResolveAPIKeyFromProcessEnvForProbe() {
 	if e == nil {

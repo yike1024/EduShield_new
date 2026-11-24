@@ -144,7 +144,7 @@ func buildSummary(r Report) Summary {
 func collectInstructions(root, home string, disp func(string) string) InstructionsReport {
 	userDir := config.MemoryUserDir()
 	if home != "" && (userDir == "" || strings.Contains(userDir, home)) {
-		// Prefer explicit test home when Reasonix home is under it.
+		// Prefer explicit test home when EduShield home is under it.
 		if custom := filepath.Join(home, ".reasonix"); custom != "" {
 			if userDir == "" {
 				userDir = custom
@@ -375,7 +375,7 @@ func collectPlugins(reasonixHome string, disp func(string) string) (PluginPackag
 			Severity: "error", Code: "plugin.state_read_failed", Subsystem: "plugins",
 			Source:      rep.StatePath,
 			Message:     "failed to read plugin-packages state",
-			Remediation: "Ensure Reasonix home is readable or reinstall packages",
+			Remediation: "Ensure EduShield home is readable or reinstall packages",
 			SettingsTab: "plugins",
 		})
 		return rep, issues

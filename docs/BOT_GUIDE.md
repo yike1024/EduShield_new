@@ -1,4 +1,4 @@
-# Reasonix Bot Guide
+# EduShield Bot Guide
 
 <a href="../README.md">README</a>
 &nbsp;·&nbsp;
@@ -7,7 +7,7 @@
 <a href="./GUIDE.md">General guide</a>
 
 > For desktop and CLI users. This guide explains how to connect Feishu, Lark,
-> WeChat, and QQ bots, how to use Reasonix from IM, and how approvals, Ask
+> WeChat, and QQ bots, how to use EduShield from IM, and how approvals, Ask
 > questions, YOLO, and bot commands work.
 
 ## Contents
@@ -25,14 +25,14 @@
 
 ## What the bot does
 
-After a bot is connected, you can send Reasonix messages from Feishu, Lark,
+After a bot is connected, you can send EduShield messages from Feishu, Lark,
 WeChat, or QQ. The desktop app or `reasonix bot start` process handles the
 model, tools, permissions, sandboxing, and local context, then sends progress
 and results back to the IM channel.
 
 Common uses:
 
-- Ask Reasonix to inspect code, read docs, explain errors, or summarize findings.
+- Ask EduShield to inspect code, read docs, explain errors, or summarize findings.
 - Trigger tool calls from IM and receive progress or final results in the chat.
 - Approve or deny sensitive actions such as file writes or shell commands.
 - Enable YOLO for trusted temporary work so ordinary tool approvals are skipped.
@@ -61,7 +61,7 @@ while a `reasonix bot start` process is alive.
 
 ## Connect the four channels
 
-Open the Reasonix desktop app and go to **Settings -> Bots**. In **Add IM Bot**,
+Open the EduShield desktop app and go to **Settings -> Bots**. In **Add IM Bot**,
 choose a channel and scan the QR code.
 
 ```mermaid
@@ -101,7 +101,7 @@ Feishu and Lark share the same capability set, but they are saved as separate
 connections. You can give them different models, working directories, or tool
 approval modes. Bot text replies are sent as standalone Interactive Card JSON
 2.0 markdown, which avoids Feishu/Lark platform quote prefixes while preserving
-CommonMark formatting. If a card is too large for the platform limit, Reasonix
+CommonMark formatting. If a card is too large for the platform limit, EduShield
 falls back to plain text automatically.
 
 For webhook mode, configure a verification token. Incoming webhook events are
@@ -164,7 +164,7 @@ The headless gateway uses the same config records as the desktop app:
   such as Feishu vs Lark.
 - `credential.app_id`, `credential.app_secret_env`, `credential.account_id`,
   and `credential.token_env` point to app IDs, app secrets, saved accounts, and
-  tokens. Secrets stay in environment variables or the Reasonix user credentials
+  tokens. Secrets stay in environment variables or the EduShield user credentials
   store.
 - `workspace_root`, `model`, and `tool_approval_mode` can be set per
   connection. This lets different IM channels route to different local projects
@@ -266,7 +266,7 @@ curl -X POST http://127.0.0.1:37913/send \
 sequenceDiagram
   participant U as "User"
   participant IM as "Feishu / Lark / WeChat / QQ"
-  participant R as "Reasonix desktop or bot start"
+  participant R as "EduShield desktop or bot start"
   participant T as "Local tools and model"
 
   U->>IM: "Send a request"
@@ -383,21 +383,21 @@ Project and session navigation:
 - `/attach session <id|query>` continues the remote session from an indexed
   `path:` transcript.
 - `/search all <query>` searches file contents across indexed project roots.
-  Reasonix uses `rg` when available and falls back to a bounded Go scanner.
+  EduShield uses `rg` when available and falls back to a bounded Go scanner.
 
 These navigation commands never accept arbitrary paths typed from IM. They only
 jump to indexed targets and, when role lists are configured, require an admin.
 
 When an adapter supplies media URLs, the gateway downloads those files into the
 current workspace's `.reasonix/attachments` directory and passes them to
-Reasonix as `@.reasonix/attachments/...` references. If an attachment cannot be
+EduShield as `@.reasonix/attachments/...` references. If an attachment cannot be
 saved, the bot sends a short warning and continues with the available text. The
 built-in Feishu, Weixin, and QQ adapters currently focus on text events; ordinary
 IM attachment extraction can be added at the adapter layer.
 
 ## Approvals and YOLO
 
-Reasonix bots use the same permission system as the desktop app. Ask mode is the
+EduShield bots use the same permission system as the desktop app. Ask mode is the
 default: sensitive tool calls such as file writes and shell commands request
 confirmation first.
 
@@ -432,16 +432,16 @@ Recommendations:
 
 ## Do upgrades require rebinding?
 
-No. A normal Reasonix app upgrade or overwrite install does not require
+No. A normal EduShield app upgrade or overwrite install does not require
 rebinding.
 
-Bindings are stored in the user's Reasonix data, not inside the app bundle:
+Bindings are stored in the user's EduShield data, not inside the app bundle:
 
 - Bot connections, remote IDs, allowlists, model choices, and approval modes are
   stored in the user config.
-- Feishu and Lark secrets are stored in Reasonix's global
-  `<Reasonix home>/.env`, shared by CLI and desktop.
-- The WeChat scanned account token is stored in the Reasonix user data
+- Feishu and Lark secrets are stored in EduShield's global
+  `<EduShield home>/.env`, shared by CLI and desktop.
+- The WeChat scanned account token is stored in the EduShield user data
   directory.
 - The QQ App ID is stored in user config; the App Secret is stored under the
   configured env var, `QQ_BOT_APP_SECRET` by default, in the global credentials
@@ -449,7 +449,7 @@ Bindings are stored in the user's Reasonix data, not inside the app bundle:
 
 You may need to bind again if:
 
-- The Reasonix user config directory was deleted.
+- The EduShield user config directory was deleted.
 - You changed machines or OS users.
 - Authorization was revoked on the platform side.
 - The WeChat token expired.

@@ -27,8 +27,8 @@ func TestConfigureCLIThemeSwitchesModeAndDefaultStyle(t *testing.T) {
 	}
 
 	configureCLITheme("dark")
-	if activeCLITheme.name != "dark" || activeCLITheme.style != "graphite" {
-		t.Fatalf("dark theme = %s/%s, want dark/graphite", activeCLITheme.name, activeCLITheme.style)
+	if activeCLITheme.name != "dark" || activeCLITheme.style != "aurora" {
+		t.Fatalf("dark theme = %s/%s, want dark/aurora", activeCLITheme.name, activeCLITheme.style)
 	}
 	if got := accent("x"); !strings.HasPrefix(got, ansiAccent) {
 		t.Fatalf("dark accent = %q, want %q", got, ansiAccent)

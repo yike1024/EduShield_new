@@ -1,6 +1,6 @@
 # Releasing
 
-How Reasonix ships, who can ship what, and the canary-before-stable flow.
+How EduShield ships, who can ship what, and the canary-before-stable flow.
 
 ## Branch model: trunk + tags
 

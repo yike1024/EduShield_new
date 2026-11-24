@@ -4,7 +4,7 @@
 &nbsp;·&nbsp;
 <a href="./REASONING_LANGUAGE.md">English</a>
 
-`agent.reasoning_language` 控制模型服务暴露“可见思考过程”时，Reasonix 希望它优先使用哪种语言。
+`agent.reasoning_language` 控制模型服务暴露“可见思考过程”时，EduShield 希望它优先使用哪种语言。
 
 它不设置最终回答语言，不翻译代码、标识符或文件路径，也不改变模型内部不可见推理。用户在单次提问里明确要求的最终回答语言，仍然优先。
 
@@ -79,9 +79,9 @@ reasoning_language = "auto" # auto|zh|en
 
 ## 缓存影响
 
-`auto` 仍然对缓存友好。用户原始提问明显是中文时，Reasonix 会为这一轮加入同样很小的 `<reasoning-language>` 临时 block；英文或信号不明确时不注入，只复用已有的稳定语言策略。`@file` 等注入的引用内容不会参与这个自动判断。
+`auto` 仍然对缓存友好。用户原始提问明显是中文时，EduShield 会为这一轮加入同样很小的 `<reasoning-language>` 临时 block；英文或信号不明确时不注入，只复用已有的稳定语言策略。`@file` 等注入的引用内容不会参与这个自动判断。
 
-当设置为 `zh` 或 `en` 时，Reasonix 总是会把一个很小的 `<reasoning-language>` 临时 block 放进本次 user turn。所有模式下，它都不会改变：
+当设置为 `zh` 或 `en` 时，EduShield 总是会把一个很小的 `<reasoning-language>` 临时 block 放进本次 user turn。所有模式下，它都不会改变：
 
 - system prompt
 - 工具 schema 的字节或顺序

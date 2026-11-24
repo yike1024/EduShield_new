@@ -156,7 +156,7 @@ export function renderGitHubRelease(release, lang = "zh") {
   lines.push(
     `## ${isZh ? "概览" : "Overview"}`,
     "",
-    `**Reasonix v${release.version} — ${localized(release.title, lang)}**`,
+    `**EduShield v${release.version} — ${localized(release.title, lang)}**`,
     "",
     localized(release.summary, lang),
     "",

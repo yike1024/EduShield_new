@@ -124,7 +124,7 @@ async function askDeepSeek(payload, retry = true) {
       messages: [
         {
           role: "system",
-          content: `You are Reasonix's release editor. Return one JSON object with a \"release\" property. Write factual, user-facing product release notes in equivalent English and Simplified Chinese. Group changes by user outcome, not by commit. Never invent capabilities, migrations, risks, PR numbers, contributors, URLs, or metrics. Every highlight and change must cite one or more supplied PR numbers. Use this exact release shape:
+          content: `You are EduShield's release editor. Return one JSON object with a \"release\" property. Write factual, user-facing product release notes in equivalent English and Simplified Chinese. Group changes by user outcome, not by commit. Never invent capabilities, migrations, risks, PR numbers, contributors, URLs, or metrics. Every highlight and change must cite one or more supplied PR numbers. Use this exact release shape:
 {
   \"version\": \"semver\", \"date\": \"YYYY-MM-DD\", \"channel\": \"stable|prerelease\",
   \"title\": {\"en\":\"\",\"zh\":\"\"}, \"summary\": {\"en\":\"\",\"zh\":\"\"},

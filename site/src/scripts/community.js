@@ -1,4 +1,4 @@
-// Reasonix Community client. Renders the forum from the forum.reasonix.io API and
+// EduShield Community client. Renders the forum from the forum.reasonix.io API and
 // gates posting on the shared id.reasonix.io session (cookie sent cross-subdomain).
 // Bilingual like the rest of the site: static labels via .l-en/.l-zh spans that the
 // shared `reasonix-lang` choice toggles; plain-text strings pick the current lang.
@@ -76,7 +76,7 @@ const CATDESC = {
   announcements: ["Releases, roadmap, and community news.", "版本发布、路线图与社区动态。"],
   help: ["Stuck on setup, config, or cache behavior? Ask here.", "安装、配置或缓存问题？在这里提问。"],
   skills: ["Share, request, and review community skills and MCP servers.", "分享、求助、评审社区技能与 MCP 服务。"],
-  show: ["Built something with Reasonix? Show the community.", "用 Reasonix 做了东西？来给社区看看。"],
+  show: ["Built something with EduShield? Show the community.", "用 EduShield 做了东西？来给社区看看。"],
   feedback: ["Feature requests and product feedback.", "功能建议与产品反馈。"],
 };
 const catName = (slug, apiName) => (CATS[slug] ? L(CATS[slug][0], CATS[slug][1]) : esc(apiName));
@@ -213,7 +213,7 @@ async function renderThread() {
   const { topic, posts } = data;
   firstPostId = posts[0]?.id || 0;
 
-  document.title = `${topic.title} — ${t("Reasonix Community", "Reasonix 社区")}`;
+  document.title = `${topic.title} — ${t("EduShield Community", "EduShield 社区")}`;
   el("crumb-cat").textContent = catText(topic.category, topic.category);
   el("crumb-title").textContent = topic.title;
   el("t-title").textContent = topic.title;
@@ -236,7 +236,7 @@ async function renderThread() {
 
   const zone = el("reply-zone");
   if (!account) {
-    zone.innerHTML = `<div class="composer"><div class="gate"><p>${L("Sign in with your Reasonix account to reply.", "用你的 Reasonix 账号登录后回复。")}</p><a class="btn btn-primary" href="${loginUrl()}">${L("Sign in", "登录")}</a></div></div>`;
+    zone.innerHTML = `<div class="composer"><div class="gate"><p>${L("Sign in with your EduShield account to reply.", "用你的 EduShield 账号登录后回复。")}</p><a class="btn btn-primary" href="${loginUrl()}">${L("Sign in", "登录")}</a></div></div>`;
     return;
   }
   zone.innerHTML = `

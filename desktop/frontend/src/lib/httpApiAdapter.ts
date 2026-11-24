@@ -222,9 +222,54 @@ class HttpApiClient {
 
   /**
    * 健康检查
+   * reasonix 无 /health 路由，改用 /status（真实存在）判断服务可用性。
    */
   async healthCheck(): Promise<{ status: string; version: string }> {
-    return this.request('/health');
+    return this.request('/status');
+  }
+
+  /**
+   * 上传非图片附件到大脑并返回相对路径（修复 Bug【web 模式 SavePastedFile 永远返回 undefined】）
+   *
+   * 与桌面端 Wails 桥（desktop/app.go:9120 → control.SaveAttachmentDataURL）等价；
+   * 调用大脑新增的 POST /save-attachment 端点（详见
+   * aisoc-docs/13-大脑新增附件上传端点.md），要求 application/json。
+   *
+   * 参数：
+   *   name    - 用户原文件名（含扩展名，如 "access.log"）；服务端会用扩展名
+   *             生成安全后缀 [a-z0-9]{1,12}，其他写入 .bin。
+   *   dataUrl - "data:<mime>;base64,<...>"，服务端正则只识别 base64 + ; 前缀。
+   *
+   * 返回：相对路径（如 ".reasonix/attachments/clipboard-...txt"），前端 Web Composer
+   *       会把它塞进 attachments Map，后续 expandFileReferences 不会直接读它
+   *       （当前架构下，web 附件内容是读 Map 然后 UTF-8 解码内联进消息文本），
+   *       但路径要可读以兼容后续 brain→部件协议设计。
+   *
+   * 上限：服务端 maxFileAttachmentBytes = 25 MB，超出应抛 413。
+   *
+   * 注意：超时用 60s（其他端点 30s 不够，10 MB base64 ≈ 13.3 MB 文本 + 走 proxy / nginx
+   *       + 服务端 base64 解码 + 写盘，可能跑满默认超时）。
+   */
+  async savePastedFile(name: string, dataUrl: string): Promise<string> {
+    const url = `${this.baseUrl}/save-attachment`;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (this.authToken) {
+      headers['Authorization'] = `Bearer ${this.authToken}`;
+    }
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ name, dataUrl }),
+      signal: AbortSignal.timeout(60_000),
+    });
+    if (!resp.ok) {
+      const txt = await resp.text();
+      throw new Error(`save-attachment HTTP ${resp.status}: ${txt}`);
+    }
+    const j = await resp.json() as { path: string };
+    return j.path;
   }
 
   /**

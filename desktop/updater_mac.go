@@ -103,7 +103,7 @@ func currentMacAppBundle() (string, error) {
 }
 
 func findMacApp(root string) (string, error) {
-	direct := filepath.Join(root, "Reasonix.app")
+	direct := filepath.Join(root, "EduShield.app")
 	if _, err := os.Stat(filepath.Join(direct, "Contents", "Info.plist")); err == nil {
 		return direct, nil
 	}

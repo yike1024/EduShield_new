@@ -1,5 +1,6 @@
 import { PanelLeft, PanelRight, Search } from "lucide-react";
 import { TabBar } from "./TabBar";
+import { UserMenu } from "./UserMenu";
 import type { TabMeta } from "../lib/types";
 import { useT } from "../lib/i18n";
 
@@ -193,6 +194,7 @@ export function AppChrome({
           <PanelRight size={16} />
         </button>
       )}
+      <UserMenu />
     </header>
   );
 }

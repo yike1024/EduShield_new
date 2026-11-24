@@ -9,6 +9,14 @@ import type { Item } from "../lib/useController";
 let passed = 0;
 let failed = 0;
 
+// Node 22+ 暴露 globalThis.navigator（取系统 locale，如 zh-CN），
+// LocaleProvider 会据此把界面切成中文，导致本文件断言的英文文案全部落空。
+// 这里显式固定为 en-US，保证渲染结果与语言环境无关。
+Object.defineProperty(globalThis, "navigator", {
+  configurable: true,
+  value: { language: "en-US" },
+});
+
 function ok(value: unknown, label: string) {
   if (value) {
     process.stdout.write(`  PASS  ${label}\n`);

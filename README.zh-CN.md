@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/logo.svg" alt="Reasonix" width="640"/>
+  <img src="docs/logo.svg" alt="EduShield" width="640"/>
 </p>
 
 <p align="center">
@@ -17,7 +17,7 @@
 </p>
 
 > [!IMPORTANT]
-> **Reasonix 1.0 是用 Go 从零重写的版本** —— 本分支(`main-v2`)已是新的默认分支,后续开发都在这里。
+> **EduShield 1.0 是用 Go 从零重写的版本** —— 本分支(`main-v2`)已是新的默认分支,后续开发都在这里。
 > 早期的 `0.x` TypeScript 版本转为 **legacy**,保留在 [`v1`](https://github.com/esengine/DeepSeek-Reasonix/tree/v1) 分支(仅维护)。
 > 详见**[迁移指南](./docs/MIGRATING.md)**。`npm i -g reasonix` 仍是安装命令——`1.0.0`+ 装的是 Go 二进制,`0.x` 是 legacy TS 版。
 
@@ -83,7 +83,7 @@ make cross      # -> dist/（darwin|linux|windows × amd64|arm64）
 ```sh
 reasonix setup                      # 管理用户配置中的 provider
 reasonix setup --local              # 可选：管理 ./reasonix.toml
-export DEEPSEEK_API_KEY=sk-...      # 也可以让 setup 保存到 Reasonix 全局 .env
+export DEEPSEEK_API_KEY=sk-...      # 也可以让 setup 保存到 EduShield 全局 .env
 reasonix                            # 然后在会话里运行 /init 生成 AGENTS.md（项目记忆）
 reasonix run "把 main.go 里的 TODO 实现掉"
 reasonix run --model deepseek-pro "给这个函数补单元测试"
@@ -106,12 +106,12 @@ api_key_env = "DEEPSEEK_API_KEY"
 ```
 
 优先级为 **flag > `./reasonix.toml` > 用户配置文件 > 内置默认值**；从
-**Reasonix v1.8.1** 开始，用户配置位于 macOS/Linux 的 `~/.reasonix/config.toml`，
+**EduShield v1.8.1** 开始，用户配置位于 macOS/Linux 的 `~/.reasonix/config.toml`，
 Windows 为 `%AppData%\reasonix\config.toml`。迁移细节见
 **[配置路径](./docs/CONFIG_PATHS.zh-CN.md)**，其中也说明了全局 `config.toml`
 和 `.env` 的完整结构。Provider 通过 `api_key_env` 命名密钥，真实密钥值保存在
-CLI 与桌面端共用的 Reasonix 全局 `<Reasonix home>/.env`；项目 `.env` 不再作为
-provider key 的运行时 fallback，但仍会作为当前 workspace 范围内的 MCP/plugin 非 provider `${VAR}` 展开来源，不导入 Reasonix 控制变量。权限、沙盒、插件(MCP)、
+CLI 与桌面端共用的 EduShield 全局 `<EduShield home>/.env`；项目 `.env` 不再作为
+provider key 的运行时 fallback，但仍会作为当前 workspace 范围内的 MCP/plugin 非 provider `${VAR}` 展开来源，不导入 EduShield 控制变量。权限、沙盒、插件(MCP)、
 斜杠命令、`@` 引用与双模型设置,全部在 **[指南](./docs/GUIDE.zh-CN.md)** 里。
 
 ## 文档
@@ -153,7 +153,7 @@ provider key 的运行时 fallback，但仍会作为当前 workspace 范围内�
 
 ## 支持本项目
 
-如果 Reasonix 帮你省了时间或 token，欢迎请杯咖啡。捐助不会换来 feature 优先级，也不会影响 issue 的处理顺序——就是「谢谢」。
+如果 EduShield 帮你省了时间或 token，欢迎请杯咖啡。捐助不会换来 feature 优先级，也不会影响 issue 的处理顺序——就是「谢谢」。
 
 - **国内** — 微信支付（扫下方二维码）
 - **海外** — PayPal: [paypal.me/yuhuahui](https://paypal.me/yuhuahui)
@@ -166,7 +166,7 @@ provider key 的运行时 fallback，但仍会作为当前 workspace 范围内�
 
 ## 致谢
 
-下面这些朋友的工作塑造了 Reasonix 今天的样子 —— 当前按 commit 数统计的前 20 名贡献者。
+下面这些朋友的工作塑造了 EduShield 今天的样子 —— 当前按 commit 数统计的前 20 名贡献者。
 完整贡献者列表在
 [GitHub](https://github.com/esengine/DeepSeek-Reasonix/graphs/contributors?all=1)。
 

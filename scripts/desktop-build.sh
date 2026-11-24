@@ -5,12 +5,12 @@
 #
 # Output lands in <repo>/dist/ with stable, platform-keyed names that
 # desktop/cmd/sign's `manifest` subcommand maps back to update.PlatformKey:
-#   macOS:   Reasonix-darwin-<arch>.zip                  (ditto archive; updater channel)
-#            Reasonix-darwin-universal.dmg               (drag-to-install; human download)
-#   Windows: Reasonix-windows-<arch>-installer.exe       (NSIS per-user installer; updater channel)
-#            Reasonix-windows-<arch>.zip                 (portable human download)
-#   Linux:   Reasonix-linux-<arch>.tar.gz                (bare binary; updater channel)
-#            Reasonix-linux-<arch>.deb                   (Debian/Ubuntu package; human download)
+#   macOS:   EduShield-darwin-<arch>.zip                  (ditto archive; updater channel)
+#            EduShield-darwin-universal.dmg               (drag-to-install; human download)
+#   Windows: EduShield-windows-<arch>-installer.exe       (NSIS per-user installer; updater channel)
+#            EduShield-windows-<arch>.zip                 (portable human download)
+#   Linux:   EduShield-linux-<arch>.tar.gz                (bare binary; updater channel)
+#            EduShield-linux-<arch>.deb                   (Debian/Ubuntu package; human download)
 #
 # Usage: scripts/desktop-build.sh <os/arch> <version> [channel]
 #   e.g. scripts/desktop-build.sh darwin/arm64 v1.1.0
@@ -25,7 +25,7 @@ os="${PLATFORM%/*}"
 arch="${PLATFORM#*/}"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-APPNAME="Reasonix"            # wails.json productName -> Reasonix.app
+APPNAME="EduShield"            # wails.json productName -> EduShield.app
 BINNAME="reasonix-desktop"    # wails.json outputfilename -> linux binary name
 GUARDNAME="reasonix-guard"
 LAUNCHERNAME="reasonix-launcher"
@@ -41,7 +41,7 @@ trap cleanup EXIT
 cd "$ROOT/desktop"
 
 build_guard() {
-	echo "==> go build Reasonix Guard"
+	echo "==> go build EduShield Guard"
 	mkdir -p "$(dirname "$guard_out")"
 	if [ "$arch" = universal ]; then
 		guard_tmp=$(mktemp -d)
@@ -87,16 +87,16 @@ if [ "$os" = windows ]; then
 	go build -trimpath -o "$windows_resource_tool" ./cmd/windows-resource
 	guard_out="$ROOT/desktop/build/windows/installer/$GUARDNAME.exe"
 	build_guard
-	stamp_windows_executable "$guard_out" "Reasonix Guard" "$GUARDNAME" "$GUARDNAME.exe"
+	stamp_windows_executable "$guard_out" "EduShield Guard" "$GUARDNAME" "$GUARDNAME.exe"
 	launcher_out="$ROOT/desktop/build/windows/installer/$LAUNCHERNAME.exe"
 	echo "==> go build Windows GUI launcher"
 	(cd "$ROOT" && GOOS=windows GOARCH="$arch" CGO_ENABLED=0 go build -trimpath \
 		-ldflags="-s -w -H windowsgui -X main.version=$VERSION" -o "$launcher_out" ./cmd/reasonix-guard)
-	stamp_windows_executable "$launcher_out" "Reasonix Launcher" "$LAUNCHERNAME" "$LAUNCHERNAME.exe"
+	stamp_windows_executable "$launcher_out" "EduShield Launcher" "$LAUNCHERNAME" "$LAUNCHERNAME.exe"
 	echo "==> go build Windows update helper"
 	GOOS=windows GOARCH="$arch" go build -trimpath -ldflags="-s -w" \
 		-o "build/windows/installer/$UPDATE_HELPER" ./cmd/update-helper
-	stamp_windows_executable "build/windows/installer/$UPDATE_HELPER" "Reasonix Update Helper" "reasonix-update-helper" "$UPDATE_HELPER"
+	stamp_windows_executable "build/windows/installer/$UPDATE_HELPER" "EduShield Update Helper" "reasonix-update-helper" "$UPDATE_HELPER"
 fi
 build_args=()
 [ "${DESKTOP_BUILD_CLEAN:-1}" != "0" ] && build_args+=(-clean)
@@ -118,7 +118,7 @@ mkdir -p "$ROOT/dist"
 case "$os" in
 darwin)
 	# Wails names the bundle after outputfilename (reasonix-desktop.app); repackage
-	# it as Reasonix.app for a clean user-facing name.
+	# it as EduShield.app for a clean user-facing name.
 	staging=$(mktemp -d)
 	app="$staging/${APPNAME}.app"
 	cp -R "build/bin/reasonix-desktop.app" "$app"

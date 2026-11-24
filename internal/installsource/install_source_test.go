@@ -289,7 +289,7 @@ func TestPlanClaudeCompatibilityReportsAgentsHooksAndMCP(t *testing.T) {
 		t.Fatalf("actions = %+v", planned.Actions)
 	}
 	a := planned.Actions[0]
-	// A Stop hook is imported best-effort, but Reasonix's Stop hook is
+	// A Stop hook is imported best-effort, but EduShield's Stop hook is
 	// observation-only and can't block the turn the way Claude's contract
 	// does, so this must report "partial" rather than silently claiming full
 	// compatibility for semantics it doesn't honor.

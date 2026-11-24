@@ -6,7 +6,7 @@
 &nbsp;·&nbsp;
 <a href="./PLUGIN_PACKAGES.md">Plugin packages</a>
 
-Reasonix ships a read-only capability diagnostics model shared by the CLI and
+EduShield ships a read-only capability diagnostics model shared by the CLI and
 desktop **Settings → Diagnostics**. It reports Skills, Commands, Hooks, plugin
 packages, MCP servers, and instruction docs (`AGENTS.md` / `REASONIX.md` /
 `CLAUDE.md`).

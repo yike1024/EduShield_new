@@ -71,7 +71,7 @@ under `/var/folders`.
 
 - `./dev` started successfully.
 - Wails devserver: `http://127.0.0.1:34193`.
-- External browser loaded the page with title `Reasonix`.
+- External browser loaded the page with title `EduShield`.
 - Browser console had no error/warn entries.
 - Submitted `/goal --research e2e verify autoresearch ui smoke test`.
 - The transcript rendered `autoresearch task created:

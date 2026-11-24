@@ -125,7 +125,7 @@ func IsValidName(name string) bool { return config.IsValidSkillName(name) }
 
 // Options configure a Store. ProjectRoot "" reads only the global + custom
 // scopes. HomeDir "" resolves to the OS home dir (tests point it at a tmpdir).
-// ReasonixHomeDir overrides the canonical Reasonix home; empty uses
+// ReasonixHomeDir overrides the canonical EduShield home; empty uses
 // config.ReasonixHomeDir(), or HomeDir/.reasonix when HomeDir is explicitly set.
 type Options struct {
 	HomeDir          string
@@ -324,7 +324,7 @@ type discoveryRoot struct {
 
 // roots returns the discovery directories, highest priority first: the
 // convention dirs (config.ConventionDirs: .reasonix / .agents / .agent / .claude)
-// under the project root → custom paths → the Reasonix home skills dir → other
+// under the project root → custom paths → the EduShield home skills dir → other
 // home-dir convention dirs. A later root never overrides an earlier one.
 func (s *Store) roots() []discoveryRoot {
 	if s == nil || s.disableDiscovery {

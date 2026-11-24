@@ -1,4 +1,4 @@
-// Package pluginpkg handles installed Reasonix plugin packages.
+// Package pluginpkg handles installed EduShield plugin packages.
 //
 // Plugin packages are higher-level bundles that can contribute skills, hooks,
 // and MCP servers. They are intentionally parsed into package-local structs so
@@ -109,7 +109,7 @@ type MCPServerRef struct {
 	AutoStart   bool
 }
 
-// Manifest is the normalized manifest shape used by Reasonix.
+// Manifest is the normalized manifest shape used by EduShield.
 type Manifest struct {
 	Name        string
 	Version     string
@@ -118,7 +118,7 @@ type Manifest struct {
 	Repository  string
 	Skills      []string
 	// Agents are directories of Claude-style flat agent Markdown files. They are
-	// loaded as plugin-owned, manually invoked Reasonix subagent profiles.
+	// loaded as plugin-owned, manually invoked EduShield subagent profiles.
 	Agents []string
 	// Commands are directories of flat <name>.md slash-command prompt templates
 	// (rendered with $ARGUMENTS/$1..$N on /<name>). Declared explicitly in a
@@ -156,7 +156,7 @@ type MCPServer struct {
 	Imported    bool              `json:"imported,omitempty"`
 }
 
-// State is persisted at <Reasonix home>/plugin-packages.json.
+// State is persisted at <EduShield home>/plugin-packages.json.
 type State struct {
 	Version int               `json:"version"`
 	Plugins []InstalledPlugin `json:"plugins"`
@@ -238,7 +238,7 @@ func SaveState(reasonixHome string, st State) error {
 // process. SaveState writes atomically (tmpfile + rename), so concurrent
 // callers never see a half-written file; this lock additionally prevents two
 // in-process load-modify-save cycles from clobbering each other's edit. It is
-// not a cross-process lock — concurrent Reasonix processes can still race.
+// not a cross-process lock — concurrent EduShield processes can still race.
 var stateMu sync.Mutex
 
 func Upsert(reasonixHome string, p InstalledPlugin) error {
@@ -480,7 +480,7 @@ var claudeConventionSkillDirs = []string{"skills", ".claude/skills"}
 
 // claudeConventionCommandDirs are the directories a Claude plugin loads slash
 // commands from by convention. A command is a flat <name>.md prompt template
-// the user invokes as /<name> — exactly Reasonix's custom-command shape
+// the user invokes as /<name> — exactly EduShield's custom-command shape
 // (internal/command) — so these directories map onto Manifest.Commands and
 // join command discovery at the lowest priority. Unlike skill dirs they are
 // adopted even when the manifest declares skills explicitly, because
@@ -492,7 +492,7 @@ var claudeConventionAgentDirs = []string{"agents"}
 // applyClaudeConventionDirs fills manifest.Skills from the conventional skill
 // directories when the manifest declares none (the standard Claude plugin
 // shape), adopts conventional command directories into manifest.Commands, and
-// reports the conventional capabilities Reasonix cannot map.
+// reports the conventional capabilities EduShield cannot map.
 func applyClaudeConventionDirs(root string, manifest *Manifest) []string {
 	var warnings []string
 	if len(manifest.Skills) == 0 {

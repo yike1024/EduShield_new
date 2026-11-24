@@ -7,13 +7,16 @@ import { normalizeLangPref, useI18n, useT, type DictKey, type LangPref } from ".
 import { apiKeyEnvFromProviderName, inferredVisionModels, mergedFetchedProviderModels, providerApiKeyEnvForSave, providerDefaultModel, providerIsConfigured, providerModelCandidates, providerRequiresKey } from "../lib/providerModels";
 import { useUpdater } from "../lib/useUpdater";
 import {
-  THEME_STYLES,
+  THEME_PALETTES,
+  applyPalette,
   applyTheme,
   getTheme,
+  getThemePalette,
   getThemeStyle,
   normalizeThemePreference,
   normalizeThemeStyleForTheme,
   type Theme,
+  type ThemePalette,
   type ThemeStyle,
 } from "../lib/theme";
 import { TEXT_SIZES, applyTextSize, getTextSize, type TextSize } from "../lib/textSize";
@@ -47,8 +50,9 @@ import {
   shortcutDefinitions,
   type ShortcutAction,
 } from "../lib/keyboardShortcuts";
-import type { BotAccessView, BotAllowlistView, BotConnectionDiagnostic, BotConnectionView, BotInstallStartResult, BotRouteView, BotSettingsView, HookConfigView, HooksSettingsView, NetworkView, ProviderPresetView, ProviderView, SettingsTab, SettingsView } from "../lib/types";
+import type { BotAccessView, BotAllowlistView, BotConnectionDiagnostic, BotConnectionView, BotInstallStartResult, BotRouteView, BotSettingsView, HookConfigView, HooksSettingsView, MemoryCompilerStats, NetworkView, ProviderPresetView, ProviderView, SettingsTab, SettingsView } from "../lib/types";
 import { InlineConfirmButton } from "./InlineConfirmButton";
+import { clearCurrentNs, currentNs } from "../lib/userScopedStorage";
 import { Tooltip } from "./Tooltip";
 import { AnchoredPopover } from "./AnchoredPopover";
 import { getGenerativePreset, setGenerativePreset, generativeMusic, type GenerativePreset } from "../lib/generative-music";
@@ -80,6 +84,7 @@ export function SettingsPanel({
   agentRunning = false,
   desktopPlatform,
   onUseSubagent,
+  memoryCompilerStats,
 }: {
   onClose: () => void;
   onChanged: (settings?: SettingsView | null) => void;
@@ -88,6 +93,7 @@ export function SettingsPanel({
   agentRunning?: boolean;
   desktopPlatform: DesktopPlatform;
   onUseSubagent: (command: string) => void;
+  memoryCompilerStats?: MemoryCompilerStats;
 }) {
   const t = useT();
   const [s, setS] = useState<SettingsView | null>(null);
@@ -98,6 +104,12 @@ export function SettingsPanel({
   const [warning, setWarning] = useState<string | null>(null);
   const [theme, setThemeState] = useState<Theme>(getTheme());
   const [themeStyle, setThemeStyleState] = useState<ThemeStyle>(() => getThemeStyle(getTheme()));
+  // palette is persisted to localStorage only (no native sync).
+  const [palette, setPaletteState] = useState<ThemePalette>(getThemePalette());
+  // desktop style is pinned to the system default; the UI for selecting it has
+  // been removed at user request (no appreciable visual effect vs. palette).
+  // We still re-read getDesktopStyle() so any persisted legacy value is honoured
+  // on DOM (via initTheme) without surfacing it as a user-facing knob.
   const [textSize, setTextSizeState] = useState<TextSize>(getTextSize());
   const [zoomPct, setZoomPct] = useState<number>(zoomToPercent(getRestartZoom()));
   const [fontFamily, setFontFamilyState] = useState<FontFamily>(getFontFamily());
@@ -256,7 +268,7 @@ export function SettingsPanel({
               loadingSettings ? <div className="empty">{t("settings.loading")}</div> : null
             ) : (
               <>
-                {tab === "general" && s && <SettingsPageShell key={tab} s={s} tab={tab} busy={busy} apply={apply}><GeneralSection s={s} busy={busy} apply={apply} agentRunning={agentRunning} /></SettingsPageShell>}
+                {tab === "general" && s && <SettingsPageShell key={tab} s={s} tab={tab} busy={busy} apply={apply}><GeneralSection s={s} busy={busy} apply={apply} agentRunning={agentRunning} /><DataSection /></SettingsPageShell>}
                 {tab === "models" && s && <SettingsPageShell key={tab} s={s} tab={tab} busy={busy} apply={apply}><ModelsSection s={s} busy={busy} apply={apply} backgroundApply={backgroundApply} /></SettingsPageShell>}
                 {tab === "bots" && s && <SettingsPageShell key={tab} s={s} tab={tab} busy={busy} apply={apply}><BotsSection s={s} busy={busy} apply={apply} initialFocus={initialFocus} /></SettingsPageShell>}
                 {tab === "mcp" && <SettingsPageShell key={tab} s={s} tab={tab} busy={false} apply={apply}><Suspense fallback={lazySettingsPageFallback}><MCPServersSettingsPage /></Suspense></SettingsPageShell>}
@@ -266,7 +278,7 @@ export function SettingsPanel({
                   requestClose();
                 }} /></Suspense></SettingsPageShell>}
                 {tab === "plugins" && <SettingsPageShell key={tab} s={s} tab={tab} busy={false} apply={apply}><Suspense fallback={lazySettingsPageFallback}><PluginsSettingsPage /></Suspense></SettingsPageShell>}
-                {tab === "memory" && <SettingsPageShell key={tab} s={s} tab={tab} busy={false} apply={apply}><Suspense fallback={lazySettingsPageFallback}><MemorySettingsPage /></Suspense></SettingsPageShell>}
+                {tab === "memory" && <SettingsPageShell key={tab} s={s} tab={tab} busy={false} apply={apply}><Suspense fallback={lazySettingsPageFallback}><MemorySettingsPage memoryCompilerStats={memoryCompilerStats} /></Suspense></SettingsPageShell>}
                 {tab === "hooks" && <SettingsPageShell key={tab} s={s} tab={tab} busy={false} apply={apply}><HooksSection onChanged={onChanged} /></SettingsPageShell>}
                 {tab === "diagnostics" && <SettingsPageShell key={tab} s={s} tab={tab} busy={false} apply={apply}><Suspense fallback={lazySettingsPageFallback}><DiagnosticsSettingsPage onNavigate={setTab} /></Suspense></SettingsPageShell>}
                 {tab === "shortcuts" && <SettingsPageShell key={tab} s={s} tab={tab} busy={false} apply={apply}><ShortcutsSection /></SettingsPageShell>}
@@ -277,7 +289,7 @@ export function SettingsPanel({
                   <SettingsPageShell key={tab} s={s} tab={tab} busy={busy} apply={apply}>
                     <AppearanceSection
                       theme={theme}
-                      themeStyle={themeStyle}
+                      palette={palette}
                       textSize={textSize}
                       showDisplayZoom={desktopPlatform === "windows"}
                       zoomPct={zoomPct}
@@ -290,10 +302,9 @@ export function SettingsPanel({
                         setThemeState(nextTheme);
                         void apply(() => app.SetDesktopAppearance(nextTheme, themeStyle));
                       }}
-                      onThemeStyle={(style) => {
-                        applyTheme(theme, style, { persist: false });
-                        setThemeStyleState(style);
-                        void apply(() => app.SetDesktopAppearance(theme, style));
+                      onPalette={(nextPalette) => {
+                        applyPalette(nextPalette, { persist: true });
+                        setPaletteState(nextPalette);
                       }}
                       onTextSize={(size) => {
                         applyTextSize(size);
@@ -1349,6 +1360,8 @@ function statusBarItemLabel(id: StatusBarItemId, t: ReturnType<typeof useT>): st
       return t("status.costLabel");
     case "balance":
       return t("status.balanceLabel");
+    case "memory":
+      return t("status.memoryLabel");
   }
 }
 
@@ -1885,6 +1898,32 @@ function GeneralSection({ s, busy, apply, agentRunning }: SectionProps & { agent
           )}
         </div>
       </SettingsField>
+    </SettingsSection>
+  );
+}
+
+/**
+ * 数据分区（18 号方案 §4.6）：清除当前账号在本机的用户域缓存。
+ * 共享电脑敏感场景的逃生门——命名空间隔离后各账号数据共存驻留，
+ * 此处提供手动清除当前命名空间 9 键的入口，清除后 reload 生效。
+ */
+function DataSection() {
+  const { t } = useI18n();
+  const ns = currentNs();
+  return (
+    <SettingsSection title={t("settings.dataSection")} description={t("settings.dataSectionHint", { ns })}>
+      <div>
+        <InlineConfirmButton
+          label={t("settings.dataClearCache")}
+          confirmLabel={t("settings.dataClearCacheConfirm")}
+          cancelLabel={t("common.cancel")}
+          danger
+          onConfirm={() => {
+            clearCurrentNs();
+            window.location.reload();
+          }}
+        />
+      </div>
     </SettingsSection>
   );
 }
@@ -6560,21 +6599,20 @@ function SandboxSection({ s, busy, apply, windows }: SectionProps & { windows: b
   );
 }
 
-// Visual-style metadata for the appearance theme cards. The two surface
-// swatches + accent are read from CSS variables at render time so they always
-// reflect the live token values for the currently-resolved light/dark mode.
-const THEME_STYLE_META: Record<ThemeStyle, { name: string; zh: DictKey; note: DictKey; desc: DictKey }> = {
-  graphite: { name: "Graphite", zh: "settings.style.graphite.zh", note: "settings.style.graphite.note", desc: "settings.style.graphite.desc" },
-  aurora: { name: "Aurora", zh: "settings.style.aurora.zh", note: "settings.style.aurora.note", desc: "settings.style.aurora.desc" },
-  slate: { name: "Slate", zh: "settings.style.slate.zh", note: "settings.style.slate.note", desc: "settings.style.slate.desc" },
-  carbon: { name: "Carbon", zh: "settings.style.carbon.zh", note: "settings.style.carbon.note", desc: "settings.style.carbon.desc" },
-  nocturne: { name: "Nocturne", zh: "settings.style.nocturne.zh", note: "settings.style.nocturne.note", desc: "settings.style.nocturne.desc" },
-  amber: { name: "Amber", zh: "settings.style.amber.zh", note: "settings.style.amber.note", desc: "settings.style.amber.desc" },
+// The five brand color groups. The hex values below are the single source of
+// truth for the palette picker swatches; the palette CSS layer re-declares
+// them as --palette-1…4 tokens per group (A–E).
+const PALETTE_META: Record<ThemePalette, { label: string; zh: DictKey; colors: [string, string, string, string] }> = {
+  a: { label: "A", zh: "settings.palette.a.note", colors: ["#77AAAD", "#6E7783", "#D8E6E7", "#9DC3C1"] },
+  b: { label: "B", zh: "settings.palette.b.note", colors: ["#A593E0", "#E0E3DA", "#FFFFF3", "#566270"] },
+  c: { label: "C", zh: "settings.palette.c.note", colors: ["#F6B352", "#1F2124", "#F68657", "#383A3F"] },
+  d: { label: "D", zh: "settings.palette.d.note", colors: ["#427CB7", "#2573F3", "#2396CF", "#14387A"] },
+  e: { label: "E", zh: "settings.palette.e.note", colors: ["#9B7A76", "#72B4D4", "#2396CF", "#427CB7"] },
 };
 
 function AppearanceSection({
   theme,
-  themeStyle,
+  palette,
   textSize,
   showDisplayZoom,
   zoomPct,
@@ -6583,7 +6621,7 @@ function AppearanceSection({
   customFontName,
   customMonoFontName,
   onTheme,
-  onThemeStyle,
+  onPalette,
   onTextSize,
   onRestartZoom,
   onFontFamily,
@@ -6592,7 +6630,7 @@ function AppearanceSection({
   onCustomMonoFontNameChange,
 }: {
   theme: Theme;
-  themeStyle: ThemeStyle;
+  palette: ThemePalette;
   textSize: TextSize;
   showDisplayZoom: boolean;
   zoomPct: number;
@@ -6601,7 +6639,7 @@ function AppearanceSection({
   customFontName: string;
   customMonoFontName: string;
   onTheme: (t: Theme) => void;
-  onThemeStyle: (style: ThemeStyle) => void;
+  onPalette: (p: ThemePalette) => void;
   onTextSize: (size: TextSize) => void;
   onRestartZoom: (zoom: ZoomLevel) => Promise<void>;
   onFontFamily: (font: FontFamily) => void;
@@ -6637,35 +6675,50 @@ function AppearanceSection({
           ))}
         </div>
       </SettingsField>
-      <SettingsField label={t("settings.themeStyle")} stacked>
-        <div className="theme-card-grid">
-          {THEME_STYLES.map((opt) => {
-            const meta = THEME_STYLE_META[opt];
-            const selected = themeStyle === opt;
+      <SettingsField label={t("settings.palette")} stacked>
+        <div className="palette-grid">
+          {THEME_PALETTES.map((opt) => {
+            const meta = PALETTE_META[opt];
+            const selected = palette === opt;
+            const [c1, c2, c3, c4] = meta.colors;
             return (
               <button
                 key={opt}
                 type="button"
                 role="radio"
                 aria-checked={selected}
-                className={`theme-card${selected ? " theme-card--on" : ""}`}
-                onClick={() => onThemeStyle(opt)}
+                aria-label={`${meta.label} ${t(meta.zh)}`}
+                className={`palette-card${selected ? " palette-card--on" : ""}`}
+                onClick={() => onPalette(opt)}
               >
-                <span className="theme-card__head">
-                  <span className="theme-card__name">
-                    {meta.name} <span className="theme-card__zh">{t(meta.zh)}</span>
+                <span
+                  className="palette-card__strip"
+                  // Linear gradient of the four palette tones so users can read
+                  // the full brand ramp at a glance (light side on the right,
+                  // deep tone on the left for dark-mode balance).
+                  style={{
+                    background: `linear-gradient(90deg, ${c4} 0%, ${c4} 14%, ${c2} 14%, ${c2} 33%, ${c1} 33%, ${c1} 66%, ${c3} 66%, ${c3} 100%)`,
+                  }}
+                />
+                <span className="palette-card__meta">
+                  <span className="palette-card__badge">
+                    {c1}
                   </span>
-                  <span className="theme-card__tag">{t(meta.note)}</span>
+                  <span className="palette-card__name">
+                    <strong>{meta.label}</strong>
+                    <span>{t(meta.zh)}</span>
+                  </span>
                 </span>
-                <span className="theme-card__swatches" data-theme-style-card={opt}>
-                  <span className="theme-card__swatch theme-card__swatch--bg" />
-                  <span className="theme-card__swatch theme-card__swatch--surface" />
-                  <span className="theme-card__swatch theme-card__swatch--accent" />
-                </span>
-                <span className="theme-card__desc">{t(meta.desc)}</span>
-                <span className="theme-card__check" aria-hidden="true">
-                  <Check size={13} strokeWidth={3} />
-                </span>
+                <span
+                  className="palette-card__dot"
+                  style={{ background: c1, boxShadow: `0 0 0 4px ${c1}33` }}
+                  aria-hidden="true"
+                />
+                {selected && (
+                  <span className="palette-card__check" aria-hidden="true">
+                    <Check size={13} strokeWidth={3} />
+                  </span>
+                )}
               </button>
             );
           })}
@@ -6973,7 +7026,7 @@ function UpdatesSection({
         label={t("changelog.title")}
         hint={t("changelog.subtitle")}
       >
-        <button className="btn btn--small" onClick={() => void openExternal("https://reasonix.io/changelog/")}>
+        <button className="btn btn--small" onClick={() => void openExternal("https://edushield.io/changelog/")}>
           {t("changelog.openWeb")}
           <ExternalLink size={14} aria-hidden="true" />
         </button>

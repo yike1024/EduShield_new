@@ -1,5 +1,5 @@
 // Package worktree creates durable, Git-backed workspaces for parallel
-// Delivery sessions. Worktrees live under Reasonix-managed state, never inside
+// Delivery sessions. Worktrees live under EduShield-managed state, never inside
 // the source repository, and are never deleted automatically.
 package worktree
 
@@ -73,10 +73,10 @@ func Create(ctx context.Context, workspaceRoot, managedRoot string) (Result, err
 	}
 	managedRoot = strings.TrimSpace(managedRoot)
 	if managedRoot == "" {
-		return Result{}, errors.New("Reasonix worktree storage is unavailable")
+		return Result{}, errors.New("EduShield worktree storage is unavailable")
 	}
 	if err := os.MkdirAll(managedRoot, 0o700); err != nil {
-		return Result{}, fmt.Errorf("create Reasonix worktree storage: %w", err)
+		return Result{}, fmt.Errorf("create EduShield worktree storage: %w", err)
 	}
 
 	repoSum := sha256.Sum256([]byte(info.commonDir))
@@ -133,7 +133,7 @@ func Create(ctx context.Context, workspaceRoot, managedRoot string) (Result, err
 	return Result{}, errors.New("could not allocate a unique Delivery worktree")
 }
 
-// IsManagedPath reports whether path belongs to Reasonix's durable worktree
+// IsManagedPath reports whether path belongs to EduShield's durable worktree
 // storage. It is a lexical UI identity check, not an authorization boundary.
 func IsManagedPath(path, managedRoot string) bool {
 	path = strings.TrimSpace(path)

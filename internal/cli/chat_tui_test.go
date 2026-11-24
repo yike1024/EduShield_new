@@ -2656,7 +2656,7 @@ func TestSlashMigrateShowsProgress(t *testing.T) {
 
 func TestSlashMigrateFromImportsExplicitSessions(t *testing.T) {
 	home := isolateCLIConfigHome(t)
-	legacySessions := filepath.Join(home, "Old Reasonix", "sessions")
+	legacySessions := filepath.Join(home, "Old EduShield", "sessions")
 	if err := os.MkdirAll(legacySessions, 0o755); err != nil {
 		t.Fatal(err)
 	}

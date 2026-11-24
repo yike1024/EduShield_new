@@ -65,7 +65,7 @@ jobs:
             index.json
             index.json.minisig
           if-no-files-found: error
-      - name: Publish the signed catalog to the Reasonix R2 origin
+      - name: Publish the signed catalog to the EduShield R2 origin
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}

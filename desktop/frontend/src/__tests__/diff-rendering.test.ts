@@ -8,6 +8,12 @@ import { summarize } from "../lib/tools";
 import { initialState, reducer } from "../lib/useController";
 import type { Item } from "../lib/useController";
 
+// 工具输出归档只在 Wails 桌面壳内启用（浏览器模式需要保留输出供卡片展开）。
+// 本文件覆盖桌面端归档行为，先注入最小 window.go 让 isWailsRuntime() 返回 true。
+(globalThis as unknown as { window: { go: { main: { App: Record<string, unknown> } } } }).window = {
+  go: { main: { App: {} } },
+};
+
 const testDir = dirname(fileURLToPath(import.meta.url));
 const styles = readFileSync(resolve(testDir, "../styles.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
 

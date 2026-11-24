@@ -21,7 +21,19 @@ export type EventKind =
   | "retrying"
   | "steer"
   | "memory_compiler_stats"
-  | "guardian_assessment";
+  | "guardian_assessment"
+  // v1.1（契约 §3.2）：队列 / 提问 / 计划事件，payload 与 /api/stream 同名 event 一致
+  | "task_queued"
+  | "queue_position"
+  | "task_started"
+  | "ask"
+  | "ask_answered"
+  | "task_cancelled"
+  | "queue_full"
+  | "plan_created"
+  | "plan_step"
+  | "completion_check"
+  | "plan_finished";
 
 export interface WireCompaction {
   trigger?: string; // "auto" | "manual"
@@ -192,6 +204,11 @@ export interface WireEvent {
   readiness?: WireFinalReadiness;
   retryAttempt?: number;
   retryMax?: number;
+  /**
+   * v1.1（契约 §3.2）：队列 / 提问 / 计划事件的原始 payload。
+   * 结构随 kind 变化，前端一律按可选字段读取，不假设存在（契约 §3.3）。
+   */
+  payload?: Record<string, unknown>;
   // Tab routing: set by the Go-side tabEventSink so multi-tab frontends
   // route each event to the correct per-tab reducer.
   tabId?: string;

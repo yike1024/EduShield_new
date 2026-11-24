@@ -66,7 +66,7 @@ type result struct {
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "e2ebench — Reasonix end-to-end benchmark.\n\n")
+		fmt.Fprintf(flag.CommandLine.Output(), "e2ebench — EduShield end-to-end benchmark.\n\n")
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s:\n", flag.CommandLine.Name())
 		flag.PrintDefaults()
 		fmt.Fprintf(flag.CommandLine.Output(), "\nExamples:\n")
@@ -298,7 +298,7 @@ func render(results []result) string {
 	if len(results) > 0 && results[0].Profile != "" {
 		profile = results[0].Profile
 	}
-	fmt.Fprintf(&b, "## 🤖 Reasonix e2e benchmark (%s)\n\n", profile)
+	fmt.Fprintf(&b, "## 🤖 EduShield e2e benchmark (%s)\n\n", profile)
 	fmt.Fprintf(&b, "**Accuracy:** %d/%d (%s) · **Cache hit:** %s · **Tokens:** %s (prompt %s / completion %s) · **Compactions:** %d · **Cost:** %s%.4f\n\n",
 		passed, ran, pct(passed, ran), pct(hit, hit+miss),
 		comma(pTok+cTok), comma(pTok), comma(cTok), compacts, currencySym(currency), cost)

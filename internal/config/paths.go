@@ -240,7 +240,7 @@ func userConfigDisplayPath() string {
 	return p
 }
 
-// UserConfigPath is the user-global config.toml. It lives under Reasonix home:
+// UserConfigPath is the user-global config.toml. It lives under EduShield home:
 // REASONIX_HOME/config.toml, then ~/.reasonix/config.toml on Unix-like systems,
 // or %AppData%/reasonix/config.toml on Windows. If %AppData% is unavailable on
 // Windows, it falls back to %USERPROFILE%/AppData/Roaming/reasonix/config.toml.
@@ -253,7 +253,7 @@ func UserConfigPath() string { return userConfigPath() }
 func LegacyUserConfigPath() string { return legacyUserConfigPath() }
 
 // LegacyUserConfigPaths returns every known legacy user config path that differs
-// from the current v1.8.1 Reasonix-home config path.
+// from the current v1.8.1 EduShield-home config path.
 func LegacyUserConfigPaths() []string {
 	primary := userConfigPath()
 	var out []string
@@ -275,11 +275,11 @@ func LegacyUserConfigPaths() []string {
 	return out
 }
 
-// ReasonixManagedConfigPaths returns the Reasonix-owned user configuration
+// ReasonixManagedConfigPaths returns the EduShield-owned user configuration
 // FILES that model-driven tools may repair on the user's request, each gated
 // by a fresh per-write human approval: the current config.toml, compatibility
 // TOML locations, and the legacy v0.x ~/.reasonix/config.json. Individual
-// files, never directories — the Reasonix home also holds credentials (.env),
+// files, never directories — the EduShield home also holds credentials (.env),
 // global hooks (settings.json), skills, and session stores, and none of those
 // may ride along on a config repair.
 func ReasonixManagedConfigPaths() []string {
@@ -306,7 +306,7 @@ func appendUniquePath(paths []string, path string) []string {
 	return append(paths, clean)
 }
 
-// ReasonixHomeDir is the current Reasonix home directory. It honors
+// ReasonixHomeDir is the current EduShield home directory. It honors
 // REASONIX_HOME, then uses ~/.reasonix on macOS/Linux or %APPDATA%/reasonix on
 // Windows, with a %USERPROFILE%/AppData/Roaming fallback when %APPDATA% is
 // unavailable.
@@ -329,7 +329,7 @@ func WorkspaceLeaseDir() string {
 // DeliveryWorktreeDir is durable storage for user-visible isolated Delivery
 // workspaces. Explicit state/home overrides remain authoritative. Windows uses
 // LocalAppData by default so large Git worktrees do not roam with the user's
-// profile; other platforms keep using Reasonix state storage.
+// profile; other platforms keep using EduShield state storage.
 func DeliveryWorktreeDir() string {
 	if dir := cleanEnvDir("REASONIX_STATE_HOME"); dir != "" {
 		return filepath.Join(dir, "worktrees")
@@ -353,10 +353,10 @@ func DeliveryWorktreeDir() string {
 	return filepath.Join(dir, "worktrees")
 }
 
-// UserCredentialsPath is the reasonix-owned global .env file under Reasonix
-// home. It is the single source for provider credentials saved by Reasonix, so
+// UserCredentialsPath is the reasonix-owned global .env file under EduShield
+// home. It is the single source for provider credentials saved by EduShield, so
 // stale shell, Windows, project, or home env vars cannot silently override keys
-// the user saved through setup or settings. "" when Reasonix home can't be
+// the user saved through setup or settings. "" when EduShield home can't be
 // resolved.
 func UserCredentialsPath() string {
 	dir := reasonixHomeDir()
@@ -505,7 +505,7 @@ func conventionSubdirsAsc(base, sub string) []string {
 // CommandDirs returns the directories scanned for custom slash commands, lowest
 // priority first, so a later (more specific) directory overrides an earlier one
 // on a name clash. Order: home-dir convention dirs (~/.claude/commands …
-// ~/.reasonix/commands), the Reasonix home commands dir, the legacy OS
+// ~/.reasonix/commands), the EduShield home commands dir, the legacy OS
 // app-support dir if different, then the project's
 // convention dirs (.claude/commands … .reasonix/commands). Scanning the .claude /
 // .agents / .agent dirs lets commands authored for other agent tools (same .md +

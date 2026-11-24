@@ -1,4 +1,4 @@
-// Command windows-resource stamps Reasonix branding and metadata into a Windows
+// Command windows-resource stamps EduShield branding and metadata into a Windows
 // support executable after it has been built. Wails already uses the same
 // winres library for the desktop executable; keeping the support binaries on the
 // same resource path avoids generic Explorer, shortcut, and taskbar icons.
@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	companyName = "Reasonix"
-	copyright   = "Copyright © 2026 Reasonix Contributors"
+	companyName = "EduShield"
+	copyright   = "Copyright © 2026 EduShield Contributors"
 )
 
 type resourceOptions struct {
@@ -96,7 +96,7 @@ func stampExecutable(opts resourceOptions) error {
 	}
 	rs.SetManifest(winres.AppManifest{
 		Identity: winres.AssemblyIdentity{
-			Name:    "Reasonix." + opts.internalName,
+			Name:    "EduShield." + opts.internalName,
 			Version: numericVersion,
 		},
 		Description:         opts.fileDescription,
@@ -117,9 +117,9 @@ func stampExecutable(opts resourceOptions) error {
 		version.InternalName:     opts.internalName,
 		version.LegalCopyright:   copyright,
 		version.OriginalFilename: opts.originalName,
-		version.ProductName:      "Reasonix",
+		version.ProductName:      "EduShield",
 		version.ProductVersion:   opts.numericVersion,
-		version.Comments:         "Reasonix desktop support component.",
+		version.Comments:         "EduShield desktop support component.",
 	} {
 		if err := info.Set(version.LangDefault, key, value); err != nil {
 			return fmt.Errorf("set version field %s: %w", key, err)
@@ -197,7 +197,7 @@ func verifyResources(executable []byte, opts resourceOptions, numericVersion [4]
 		version.FileDescription:  opts.fileDescription,
 		version.InternalName:     opts.internalName,
 		version.OriginalFilename: opts.originalName,
-		version.ProductName:      "Reasonix",
+		version.ProductName:      "EduShield",
 	} {
 		if got := (*table)[key]; got != want {
 			return fmt.Errorf("version field %s=%q, want %q", key, got, want)

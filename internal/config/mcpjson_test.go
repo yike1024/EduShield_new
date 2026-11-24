@@ -212,7 +212,7 @@ func TestMCPJSONApprovalPolicyUpdatePreservesNestedUnknownFields(t *testing.T) {
 	}
 	if len(entries) != 1 || len(entries[0].Tools) != 2 ||
 		entries[0].Tools["wipe"].ApprovalMode != "approve" || entries[0].Tools["new"].ApprovalMode != "prompt" {
-		t.Fatalf("Reasonix tool policies = %+v, want only updated wipe and new", entries)
+		t.Fatalf("EduShield tool policies = %+v, want only updated wipe and new", entries)
 	}
 
 	root, servers, err := readMCPJSONRaw(path)
@@ -246,7 +246,7 @@ func TestMCPJSONApprovalPolicyUpdatePreservesNestedUnknownFields(t *testing.T) {
 		t.Fatal("unknown-only tool entry was removed")
 	}
 	if _, ok := tools["remove_keep"]["approval_mode"]; ok {
-		t.Fatal("removed Reasonix approval mode survived")
+		t.Fatal("removed EduShield approval mode survived")
 	}
 	if _, ok := tools["remove_keep"]["enabled"]; !ok {
 		t.Fatal("removing approval mode removed external fields")

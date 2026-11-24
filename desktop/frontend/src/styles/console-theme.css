@@ -1,60 +1,140 @@
 /*
- * Console — Edushield security-core visual direction.
+ * Console — palette color core layer.
  *
- * Aligned with the EDUSHIELD startup splash: near-black blue stage, dark navy
- * panels, electric-blue primary, neon-cyan secondary, and gold/neon-green
- * signal accents. Sharper radii and cyan hairlines evoke a terminal HUD.
- * Light and dark variants are supplied for OS appearance switching.
+ * This file is the single source of color for the whole app. The five brand
+ * color groups (A–E) are declared once here; the shared palette layer below
+ * derives the complete semantic token set from them via color-mix(). The 8
+ * visual styles (data-theme-style) intentionally keep ONLY non-color
+ * differences (radius / shadow / density / texture), so switching styles never
+ * changes the active palette and vice-versa.
+ *
+ * Selector strategy (loaded after styles.css, so equal-specificity rules here
+ * win):
+ *   - :root[data-theme-style][data-theme-palette]            → dark colors, (0,3,0)
+ *   - :root[data-theme-style][data-theme-palette][data-theme="light"] → light, (0,4,0)
+ *   - @media (prefers-color-scheme: light) …:not([data-theme])        → auto light, (0,4,0)
+ *
+ * Only the four brand colors per group are allowed here; the neutral
+ * background / text / border tones are derived from them, so every group stays
+ * internally consistent and no hard-coded neon or blue-purple gradient leaks in.
  */
 
-:root[data-theme-style="console"] {
-  --stage: #05080d;
-  --surface: #080e17;
-  --surface-2: #0b1424;
-  --surface-3: #060b12;
-  --panel: #080e17;
-  --bg: #05080d;
-  --bg-soft: #070c14;
-  --bg-elev: #0a1220;
-  --bg-elev-2: #0e1a2e;
-  --sidebar-bg: #070c14;
-  --sidebar-hover: #0d1626;
-  --sidebar-active: rgba(0, 229, 255, 0.14);
-  --chat-bg: #05080d;
-  --workspace-preview-bg: #070c14;
-  --workspace-files-bg: #080e17;
-  --workspace-files-hover: #0d1626;
-  --workspace-selection-bg: rgba(0, 229, 255, 0.14);
-  --workspace-selection-fg: #9be8ff;
-  --workspace-selection-bar: #00e5ff;
-  --border: rgba(0, 229, 255, 0.16);
-  --border-2: rgba(0, 229, 255, 0.30);
-  --border-soft: rgba(0, 229, 255, 0.08);
-  --text: #e8f0f7;
-  --text-2: #9fb4c8;
-  --text-3: #5b7085;
-  --fg: #e8f0f7;
-  --fg-dim: #9fb4c8;
-  --fg-faint: #5b7085;
-  --accent: #0057ff;
-  --accent-fg: #eaf2ff;
-  --accent-text: #ffffff;
-  --accent-soft: rgba(0, 87, 255, 0.18);
-  --accent-strong: #00e5ff;
-  --ok: #00ff9d;
-  --warn: #ffd700;
-  --err: #ff5c7a;
-  --danger: #ff2d55;
+/* ── 1. Brand color groups (A–E) ────────────────────────────────────────── */
+/* Each group provides exactly four brand colors:
+ *   --palette-1  primary accent
+ *   --palette-2  secondary accent (glows, highlights)
+ *   --palette-3  light tone (light-mode surfaces, dark-mode text base)
+ *   --palette-4  deep tone (dark-mode surfaces, light-mode text base)
+ * --palette-accent-fg is the readable foreground placed ON the primary accent. */
+:root[data-theme-palette="a"] {
+  --palette-1: #77aaad;
+  --palette-2: #6e7783;
+  --palette-3: #d8e6e7;
+  --palette-4: #9dc3c1;
+  --palette-accent-fg: #0d1418;
+}
+
+:root[data-theme-palette="b"] {
+  --palette-1: #a593e0;
+  --palette-2: #e0e3da;
+  --palette-3: #fffff3;
+  --palette-4: #566270;
+  --palette-accent-fg: #262931;
+}
+
+:root[data-theme-palette="c"] {
+  --palette-1: #f6b352;
+  --palette-2: #1f2124;
+  --palette-3: #f68657;
+  --palette-4: #383a3f;
+  --palette-accent-fg: #1c1e21;
+}
+
+:root[data-theme-palette="d"] {
+  --palette-1: #427cb7;
+  --palette-2: #2573f3;
+  --palette-3: #2396cf;
+  --palette-4: #14387a;
+  --palette-accent-fg: #ffffff;
+}
+
+:root[data-theme-palette="e"] {
+  --palette-1: #9b7a76;
+  --palette-2: #72b4d4;
+  --palette-3: #2396cf;
+  --palette-4: #427cb7;
+  --palette-accent-fg: #ffffff;
+}
+
+/* ── 2. Shared semantic token set (dark) ────────────────────────────────── */
+/* Applies to every visual style; specific values come from the palette vars.
+ * Tokens that only reference other tokens are mode-neutral and stay here, so
+ * the light blocks below only need to override the absolute base colors. */
+:root[data-theme-style][data-theme-palette] {
+  /* stage / surfaces — deep palette tone blended toward near-black */
+  --stage: color-mix(in srgb, var(--palette-4) 32%, #04060a);
+  --surface: color-mix(in srgb, var(--palette-4) 28%, #0a0e14);
+  --surface-2: color-mix(in srgb, var(--palette-4) 36%, #10151d);
+  --surface-3: color-mix(in srgb, var(--palette-4) 22%, #070a10);
+  --panel: var(--surface);
+  --bg: color-mix(in srgb, var(--palette-4) 24%, #05070c);
+  --bg-soft: color-mix(in srgb, var(--palette-4) 30%, #080b11);
+  --bg-elev: color-mix(in srgb, var(--palette-4) 34%, #0d1219);
+  --bg-elev-2: color-mix(in srgb, var(--palette-4) 40%, #141a23);
+  --sidebar-bg: var(--surface);
+  --sidebar-hover: color-mix(in srgb, var(--palette-4) 46%, #131820);
+  --chat-bg: var(--bg);
+  --workspace-preview-bg: var(--bg-soft);
+  --workspace-files-bg: var(--surface);
+  --workspace-files-hover: var(--sidebar-hover);
+
+  /* borders — light palette tone as subtle hairlines */
+  --border: color-mix(in srgb, var(--palette-3) 16%, transparent);
+  --border-2: color-mix(in srgb, var(--palette-3) 28%, transparent);
+  --border-soft: color-mix(in srgb, var(--palette-3) 9%, transparent);
+
+  /* text */
+  --text: color-mix(in srgb, var(--palette-3) 26%, #edf1f6);
+  --text-2: color-mix(in srgb, var(--palette-3) 20%, #a8b1bb);
+  --text-3: color-mix(in srgb, var(--palette-3) 16%, #6d7680);
+  --fg: var(--text);
+  --fg-dim: var(--text-2);
+  --fg-faint: var(--text-3);
+
+  /* accent — brand colors drive every emphasis */
+  --accent: var(--palette-1);
+  --accent-fg: var(--palette-accent-fg);
+  --accent-text: var(--palette-accent-fg);
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --accent-strong: color-mix(in srgb, var(--accent) 55%, var(--palette-3));
+
+  /* state colors — soft, non-neon functional hues */
+  --ok: #43a377;
+  --warn: #c99a3a;
+  --err: #d45d6a;
+  --danger: var(--err);
   --danger-fg: #ffffff;
-  --shell-accent: #00e5ff;
+  --shell-accent: var(--ok);
+
+  /* selection */
+  --sidebar-active: color-mix(in srgb, var(--accent) 14%, transparent);
+  --workspace-selection-bg: color-mix(in srgb, var(--accent) 14%, transparent);
+  --workspace-selection-fg: color-mix(in srgb, var(--palette-3) 72%, var(--fg));
+  --workspace-selection-bar: var(--accent);
+
+  /* controls */
   --control-primary-bg: var(--accent);
   --control-primary-fg: var(--accent-fg);
-  --control-disabled-bg: #0e1a2e;
-  --control-disabled-fg: #5b7085;
+  --control-disabled-bg: var(--bg-elev-2);
+  --control-disabled-fg: var(--fg-faint);
+
+  /* chat bubbles */
   --chat-user-bg: color-mix(in srgb, var(--accent) 16%, var(--bg-elev-2));
   --chat-user-border: color-mix(in srgb, var(--accent) 28%, var(--border-soft));
   --chat-user-fg: var(--fg);
   --chat-user-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 12%, transparent);
+
+  /* generic buttons / pills */
   --button-bg: color-mix(in srgb, var(--bg-elev-2) 70%, var(--bg-soft));
   --button-bg-hover: color-mix(in srgb, var(--bg-elev-2) 90%, var(--bg-soft));
   --button-border: var(--border);
@@ -72,250 +152,192 @@
   --pill-yolo-border: var(--danger);
   --pill-yolo-border-hover: color-mix(in srgb, var(--danger) 90%, var(--fg));
   --pill-yolo-fg: var(--danger-fg);
-  --mode-auto-bg: #0057ff;
-  --mode-auto-border: #2a74ff;
-  --mode-auto-fg: #ffffff;
+
+  /* plan / auto / yolo mode buttons */
+  --mode-auto-bg: var(--accent);
+  --mode-auto-border: color-mix(in srgb, var(--accent) 78%, var(--palette-3));
+  --mode-auto-fg: var(--accent-fg);
   --mode-plan-bg: var(--accent-soft);
   --mode-plan-border: color-mix(in srgb, var(--accent) 34%, var(--border));
   --mode-plan-fg: var(--accent);
-  --mode-yolo-bg: #ff2d55;
-  --mode-yolo-border: #ff5273;
-  --mode-yolo-fg: #ffffff;
-  --add-bg: rgba(0, 255, 157, 0.12);
-  --add-fg: #2dffb0;
-  --del-bg: rgba(255, 45, 85, 0.12);
-  --del-fg: #ff5273;
-  --code-bg: #070c14;
-  --focus-ring: 0 0 0 3px rgba(0, 229, 255, 0.22);
+  --mode-yolo-bg: var(--danger);
+  --mode-yolo-border: color-mix(in srgb, var(--danger) 82%, var(--palette-3));
+  --mode-yolo-fg: var(--danger-fg);
+
+  /* add / delete affordances */
+  --add-bg: color-mix(in srgb, var(--ok) 12%, transparent);
+  --add-fg: var(--ok);
+  --del-bg: color-mix(in srgb, var(--err) 12%, transparent);
+  --del-fg: var(--err);
+
+  --code-bg: var(--bg-soft);
   --grad: linear-gradient(120deg, var(--accent), var(--accent-strong));
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 26%, transparent);
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
   --shadow-2: 0 14px 40px rgba(0, 0, 0, 0.55);
-  --r-s: 4px;
-  --r: 6px;
-  --r-l: 8px;
-  --radius: 6px;
 }
 
-:root[data-theme="light"][data-theme-style="console"] {
-  --stage: #e9eef6;
-  --surface: #f5f8fc;
+/* ── 3. Light forced mode ───────────────────────────────────────────────── */
+:root[data-theme-style][data-theme-palette][data-theme="light"] {
+  --stage: color-mix(in srgb, var(--palette-3) 18%, #eef1f6);
+  --surface: color-mix(in srgb, var(--palette-3) 14%, #ffffff);
   --surface-2: #ffffff;
-  --surface-3: #eef2f8;
+  --surface-3: color-mix(in srgb, var(--palette-3) 20%, #eef1f6);
   --panel: #ffffff;
-  --bg: #eef2f8;
-  --bg-soft: #e9eef6;
+  --bg: color-mix(in srgb, var(--palette-3) 16%, #f5f7fa);
+  --bg-soft: color-mix(in srgb, var(--palette-3) 20%, #eef1f6);
   --bg-elev: #ffffff;
-  --bg-elev-2: #f7fafd;
+  --bg-elev-2: color-mix(in srgb, var(--palette-3) 12%, #f7f9fb);
   --sidebar-bg: #ffffff;
-  --sidebar-hover: #eef2f8;
-  --sidebar-active: rgba(0, 87, 255, 0.10);
-  --chat-bg: #eef2f8;
+  --sidebar-hover: color-mix(in srgb, var(--palette-3) 24%, #eef1f6);
+  --chat-bg: var(--bg);
   --workspace-preview-bg: #ffffff;
   --workspace-files-bg: #ffffff;
-  --workspace-files-hover: #eef2f8;
-  --workspace-selection-bg: rgba(0, 87, 255, 0.10);
-  --workspace-selection-fg: #0b3f99;
-  --workspace-selection-bar: #0057ff;
-  --border: rgba(10, 30, 60, 0.10);
-  --border-2: rgba(10, 30, 60, 0.18);
-  --border-soft: rgba(10, 30, 60, 0.06);
-  --text: #0a1420;
-  --text-2: #44556b;
-  --text-3: #8592a4;
-  --fg: #0a1420;
-  --fg-dim: #44556b;
-  --fg-faint: #8592a4;
-  --accent: #0050e6;
-  --accent-fg: #ffffff;
-  --accent-text: #ffffff;
-  --accent-soft: rgba(0, 80, 230, 0.10);
-  --accent-strong: #0078d4;
-  --ok: #00875a;
-  --warn: #9a7200;
-  --err: #c61a3f;
-  --danger: #c61a3f;
+  --workspace-files-hover: color-mix(in srgb, var(--palette-3) 24%, #eef1f6);
+
+  --border: color-mix(in srgb, var(--palette-4) 18%, transparent);
+  --border-2: color-mix(in srgb, var(--palette-4) 30%, transparent);
+  --border-soft: color-mix(in srgb, var(--palette-4) 9%, transparent);
+
+  --text: color-mix(in srgb, var(--palette-4) 82%, #10151b);
+  --text-2: color-mix(in srgb, var(--palette-4) 60%, #4a525c);
+  --text-3: color-mix(in srgb, var(--palette-4) 40%, #8b939c);
+  --fg: var(--text);
+  --fg-dim: var(--text-2);
+  --fg-faint: var(--text-3);
+
+  --accent: var(--palette-1);
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-strong: color-mix(in srgb, var(--accent) 62%, var(--palette-4));
+
+  --ok: #2e7d55;
+  --warn: #a3711c;
+  --err: #b54452;
+  --danger: var(--err);
   --danger-fg: #ffffff;
-  --shell-accent: #00875a;
-  --control-primary-bg: var(--accent);
-  --control-primary-fg: var(--accent-fg);
-  --control-disabled-bg: #e9eef6;
-  --control-disabled-fg: #8592a4;
-  --chat-user-bg: color-mix(in srgb, var(--accent) 10%, var(--bg-elev-2));
-  --chat-user-border: color-mix(in srgb, var(--accent) 22%, var(--border-soft));
-  --chat-user-fg: var(--fg);
-  --chat-user-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 10%, transparent);
-  --button-bg: #ffffff;
-  --button-bg-hover: #f7fafd;
-  --button-border: rgba(10, 30, 60, 0.10);
-  --button-border-hover: rgba(10, 30, 60, 0.18);
-  --button-fg: var(--fg);
-  --button-muted-fg: var(--fg-dim);
-  --pill-bg: #ffffff;
-  --pill-border: rgba(10, 30, 60, 0.10);
-  --pill-fg: var(--fg-dim);
-  --pill-hover-bg: #f7fafd;
-  --pill-plan-bg: var(--accent-soft);
-  --pill-plan-border: color-mix(in srgb, var(--accent) 22%, var(--border));
-  --pill-yolo-bg: var(--danger);
-  --pill-yolo-bg-hover: color-mix(in srgb, var(--danger) 90%, var(--fg));
-  --pill-yolo-border: var(--danger);
-  --pill-yolo-border-hover: color-mix(in srgb, var(--danger) 90%, var(--fg));
-  --pill-yolo-fg: var(--danger-fg);
-  --mode-auto-bg: #0050e6;
-  --mode-auto-border: #2a74e6;
-  --mode-auto-fg: #ffffff;
-  --mode-plan-bg: var(--accent-soft);
-  --mode-plan-border: color-mix(in srgb, var(--accent) 30%, var(--border));
-  --mode-plan-fg: var(--accent);
-  --mode-yolo-bg: #c61a3f;
-  --mode-yolo-border: #d43a5c;
-  --mode-yolo-fg: #ffffff;
-  --add-bg: rgba(0, 135, 90, 0.10);
-  --add-fg: #00875a;
-  --del-bg: rgba(198, 26, 63, 0.10);
-  --del-fg: #c61a3f;
-  --code-bg: #f7fafd;
-  --focus-ring: 0 0 0 3px rgba(0, 80, 230, 0.16);
+  --shell-accent: var(--ok);
+
+  --workspace-selection-bg: color-mix(in srgb, var(--accent) 12%, transparent);
+  --workspace-selection-fg: color-mix(in srgb, var(--palette-4) 78%, var(--fg));
+
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+  --shadow-1: 0 1px 2px color-mix(in srgb, var(--palette-4) 10%, transparent);
+  --shadow-2: 0 12px 34px color-mix(in srgb, var(--palette-4) 14%, transparent);
+}
+
+/* ── 4. Auto light (OS light while data-theme is unset) ─────────────────── */
+@media (prefers-color-scheme: light) {
+  :root[data-theme-style][data-theme-palette]:not([data-theme]) {
+    --stage: color-mix(in srgb, var(--palette-3) 18%, #eef1f6);
+    --surface: color-mix(in srgb, var(--palette-3) 14%, #ffffff);
+    --surface-2: #ffffff;
+    --surface-3: color-mix(in srgb, var(--palette-3) 20%, #eef1f6);
+    --panel: #ffffff;
+    --bg: color-mix(in srgb, var(--palette-3) 16%, #f5f7fa);
+    --bg-soft: color-mix(in srgb, var(--palette-3) 20%, #eef1f6);
+    --bg-elev: #ffffff;
+    --bg-elev-2: color-mix(in srgb, var(--palette-3) 12%, #f7f9fb);
+    --sidebar-bg: #ffffff;
+    --sidebar-hover: color-mix(in srgb, var(--palette-3) 24%, #eef1f6);
+    --chat-bg: var(--bg);
+    --workspace-preview-bg: #ffffff;
+    --workspace-files-bg: #ffffff;
+    --workspace-files-hover: color-mix(in srgb, var(--palette-3) 24%, #eef1f6);
+
+    --border: color-mix(in srgb, var(--palette-4) 18%, transparent);
+    --border-2: color-mix(in srgb, var(--palette-4) 30%, transparent);
+    --border-soft: color-mix(in srgb, var(--palette-4) 9%, transparent);
+
+    --text: color-mix(in srgb, var(--palette-4) 82%, #10151b);
+    --text-2: color-mix(in srgb, var(--palette-4) 60%, #4a525c);
+    --text-3: color-mix(in srgb, var(--palette-4) 40%, #8b939c);
+    --fg: var(--text);
+    --fg-dim: var(--text-2);
+    --fg-faint: var(--text-3);
+
+    --accent: var(--palette-1);
+    --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+    --accent-strong: color-mix(in srgb, var(--accent) 62%, var(--palette-4));
+
+    --ok: #2e7d55;
+    --warn: #a3711c;
+    --err: #b54452;
+    --danger: var(--err);
+    --danger-fg: #ffffff;
+    --shell-accent: var(--ok);
+
+    --workspace-selection-bg: color-mix(in srgb, var(--accent) 12%, transparent);
+    --workspace-selection-fg: color-mix(in srgb, var(--palette-4) 78%, var(--fg));
+
+    --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+    --shadow-1: 0 1px 2px color-mix(in srgb, var(--palette-4) 10%, transparent);
+    --shadow-2: 0 12px 34px color-mix(in srgb, var(--palette-4) 14%, transparent);
+  }
+}
+
+/* ── 5. Creation screen accent (palette-driven, no blue-purple ramp) ────── */
+:root[data-theme-style][data-theme-palette] .app--creation {
+  --accent: var(--palette-1);
+  --accent-fg: var(--palette-accent-fg);
+  --accent-text: var(--palette-accent-fg);
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --accent-strong: color-mix(in srgb, var(--accent) 55%, var(--palette-3));
   --grad: linear-gradient(120deg, var(--accent), var(--accent-strong));
-  --shadow-1: 0 1px 2px rgba(10, 30, 60, 0.06);
-  --shadow-2: 0 12px 34px rgba(10, 30, 60, 0.10);
+  --accent-title-grad: linear-gradient(
+    90deg,
+    var(--accent-strong) 0%,
+    var(--accent) 48%,
+    color-mix(in srgb, var(--palette-4) 82%, #000) 100%
+  );
+}
+
+:root[data-theme-style][data-theme-palette][data-theme="light"] .app--creation {
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-strong: color-mix(in srgb, var(--accent) 62%, var(--palette-4));
+  --grad: linear-gradient(120deg, var(--accent), var(--accent-strong));
+  --accent-title-grad: linear-gradient(
+    90deg,
+    var(--accent-strong) 0%,
+    var(--accent) 48%,
+    color-mix(in srgb, var(--palette-4) 82%, #fff) 100%
+  );
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme-style][data-theme-palette]:not([data-theme]) .app--creation {
+    --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+    --accent-strong: color-mix(in srgb, var(--accent) 62%, var(--palette-4));
+    --grad: linear-gradient(120deg, var(--accent), var(--accent-strong));
+    --accent-title-grad: linear-gradient(
+      90deg,
+      var(--accent-strong) 0%,
+      var(--accent) 48%,
+      color-mix(in srgb, var(--palette-4) 82%, #fff) 100%
+    );
+  }
+}
+
+/* ── 6. Settings picker swatches (palette-driven, any style) ────────────── */
+/* Specificity (0,5,0)+ beats the per-style swatches defined in styles.css so
+ * the picker always previews the active palette regardless of style. */
+:root[data-theme-style][data-theme-palette] .theme-card__swatches .theme-card__swatch--bg {
+  background: var(--bg);
+}
+:root[data-theme-style][data-theme-palette] .theme-card__swatches .theme-card__swatch--surface {
+  background: var(--surface-2);
+}
+:root[data-theme-style][data-theme-palette] .theme-card__swatches .theme-card__swatch--accent {
+  background: linear-gradient(120deg, var(--accent), var(--accent-strong));
+}
+
+/* ── 7. Console style — non-color differences only ──────────────────────── */
+/* Sharp radii + crisp hairlines evoke a terminal HUD; no colors here. */
+:root[data-theme-style="console"] {
   --r-s: 4px;
   --r: 6px;
   --r-l: 8px;
   --radius: 6px;
-}
-
-@media (prefers-color-scheme: light) {
-  :root[data-theme-style="console"]:not([data-theme]) {
-    --stage: #e9eef6;
-    --surface: #f5f8fc;
-    --surface-2: #ffffff;
-    --surface-3: #eef2f8;
-    --panel: #ffffff;
-    --bg: #eef2f8;
-    --bg-soft: #e9eef6;
-    --bg-elev: #ffffff;
-    --bg-elev-2: #f7fafd;
-    --sidebar-bg: #ffffff;
-    --sidebar-hover: #eef2f8;
-    --sidebar-active: rgba(0, 87, 255, 0.10);
-    --chat-bg: #eef2f8;
-    --workspace-preview-bg: #ffffff;
-    --workspace-files-bg: #ffffff;
-    --workspace-files-hover: #eef2f8;
-    --workspace-selection-bg: rgba(0, 87, 255, 0.10);
-    --workspace-selection-fg: #0b3f99;
-    --workspace-selection-bar: #0057ff;
-    --border: rgba(10, 30, 60, 0.10);
-    --border-2: rgba(10, 30, 60, 0.18);
-    --border-soft: rgba(10, 30, 60, 0.06);
-    --text: #0a1420;
-    --text-2: #44556b;
-    --text-3: #8592a4;
-    --fg: #0a1420;
-    --fg-dim: #44556b;
-    --fg-faint: #8592a4;
-    --accent: #0050e6;
-    --accent-fg: #ffffff;
-    --accent-text: #ffffff;
-    --accent-soft: rgba(0, 80, 230, 0.10);
-    --accent-strong: #0078d4;
-    --ok: #00875a;
-    --warn: #9a7200;
-    --err: #c61a3f;
-    --danger: #c61a3f;
-    --danger-fg: #ffffff;
-    --shell-accent: #00875a;
-    --control-primary-bg: var(--accent);
-    --control-primary-fg: var(--accent-fg);
-    --control-disabled-bg: #e9eef6;
-    --control-disabled-fg: #8592a4;
-    --chat-user-bg: color-mix(in srgb, var(--accent) 10%, var(--bg-elev-2));
-    --chat-user-border: color-mix(in srgb, var(--accent) 22%, var(--border-soft));
-    --chat-user-fg: var(--fg);
-    --chat-user-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 10%, transparent);
-    --button-bg: #ffffff;
-    --button-bg-hover: #f7fafd;
-    --button-border: rgba(10, 30, 60, 0.10);
-    --button-border-hover: rgba(10, 30, 60, 0.18);
-    --button-fg: var(--fg);
-    --button-muted-fg: var(--fg-dim);
-    --pill-bg: #ffffff;
-    --pill-border: rgba(10, 30, 60, 0.10);
-    --pill-fg: var(--fg-dim);
-    --pill-hover-bg: #f7fafd;
-    --pill-plan-bg: var(--accent-soft);
-    --pill-plan-border: color-mix(in srgb, var(--accent) 22%, var(--border));
-    --pill-yolo-bg: var(--danger);
-    --pill-yolo-bg-hover: color-mix(in srgb, var(--danger) 90%, var(--fg));
-    --pill-yolo-border: var(--danger);
-    --pill-yolo-border-hover: color-mix(in srgb, var(--danger) 90%, var(--fg));
-    --pill-yolo-fg: var(--danger-fg);
-    --mode-auto-bg: #0050e6;
-    --mode-auto-border: #2a74e6;
-    --mode-auto-fg: #ffffff;
-    --mode-plan-bg: var(--accent-soft);
-    --mode-plan-border: color-mix(in srgb, var(--accent) 30%, var(--border));
-    --mode-plan-fg: var(--accent);
-    --mode-yolo-bg: #c61a3f;
-    --mode-yolo-border: #d43a5c;
-    --mode-yolo-fg: #ffffff;
-    --add-bg: rgba(0, 135, 90, 0.10);
-    --add-fg: #00875a;
-    --del-bg: rgba(198, 26, 63, 0.10);
-    --del-fg: #c61a3f;
-    --code-bg: #f7fafd;
-    --focus-ring: 0 0 0 3px rgba(0, 80, 230, 0.16);
-    --grad: linear-gradient(120deg, var(--accent), var(--accent-strong));
-    --shadow-1: 0 1px 2px rgba(10, 30, 60, 0.06);
-    --shadow-2: 0 12px 34px rgba(10, 30, 60, 0.10);
-    --r-s: 4px;
-    --r: 6px;
-    --r-l: 8px;
-    --radius: 6px;
-  }
-}
-
-/* Creation-screen title gradient, matched to the splash blue→cyan→violet ramp. */
-:root[data-theme="dark"][data-theme-style="console"] .app--creation {
-  --accent-title-grad: linear-gradient(90deg, #00e5ff 0%, #0057ff 48%, #20004d 100%);
-}
-
-:root[data-theme="light"][data-theme-style="console"] .app--creation {
-  --accent-title-grad: linear-gradient(90deg, #0078d4 0%, #0050e6 48%, #0a1420 100%);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root[data-theme-style="console"]:not([data-theme]) .app--creation {
-    --accent-title-grad: linear-gradient(90deg, #00e5ff 0%, #0057ff 48%, #20004d 100%);
-  }
-}
-
-@media (prefers-color-scheme: light) {
-  :root[data-theme-style="console"]:not([data-theme]) .app--creation {
-    --accent-title-grad: linear-gradient(90deg, #0078d4 0%, #0050e6 48%, #0a1420 100%);
-  }
-}
-
-/* Theme-card swatches for the settings picker. */
-.theme-card__swatches[data-theme-style-card="console"] .theme-card__swatch--bg {
-  background: #05080d;
-}
-.theme-card__swatches[data-theme-style-card="console"] .theme-card__swatch--surface {
-  background: #0a1220;
-}
-.theme-card__swatches[data-theme-style-card="console"] .theme-card__swatch--accent {
-  background: linear-gradient(120deg, #0057ff, #00e5ff);
-}
-
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme]) .theme-card__swatches[data-theme-style-card="console"] .theme-card__swatch--bg {
-    background: #eef2f8;
-  }
-  :root:not([data-theme]) .theme-card__swatches[data-theme-style-card="console"] .theme-card__swatch--surface {
-    background: #ffffff;
-  }
-  :root:not([data-theme]) .theme-card__swatches[data-theme-style-card="console"] .theme-card__swatch--accent {
-    background: linear-gradient(120deg, #0050e6, #0078d4);
-  }
+  --button-radius: 6px;
+  --list-row-radius: 6px;
+  --tree-row-radius: 6px;
 }

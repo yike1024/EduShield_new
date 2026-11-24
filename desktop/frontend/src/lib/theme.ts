@@ -4,6 +4,15 @@
 // carbon/nocturne/amber) — orthogonal to theme, so every direction supports both
 // light & dark.
 //
+// Two more orthogonal dimensions are layered on top:
+//   - data-theme-palette (a…e): the five brand color groups. Colors are owned
+//     exclusively by the palette layer; the 8 styles keep only non-color
+//     differences (radius/shadow/density/texture).
+//   - data-desktop-style (classic/workbench/creative): desktop layout modes.
+//
+// palette and desktopStyle are persisted to localStorage only (front-end side),
+// while theme/style keep syncing the native Wails shell as before.
+//
 // When running inside the Wails shell, applyTheme also syncs the native window
 // theme (title bar, traffic lights, etc.) so the OS chrome matches the webview.
 
@@ -11,6 +20,8 @@ export type Theme = "auto" | "light" | "dark";
 export type ResolvedTheme = Exclude<Theme, "auto">;
 
 export const THEME_STYLES = [
+  "console",
+  "morandi",
   "graphite",
   "aurora",
   "slate",
@@ -20,6 +31,15 @@ export const THEME_STYLES = [
 ] as const;
 
 export type ThemeStyle = (typeof THEME_STYLES)[number];
+
+// Five brand color groups. Each group provides exactly four brand colors; the
+// palette CSS layer derives the full semantic token set from them.
+export const THEME_PALETTES = ["a", "b", "c", "d", "e"] as const;
+export type ThemePalette = (typeof THEME_PALETTES)[number];
+
+// Desktop layout styles. They differ through layout / spacing only (no color).
+export const DESKTOP_STYLES = ["classic", "workbench", "creative"] as const;
+export type DesktopStyle = (typeof DESKTOP_STYLES)[number];
 
 // Old style identifiers map to the closest new direction so settings stored
 // from previous versions still resolve to a valid value.
@@ -32,14 +52,20 @@ const LEGACY_STYLE_MAP: Record<string, ThemeStyle> = {
   glacier: "slate",
 };
 
-const DEFAULT_THEME_STYLE: ThemeStyle = "graphite";
+const DEFAULT_THEME_STYLE: ThemeStyle = "console";
 const DEFAULT_THEME: Theme = "auto";
+const DEFAULT_PALETTE: ThemePalette = "a";
+const DEFAULT_DESKTOP_STYLE: DesktopStyle = "classic";
 
-const THEME_KEY = "reasonix-theme";
-const STYLE_KEY = "reasonix-theme-style";
+const THEME_KEY = "edushield-theme";
+const STYLE_KEY = "edushield-theme-style";
+const PALETTE_KEY = "edushield-theme-palette";
+const DESKTOP_STYLE_KEY = "edushield-desktop-style";
 const AUTO_THEME_MEDIA_QUERY = "(prefers-color-scheme: light)";
 let currentTheme: Theme = DEFAULT_THEME;
 let currentThemeStyle: ThemeStyle = DEFAULT_THEME_STYLE;
+let currentPalette: ThemePalette = DEFAULT_PALETTE;
+let currentDesktopStyle: DesktopStyle = DEFAULT_DESKTOP_STYLE;
 let autoThemeMediaQuery: MediaQueryList | null = null;
 
 export function normalizeThemePreference(value: unknown): Theme {
@@ -99,6 +125,79 @@ export function normalizeThemeStyleForTheme(style: string | undefined, _theme?: 
   return LEGACY_STYLE_MAP[style] ?? DEFAULT_THEME_STYLE;
 }
 
+export function isThemePalette(value: unknown): value is ThemePalette {
+  return typeof value === "string" && (THEME_PALETTES as readonly string[]).includes(value);
+}
+
+export function normalizeThemePalette(value: unknown): ThemePalette {
+  return isThemePalette(value) ? value : DEFAULT_PALETTE;
+}
+
+export function getThemePalette(): ThemePalette {
+  return currentPalette;
+}
+
+// applyPalette only sets the data-theme-palette attribute (colors). It never
+// touches theme / style / desktop-style, keeping every dimension orthogonal.
+export function applyPalette(palette: ThemePalette, options: { persist?: boolean } = {}): void {
+  if (typeof document === "undefined") return;
+  const next = normalizeThemePalette(palette);
+  currentPalette = next;
+  document.documentElement.setAttribute("data-theme-palette", next);
+  if (options.persist) {
+    try {
+      localStorage.setItem(PALETTE_KEY, next);
+    } catch {
+      /* ignore storage failures */
+    }
+  }
+}
+
+export function isDesktopStyle(value: unknown): value is DesktopStyle {
+  return typeof value === "string" && (DESKTOP_STYLES as readonly string[]).includes(value);
+}
+
+export function normalizeDesktopStyle(value: unknown): DesktopStyle {
+  return isDesktopStyle(value) ? value : DEFAULT_DESKTOP_STYLE;
+}
+
+export function getDesktopStyle(): DesktopStyle {
+  return currentDesktopStyle;
+}
+
+// applyDesktopStyle only sets the data-desktop-style attribute (layout /
+// spacing / density). Colors stay owned by the palette layer.
+export function applyDesktopStyle(style: DesktopStyle, options: { persist?: boolean } = {}): void {
+  if (typeof document === "undefined") return;
+  const next = normalizeDesktopStyle(style);
+  currentDesktopStyle = next;
+  document.documentElement.setAttribute("data-desktop-style", next);
+  if (options.persist) {
+    try {
+      localStorage.setItem(DESKTOP_STYLE_KEY, next);
+    } catch {
+      /* ignore storage failures */
+    }
+  }
+}
+
+// Read the persisted palette / desktop style (localStorage only, front-end
+// side — no Wails native sync needed for these two dimensions).
+function readPersistedNonNativePreferences(): { palette: ThemePalette; desktopStyle: DesktopStyle } {
+  if (typeof localStorage === "undefined") {
+    return { palette: DEFAULT_PALETTE, desktopStyle: DEFAULT_DESKTOP_STYLE };
+  }
+  let palette = DEFAULT_PALETTE;
+  let desktopStyle = DEFAULT_DESKTOP_STYLE;
+  try {
+    palette = normalizeThemePalette(localStorage.getItem(PALETTE_KEY));
+    desktopStyle = normalizeDesktopStyle(localStorage.getItem(DESKTOP_STYLE_KEY));
+  } catch {
+    /* ignore storage failures */
+  }
+  return { palette, desktopStyle };
+}
+
 export function applyTheme(theme: Theme, style: ThemeStyle = getThemeStyle(theme), options: { persist?: boolean } = {}): void {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
@@ -126,7 +225,14 @@ export function applyTheme(theme: Theme, style: ThemeStyle = getThemeStyle(theme
     syncNativeWindowBackground(theme);
   }
 
-  void options;
+  if (options.persist) {
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+      localStorage.setItem(STYLE_KEY, nextStyle);
+    } catch {
+      /* ignore storage failures */
+    }
+  }
 }
 
 function syncAutoThemeBackgroundListener(theme: Theme): void {
@@ -197,6 +303,11 @@ export function clearLegacyThemePreference(): void {
 export function initTheme(): void {
   const theme = getTheme();
   applyTheme(theme, getThemeStyle(theme), { persist: false });
+  // Apply the persisted palette / desktop style before React mounts so the
+  // first painted frame already uses them (avoids a colour/layout flash).
+  const { palette, desktopStyle } = readPersistedNonNativePreferences();
+  applyPalette(palette, { persist: false });
+  applyDesktopStyle(desktopStyle, { persist: false });
 }
 
 function syncNativeWindowBackground(theme: Theme): void {
@@ -204,10 +315,10 @@ function syncNativeWindowBackground(theme: Theme): void {
   if (!runtime?.WindowSetBackgroundColour) return;
   const resolved = getResolvedTheme(theme);
   if (resolved === "light") {
-    // Light shell: matches graphite --bg (#f4f3ef).
-    runtime.WindowSetBackgroundColour(244, 243, 239, 255);
+    // Light shell: matches console --bg (#eef2f8).
+    runtime.WindowSetBackgroundColour(238, 242, 248, 255);
   } else {
-    // Dark shell: matches :root --bg (#090a0c).
-    runtime.WindowSetBackgroundColour(9, 10, 12, 255);
+    // Dark shell: matches console --bg (#05080d).
+    runtime.WindowSetBackgroundColour(5, 8, 13, 255);
   }
 }

@@ -1,6 +1,6 @@
 import { downloadPaneFromURL } from "./download-link.js";
 
-// Reasonix site — vanilla interactions
+// EduShield site — vanilla interactions
 (function () {
   const motionOK = () =>
     document.body.dataset.motion === "rich" &&
@@ -164,14 +164,14 @@ import { downloadPaneFromURL } from "./download-link.js";
 
   /* refresh the published version and immutable desktop download links between rebuilds */
   const desktopAssets = [
-    "Reasonix-darwin-universal.dmg",
-    "Reasonix-darwin-arm64.zip",
-    "Reasonix-darwin-amd64.zip",
-    "Reasonix-windows-amd64-installer.exe",
-    "Reasonix-windows-arm64-installer.exe",
-    "Reasonix-windows-amd64.zip",
-    "Reasonix-linux-amd64.deb",
-    "Reasonix-linux-amd64.tar.gz",
+    "EduShield-darwin-universal.dmg",
+    "EduShield-darwin-arm64.zip",
+    "EduShield-darwin-amd64.zip",
+    "EduShield-windows-amd64-installer.exe",
+    "EduShield-windows-arm64-installer.exe",
+    "EduShield-windows-amd64.zip",
+    "EduShield-linux-amd64.deb",
+    "EduShield-linux-amd64.tar.gz",
   ];
   const localPreview = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
   if (!localPreview) {

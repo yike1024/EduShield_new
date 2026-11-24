@@ -2,7 +2,7 @@
 
 Subagent profiles are reusable, explicitly invoked agents for focused work such
 as code review, investigation, or documentation. Each profile is a manual Skill
-with `runAs: subagent`: Reasonix starts an isolated child agent, gives it the
+with `runAs: subagent`: EduShield starts an isolated child agent, gives it the
 profile prompt and task, and returns only its final answer to the parent.
 
 Profiles are shared by the desktop app, interactive CLI, and headless CLI. They
@@ -25,7 +25,7 @@ With a workspace, `create` defaults to project scope. Outside a workspace it
 defaults to global scope. Pass `--scope project` or `--scope global` to make the
 choice explicit. Project profiles are stored under
 `.reasonix/skills/<name>/SKILL.md`; global profiles are stored under the
-Reasonix home Skill directory described in
+EduShield home Skill directory described in
 [Configuration paths](./CONFIG_PATHS.md).
 
 The prompt may come from `--prompt`, `--prompt-file PATH`,
@@ -36,7 +36,7 @@ printf '%s\n' 'Review the task and report only actionable findings.' | \
   reasonix subagent create reviewer --description "Code reviewer"
 ```
 
-Names may contain letters, digits, `_`, `-`, and `.`. Reasonix refuses a name
+Names may contain letters, digits, `_`, `-`, and `.`. EduShield refuses a name
 that already belongs to another project, global, custom, or built-in Skill.
 
 ## Invoke a profile
@@ -170,4 +170,4 @@ If invocation reports an unknown or disabled profile, check
 `reasonix subagent list`, the current `--dir`, and `skills.disabled_skills`. If
 editing reports that a profile is custom or rich, edit its `SKILL.md` directly
 instead of forcing it through the profile editor. Unknown model references and
-invalid effort levels are rejected when Reasonix resolves the effective model.
+invalid effort levels are rejected when EduShield resolves the effective model.

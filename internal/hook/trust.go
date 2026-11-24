@@ -11,9 +11,9 @@ import (
 // Trust gates project hooks. A project's .reasonix/settings.json can run
 // arbitrary shell commands, so cloning a repo must not silently execute its
 // hooks: project hooks load only after the user explicitly trusts that project
-// root. The trust flag lives in user-global state (<Reasonix home>/trust.json),
+// root. The trust flag lives in user-global state (<EduShield home>/trust.json),
 // NOT in the project file itself — an attacker controls the latter. Global
-// hooks (<Reasonix home>/settings.json) are the user's own and always run.
+// hooks (<EduShield home>/settings.json) are the user's own and always run.
 
 // TrustFilename is the user-global trust store under ~/.reasonix.
 const TrustFilename = "trust.json"
@@ -23,7 +23,7 @@ type trustFile struct {
 	Projects map[string]bool `json:"projects"`
 }
 
-// TrustPath is <Reasonix home>/trust.json (homeDir overrides ~ for tests and
+// TrustPath is <EduShield home>/trust.json (homeDir overrides ~ for tests and
 // legacy callers).
 func TrustPath(homeDir string) string {
 	return filepath.Join(reasonixHome(homeDir), TrustFilename)

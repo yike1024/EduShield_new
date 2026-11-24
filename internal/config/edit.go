@@ -261,7 +261,7 @@ func (c *Config) SetDesktopAppearance(theme, style string) error {
 	}
 	normalized := normalizeThemeStyle(style)
 	if normalized == "" {
-		return fmt.Errorf("desktop theme style %q: must be graphite|aurora|slate|carbon|nocturne|amber", style)
+		return fmt.Errorf("desktop theme style %q: must be console|morandi|graphite|aurora|slate|carbon|nocturne|amber", style)
 	}
 	c.Desktop.ThemeStyle = normalized
 	return nil
@@ -1017,7 +1017,7 @@ func planLegacyMCPDisable(path, name string) (configSourceEdit, bool, error) {
 // config source that can contribute it for root. Removing all matching TOML
 // declarations prevents a lower-priority duplicate from reappearing after the
 // higher-priority entry is deleted. Every edit is planned before the first write,
-// and legacy JSON receives a disable marker for older Reasonix versions.
+// and legacy JSON receives a disable marker for older EduShield versions.
 func RemovePluginFromSourcesForRoot(root, name string) (bool, error) {
 	name = strings.TrimSpace(name)
 	if name == "" {
@@ -1311,7 +1311,7 @@ func SaveMinimalProjectReasoningLanguage(path, lang string) (string, error) {
 	if err := cfg.SetReasoningLanguage(lang); err != nil {
 		return "", err
 	}
-	body := fmt.Sprintf(`# Reasonix project configuration.
+	body := fmt.Sprintf(`# EduShield project configuration.
 # Project-local overrides are merged over the user config.
 
 [agent]
@@ -1677,7 +1677,7 @@ func isUserConfigPath(path string) bool {
 	return false
 }
 
-// IsUserConfigPath reports whether path is one of Reasonix's current or legacy
+// IsUserConfigPath reports whether path is one of EduShield's current or legacy
 // user-global config locations. Other paths use project-scoped rendering.
 func IsUserConfigPath(path string) bool {
 	return isUserConfigPath(path)

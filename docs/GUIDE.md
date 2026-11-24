@@ -1,4 +1,4 @@
-# Reasonix Guide
+# EduShield Guide
 
 <a href="../README.md">README</a>
 &nbsp;·&nbsp;
@@ -31,18 +31,18 @@
 ## Configuration
 
 Resolution order: **flag > `./reasonix.toml` > the user config file >
-built-in defaults**. Starting with **Reasonix v1.8.1**, the user config lives at
+built-in defaults**. Starting with **EduShield v1.8.1**, the user config lives at
 `~/.reasonix/config.toml` on macOS/Linux and
 `%AppData%\reasonix\config.toml` on Windows; see
 [Configuration paths](./CONFIG_PATHS.md) for migration and related data paths.
 Fields marked user/global only are not overridden by `./reasonix.toml`.
 Provider entries name secrets with `api_key_env`, while the secret values live in
-Reasonix's global `<Reasonix home>/.env`, shared by CLI and desktop. Project
+EduShield's global `<EduShield home>/.env`, shared by CLI and desktop. Project
 `.env`, home `.env`, inherited shell environment variables, legacy credentials,
 and the OS keyring are not provider-key runtime fallbacks; legacy credentials are
 only migration sources. Project `.env` still feeds workspace-scoped,
 non-provider `${VAR}` expansion for MCP/plugin settings without importing
-provider keys or Reasonix control variables. See
+provider keys or EduShield control variables. See
 [Configuration paths](./CONFIG_PATHS.md) for the full `config.toml` and `.env`
 structure.
 
@@ -132,13 +132,13 @@ read-only tool registry and foreground-command classifier.
 
 ### Environment variables
 
-Most day-to-day settings belong in `config.toml` or the global Reasonix `.env`
+Most day-to-day settings belong in `config.toml` or the global EduShield `.env`
 described above. The variables below are process-level advanced switches; set
-them before launching Reasonix. Project `.env` files are not a runtime source for
-Reasonix control variables.
+them before launching EduShield. Project `.env` files are not a runtime source for
+EduShield control variables.
 
 `REASONIX_MEMORY_COMPILER_LLM_CLASSIFICATION=true` enables the optional LLM
-task/chat classifier for Memory v5. By default it is disabled, and Reasonix uses
+task/chat classifier for Memory v5. By default it is disabled, and EduShield uses
 the local heuristic classifier without extra provider calls. When enabled, cache
 misses may send a small classifier request through the configured provider before
 deciding whether a user input is task-like or conversational; this can add a
@@ -164,7 +164,7 @@ when you intentionally want this advanced switch enabled.
 
 `reasonix serve` starts the same local engine behind a browser UI. Use it when
 you want a desktop-style surface without installing the desktop app, when running
-Reasonix on a remote development box through a tunnel, or when you want a
+EduShield on a remote development box through a tunnel, or when you want a
 shareable view of a live session.
 
 ```bash
@@ -191,7 +191,7 @@ Token mode prints a share URL with `?token=...`; pass `--token` or set
 ```bash
 reasonix serve --hash-password --password 'strong-password'
 
-# <Reasonix home>/config.toml
+# <EduShield home>/config.toml
 [serve]
 auth_mode = "password" # none|token|password
 password_hash = "$2a$12$..."
@@ -209,7 +209,7 @@ user-global `default_model`.
 `reasonix acp` exposes three independent session axes to ACP editor clients:
 
 - `modes`: `normal`, `plan`, or `goal`. Selecting Goal makes the next user
-  prompt the active goal and starts Reasonix's normal Goal continuation loop.
+  prompt the active goal and starts EduShield's normal Goal continuation loop.
 - `work_mode`: `economy`, `balanced`, or `delivery`. Changing it atomically
   rebuilds the controller while preserving history, collaboration mode, and
   tool approval. It is also available as the startup-only
@@ -217,7 +217,7 @@ user-global `default_model`.
 - `tool_approval`: `ask`, `auto`, or `yolo`. Changing approval does not rebuild
   the controller or alter the collaboration/work mode.
 
-Model and reasoning effort remain independent ACP config options. Reasonix
+Model and reasoning effort remain independent ACP config options. EduShield
 persists all three axes per ACP session. Older session metadata defaults to
 the ACP process's startup profile (Balanced unless `--profile` overrides it) +
 Ask + Normal. For compatibility with clients built against the old mixed mode
@@ -231,7 +231,7 @@ Custom provider** for proxies, aggregators, or self-hosted services that speak
 the OpenAI-compatible chat API or Anthropic-compatible Messages API.
 
 For common providers, choose **Add model service -> Recommended preset** instead.
-Reasonix can prefill editable custom-provider entries for Kimi CN, Kimi Global,
+EduShield can prefill editable custom-provider entries for Kimi CN, Kimi Global,
 Kimi Coding Plan, MiMo API, MiMo Anthropic, MiMo Token Plan CN/SGP/AMS and their
 Anthropic-compatible variants, MiniMax CN/Global API, MiniMax CN/Global
 Anthropic, GLM CN, Z.AI Global, GLM/Z.AI Coding Plan OpenAI-compatible and
@@ -243,7 +243,7 @@ HuggingFace Router, NVIDIA NIM, KiloCode, and Ollama Cloud. Plan names describe
 the access/payment route; they include CN/Global only when the provider exposes
 distinct regional endpoints. Kimi Coding Plan is therefore a dedicated plan
 endpoint, while Kimi direct API is split into CN and Global. The preset path
-usually needs only the provider API key: the key value is stored in Reasonix home
+usually needs only the provider API key: the key value is stored in EduShield home
 `.env`, while `config.toml` stores the endpoint, model list, key
 environment-variable name, context window, vision model metadata, proxy bypass
 for China-only endpoints, MiniMax `reasoning_split`, GLM/MiniMax thinking
@@ -253,14 +253,14 @@ a preset, open its provider card if you need to change models, headers,
 endpoint, or compatibility settings.
 
 Fill **API address** with the provider endpoint that should receive the standard
-chat path. In this mode Reasonix previews and sends chat requests to:
+chat path. In this mode EduShield previews and sends chat requests to:
 
 ```text
 <API address>/chat/completions
 ```
 
 Enable **Full URL** when the service gives you a complete request URL, for
-example `https://gateway.example.com/v1/chat/completions`. Reasonix then sends
+example `https://gateway.example.com/v1/chat/completions`. EduShield then sends
 chat requests directly to that URL and does not append `/chat/completions`. The
 preview under the field shows the exact request URL that will be used.
 
@@ -284,21 +284,21 @@ For Anthropic-compatible services, such as some coding-plan endpoints, choose
 
 | Field | What it controls | When to change it |
 | --- | --- | --- |
-| `api_key_env` | The environment-variable name used for this provider's API key. Desktop-saved key values are stored in Reasonix home `.env` under this name; the TOML config stores only the name. | Change it when several providers need distinct keys, or leave it blank for a service that does not require an API key. |
+| `api_key_env` | The environment-variable name used for this provider's API key. Desktop-saved key values are stored in EduShield home `.env` under this name; the TOML config stores only the name. | Change it when several providers need distinct keys, or leave it blank for a service that does not require an API key. |
 | `models_url` | The URL used only for model discovery. Chat requests still use the API address or Full URL above. | Set it when `/models` or `/v1/models` is not where the gateway exposes its model list. |
 | Extra request headers | Static HTTP headers, one `Header: value` per line. | Use for gateways such as OpenRouter that require `HTTP-Referer`, `X-Title`, or similar site headers. Keep bearer/API keys in the key field instead of duplicating them here. |
-| Extra request body | A JSON object merged into the top-level chat request body. | Use only for provider-specific flags such as `{"enable_thinking": true}`. Reasonix still owns core fields such as `model`, `messages`, `tools`, `stream`, and `thinking`, and null values are rejected. |
+| Extra request body | A JSON object merged into the top-level chat request body. | Use only for provider-specific flags such as `{"enable_thinking": true}`. EduShield still owns core fields such as `model`, `messages`, `tools`, `stream`, and `thinking`, and null values are rejected. |
 | Authorization: Bearer | For Anthropic-compatible providers, sends the saved API key as `Authorization: Bearer <key>` instead of `x-api-key`. | Enable it only when the gateway documents Bearer auth, such as MiniMax Global or Vercel AI Gateway. |
-| Model capability mode | Which reasoning request protocol Reasonix should use for this provider. | Keep **Auto-detect** unless the gateway is misdetected or the model docs require a specific reasoning format. |
+| Model capability mode | Which reasoning request protocol EduShield should use for this provider. | Keep **Auto-detect** unless the gateway is misdetected or the model docs require a specific reasoning format. |
 | Thinking override | Provider-specific override for `thinking.type`. | Keep **Auto** unless the backend documents `enabled`, `disabled`, or `adaptive`. Unsupported values can make some OpenAI-compatible gateways reject the request. |
 | Balance URL | Optional endpoint for wallet/balance lookup. | Set it when the provider exposes a balance endpoint and you want the desktop status bar to show it. |
-| Context window | The maximum number of tokens this provider keeps in context. `0` means provider default. | Set it when the model's real context size differs from Reasonix's default or built-in metadata. |
+| Context window | The maximum number of tokens this provider keeps in context. `0` means provider default. | Set it when the model's real context size differs from EduShield's default or built-in metadata. |
 
 Model capability mode options:
 
 | Option | Effect |
 | --- | --- |
-| Auto-detect (recommended) | Reasonix chooses the request shape from model capability metadata and endpoint detection. |
+| Auto-detect (recommended) | EduShield chooses the request shape from model capability metadata and endpoint detection. |
 | DeepSeek thinking | Uses DeepSeek-style thinking control, including `thinking.type` and DeepSeek-supported reasoning depth. |
 | OpenAI reasoning | Uses the standard OpenAI-compatible `reasoning_effort` levels. |
 | Plain chat | Sends no reasoning or thinking control fields. Use this for text-only proxies that reject reasoning parameters. |
@@ -307,7 +307,7 @@ Thinking override options:
 
 | Option | Effect |
 | --- | --- |
-| Auto (provider default) | Does not write an explicit provider-level `thinking` override. Reasonix uses the provider/model default behavior. |
+| Auto (provider default) | Does not write an explicit provider-level `thinking` override. EduShield uses the provider/model default behavior. |
 | Enabled | Sends `thinking.type = "enabled"` for compatible providers. |
 | Disabled | Sends `thinking.type = "disabled"` for compatible providers. On DeepSeek-style providers this also avoids sending a reasoning depth hint. |
 | Adaptive (self-adjusting) | Sends or preserves `thinking.type = "adaptive"` only for providers that document adaptive thinking, such as MiniMax-M3-style endpoints. |
@@ -325,7 +325,7 @@ api_key_env = "SPARK_API_KEY"
 extra_body  = { enable_thinking = true }
 ```
 
-`extra_body` is merged into the chat JSON request body. Reasonix keeps core
+`extra_body` is merged into the chat JSON request body. EduShield keeps core
 fields such as `model`, `messages`, `tools`, `stream`, and `thinking` under its
 own control.
 
@@ -334,15 +334,15 @@ own control.
 Desktop hooks run local commands at lifecycle events such as `SessionStart`,
 `UserPromptSubmit`, `PreToolUse`, and `PreCompact`. A successful `SessionStart`
 hook may write plain text to stdout, or return JSON with
-`hookSpecificOutput.additionalContext`; Reasonix injects that text once into the
+`hookSpecificOutput.additionalContext`; EduShield injects that text once into the
 next real user turn as `<hook-context event="SessionStart">...</hook-context>`.
 This is intended for plugin or workflow bootstrap context, including
 Superpowers-style startup instructions, without baking that workflow into
-Reasonix's system prompt.
+EduShield's system prompt.
 
 Plugin packages can provide this startup context through
 `hooks/session-start-codex` or a plugin-root `CLAUDE.md`. Claude-style
-`.claude/settings.json` command hooks are also mapped to matching Reasonix hook
+`.claude/settings.json` command hooks are also mapped to matching EduShield hook
 events.
 
 The injected hook context is dynamic current-turn context. It does not change
@@ -369,7 +369,7 @@ cursor. This setting does not change desktop or web text fields.
 ### Desktop GUI
 
 Desktop shortcuts are managed from **Settings → Shortcuts**. Pick a row, press a
-new key combination, and Reasonix saves it for the desktop app. Conflicting
+new key combination, and EduShield saves it for the desktop app. Conflicting
 bindings are rejected so one shortcut never triggers two actions. Press `?` or
 use the help button in the topic bar to open the shortcuts sheet; it is generated
 from the same shortcut registry, so it reflects any custom bindings.
@@ -496,11 +496,11 @@ Seatbelt on macOS and bubblewrap on Linux):
 commands may write only those same roots plus platform-specific command
 temp/cache roots, cannot read configured `forbid_read` roots while the OS
 sandbox is active, and reach the network only when `[sandbox] network` is set.
-Reasonix always removes saved provider and bot credential variables from tool
+EduShield always removes saved provider and bot credential variables from tool
 subprocess environments and automatically adds its global credential `.env` to
 the runtime read-deny boundary. Project `.env` files keep their existing
 workspace-scoped behavior.
-**Windows note:** Reasonix does not ship an OS-level Bash sandbox on Windows.
+**Windows note:** EduShield does not ship an OS-level Bash sandbox on Windows.
 The effective mode is fixed to `off`; even an older config containing
 `bash = "enforce"` resolves to `off`, `reasonix doctor` flags the ignored value,
 and the desktop selector is read-only. Bash commands therefore run unconfined,
@@ -559,7 +559,7 @@ start failure); `2` is bad flags. This is separate from `reasonix doctor`
 
 ## Plugins (MCP)
 
-Reasonix is an MCP client. A `[[plugins]]` entry's `type` selects the transport:
+EduShield is an MCP client. A `[[plugins]]` entry's `type` selects the transport:
 `stdio` (default) launches a local subprocess (`command`/`args`/`env`); `http`
 (Streamable HTTP) connects to a remote `url` with optional static `headers`
 (`${VAR}` / `${VAR:-default}` expanded from the environment, so tokens stay out
@@ -649,7 +649,7 @@ report across skills, hooks, packages, and MCP (without changing settings), see
 [Capability diagnostics](./CAPABILITY_DIAGNOSTICS.md)
 (`reasonix doctor capabilities` or **Settings → Diagnostics**).
 
-**Already have an `.mcp.json`?** Drop it in the project root and Reasonix
+**Already have an `.mcp.json`?** Drop it in the project root and EduShield
 reads it as-is — the `mcpServers` spec (`command`/`args`/`env`, `type`/`url`/
 `headers`, `${VAR}` expansion) maps field-for-field onto `[[plugins]]`. Both
 sources are merged; on a name collision `reasonix.toml` wins.
@@ -696,7 +696,7 @@ Subagent profiles are manual Skills with `runAs: subagent` and
 `invocation: manual`. They are stored in the same project/global Skill roots as
 the desktop settings page, so profiles created on either surface are immediately
 available to the other after the session refreshes. In interactive chat, invoke
-one with `/<name> <task>`; Reasonix runs an isolated child loop and keeps only
+one with `/<name> <task>`; EduShield runs an isolated child loop and keeps only
 the task and final answer in the parent conversation.
 
 The headless CLI provides explicit management and execution commands without
@@ -739,7 +739,7 @@ Retrieval keeps the top BM25 result while trimming weak common-word matches, and
 0-result responses suggest narrower, more distinctive follow-up searches.
 Memory v5 is enabled by default across the CLI/TUI, `reasonix serve`, and the
 desktop app because they all share the same local controller. It records local,
-project-scoped execution traces and compiler state under Reasonix home, then
+project-scoped execution traces and compiler state under EduShield home, then
 compiles the next user turn into a compact execution contract only when prior
 outcomes produce actionable constraints. Early turns may only write traces and
 inject nothing. The default `verbosity = "observe"` keeps this as local learning
@@ -764,7 +764,7 @@ IDs, keys, base URLs, or file contents.
 CLI/TUI and `reasonix serve` use the same user/global config. Project
 `reasonix.toml` files cannot override this user/global setting. The CLI command
 updates this underlying config; advanced users may also edit it manually under
-Reasonix home:
+EduShield home:
 
 ```toml
 [agent]
@@ -794,7 +794,7 @@ MCP prompts also appear here as `/mcp__<server>__<prompt>`.
 ## Goal and AutoResearch
 
 Goal is the unified runtime for long-running objectives. Ordinary `/goal`
-objectives stay lightweight: Reasonix keeps working until the goal is complete,
+objectives stay lightweight: EduShield keeps working until the goal is complete,
 blocked, or cleared. When a goal is clearly long-horizon, Goal automatically
 enables the AutoResearch strategy instead of requiring a separate
 `/auto-research` skill; `auto-research` is not listed as a standalone built-in
@@ -825,7 +825,7 @@ by themselves.
 Once AutoResearch is active, the agent treats the goal as a stateful research
 loop instead of a chat-only continuation. It creates or reuses a project-local
 `.reasonix/autoresearch/<task-id>/` directory. For new tasks, the default id
-shape is `YYYYMMDD-HHMMSS-slug`, such as `20260618-224530-cache-audit`; Reasonix
+shape is `YYYYMMDD-HHMMSS-slug`, such as `20260618-224530-cache-audit`; EduShield
 checks the project directory first and appends `-2`, `-3`, and so on only if
 that id already exists. The task state includes `task_spec.md`, `progress.json`,
 `findings.jsonl`, `directions_tried.json`, and `iteration_log.jsonl`, records
@@ -846,7 +846,7 @@ gates.
 
 ## @ references
 
-Embed `@` references in a message and Reasonix resolves them before sending, as
+Embed `@` references in a message and EduShield resolves them before sending, as
 tagged context blocks: `@path/to/file` (or `@dir`) injects a local file's
 contents (or a directory listing), and `@<server>:<uri>` injects an MCP
 resource. A local path is only treated as a reference when it actually exists,
@@ -869,7 +869,7 @@ planner_model = "deepseek-pro"   # used as the low-frequency planner
 
 The planner sees loaded `REASONIX.md` / `AGENTS.md` memory and a small read-only
 research tool set, so it can inspect relevant files before handing a plan to the
-executor. Writer and workflow tools remain executor-only. Reasonix manages
+executor. Writer and workflow tools remain executor-only. EduShield manages
 normal execution automatically: if an active todo produces no new completion,
 unique read, command, or mutation for 8 tool-call rounds, the host asks the
 executor to reassess. After 16 no-progress rounds it pauses with saved work that
@@ -982,7 +982,7 @@ legacy empty/`full` values remain Balanced.
 
 For interactive frontends, plan mode is manual by default. Set
 `agent.auto_plan = "on"` to make complex-looking tasks enter plan mode
-automatically: Reasonix first drafts a plan, then waits for approval before the
+automatically: EduShield first drafts a plan, then waits for approval before the
 workflow switches to implementation. Tool calls made while drafting still use
 the current Permissions and Sandbox. `auto_plan_classifier` can
 name a cheap provider such as `deepseek-flash`; it is only called for borderline

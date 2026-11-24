@@ -364,10 +364,10 @@ func TestReasonixHomeDirOverridesGlobalReasonixSkills(t *testing.T) {
 	list := st.List()
 	current, ok := find(list, "current")
 	if !ok {
-		t.Fatal("Reasonix home skill should be discovered")
+		t.Fatal("EduShield home skill should be discovered")
 	}
 	if current.Path != currentPath {
-		t.Fatalf("current skill path = %q, want Reasonix home path %q", current.Path, currentPath)
+		t.Fatalf("current skill path = %q, want EduShield home path %q", current.Path, currentPath)
 	}
 	if _, ok := find(list, "old"); !ok {
 		t.Fatal("legacy ~/.reasonix skill should remain discoverable")

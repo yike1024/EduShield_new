@@ -2,9 +2,13 @@
 
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { StatusBar } from "../components/StatusBar";
+import { StatusBar, memoryCompilerTooltip } from "../components/StatusBar";
 import { LocaleProvider } from "../lib/i18n";
 import { DEFAULT_STATUS_BAR_ITEMS, normalizeStatusBarItems } from "../lib/statusBarItems";
+import { en, type DictKey } from "../locales/en";
+import type { MemoryCompilerStats } from "../lib/types";
+
+const enT = (key: DictKey): string => en[key] ?? key;
 
 let passed = 0;
 let failed = 0;
@@ -87,6 +91,77 @@ console.log("\nstatus bar workspace");
 {
   const defaultItems = DEFAULT_STATUS_BAR_ITEMS as readonly string[];
   ok(!defaultItems.includes("autoresearch"), "autoresearch is not a configurable status bar UI item");
+}
+
+{
+  const defaultItems = DEFAULT_STATUS_BAR_ITEMS as readonly string[];
+  ok(defaultItems.includes("memory"), "memory is a default configurable status bar item");
+  ok(
+    normalizeStatusBarItems(["balance", "memory"]).join(",") === "balance,memory",
+    "memory item preserves configured order",
+  );
+}
+
+{
+  const memoryCompilerStats: MemoryCompilerStats = {
+    injected: true,
+    usefulIR: true,
+    compiledTokens: 1200,
+    irOverheadTokens: 40,
+    memoryReferences: 3,
+    constraints: 2,
+    riskNotes: 0,
+    executionSteps: 5,
+    totalNodes: 30,
+    highSignalNodes: 8,
+    toolResultNodes: 4,
+    decisionNodes: 3,
+    strategyCount: 1,
+    learningCount: 0,
+  };
+  const html = renderStatusBar({
+    items: ["memory"],
+    memoryCompilerStats,
+  });
+  ok(html.includes("3"), "memory status shows reference count when injected");
+  const tooltipHtml = renderToStaticMarkup(
+    <span>{memoryCompilerTooltip(enT, memoryCompilerStats)}</span>,
+  );
+  ok(tooltipHtml.includes("1,200"), "memory tooltip shows compiled tokens");
+  ok(!html.includes("suppressed"), "injected memory is not labelled suppressed");
+}
+
+{
+  const memoryCompilerStats: MemoryCompilerStats = {
+    injected: false,
+    usefulIR: false,
+    compiledTokens: 800,
+    irOverheadTokens: 20,
+    memoryReferences: 0,
+    constraints: 1,
+    riskNotes: 1,
+    executionSteps: 3,
+    totalNodes: 10,
+    highSignalNodes: 0,
+    toolResultNodes: 0,
+    decisionNodes: 2,
+    strategyCount: 0,
+    learningCount: 0,
+  };
+  const html = renderStatusBar({
+    items: ["memory"],
+    memoryCompilerStats,
+  });
+  ok(html.includes("suppressed"), "suppressed memory is labelled suppressed");
+  const tooltipHtml = renderToStaticMarkup(
+    <span>{memoryCompilerTooltip(enT, memoryCompilerStats)}</span>,
+  );
+  ok(tooltipHtml.includes("800"), "suppressed memory tooltip still shows compiled tokens");
+}
+
+{
+  const html = renderStatusBar({ items: ["memory"] });
+  ok(!html.includes("statusbar__memory"), "memory metric is hidden when no compiler stats are available");
 }
 
 console.log(`\n${passed} passed, ${failed} failed, ${passed + failed} total`);

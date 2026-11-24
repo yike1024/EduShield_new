@@ -1,4 +1,4 @@
-# Reasonix 使用指南
+# EduShield 使用指南
 
 <a href="../README.zh-CN.md">README</a>
 &nbsp;·&nbsp;
@@ -31,17 +31,17 @@
 ## 配置
 
 优先级：**flag > `./reasonix.toml` > 用户配置文件 > 内置默认值**。从
-**Reasonix v1.8.1** 开始，用户配置位于 macOS/Linux 的
+**EduShield v1.8.1** 开始，用户配置位于 macOS/Linux 的
 `~/.reasonix/config.toml`，Windows 为 `%AppData%\reasonix\config.toml`；迁移和相关数据路径见
 [配置路径](./CONFIG_PATHS.zh-CN.md)。标注为“仅用户/全局”的字段（包括 agent 轮数上限）不会被 `./reasonix.toml` 覆盖。
 Provider 通过 `api_key_env` 命名密钥，真实密钥值保存在 CLI 与桌面端共用的
-Reasonix 全局 `<Reasonix home>/.env`。项目 `.env`、home `.env`、继承的 shell 环境变量、旧 credentials 和系统 keyring 都不再作为 provider key 的运行时 fallback；旧凭据只作为迁移来源读取。项目 `.env` 仍会作为当前 workspace 范围内的 MCP/plugin 非 provider `${VAR}` 展开来源，但不会导入 provider key 或 Reasonix 控制变量。全局 `config.toml` 和 `.env` 的完整结构见
+EduShield 全局 `<EduShield home>/.env`。项目 `.env`、home `.env`、继承的 shell 环境变量、旧 credentials 和系统 keyring 都不再作为 provider key 的运行时 fallback；旧凭据只作为迁移来源读取。项目 `.env` 仍会作为当前 workspace 范围内的 MCP/plugin 非 provider `${VAR}` 展开来源，但不会导入 provider key 或 EduShield 控制变量。全局 `config.toml` 和 `.env` 的完整结构见
 [配置路径](./CONFIG_PATHS.zh-CN.md)。
 
 桌面端和 CLI 端的可见思考语言设置，见 [思考语言](./REASONING_LANGUAGE.zh-CN.md)。
 桌面端 Hooks 的 JSON 配置、事件 key 和 payload 字段，见 [桌面端 Hooks](./DESKTOP_HOOKS.zh-CN.md)。
 `SessionStart` hook 可通过 stdout 或 `hookSpecificOutput.additionalContext` 把插件/工作流 bootstrap 内容一次性注入下一轮真实用户输入上下文，而不是写入稳定 system prompt。
-插件包可通过 `hooks/session-start-codex` 或插件根目录 `CLAUDE.md` 提供该启动上下文；Claude 风格 `.claude/settings.json` command hooks 也会按同名事件映射到 Reasonix hooks。
+插件包可通过 `hooks/session-start-codex` 或插件根目录 `CLAUDE.md` 提供该启动上下文；Claude 风格 `.claude/settings.json` command hooks 也会按同名事件映射到 EduShield hooks。
 
 ```toml
 default_model = "deepseek-flash"   # 执行器；设 [agent].planner_model 可加规划器
@@ -122,12 +122,12 @@ bash allowlist 或信任提示。Plan 与常规模式使用相同的 Permissions
 
 ### 环境变量
 
-多数日常设置应写在 `config.toml` 或前文提到的 Reasonix 全局 `.env` 中。下面这些变量是进程级高级开关；
-需要在启动 Reasonix 之前设置。项目 `.env` 不是 Reasonix 控制变量的运行时来源。
+多数日常设置应写在 `config.toml` 或前文提到的 EduShield 全局 `.env` 中。下面这些变量是进程级高级开关；
+需要在启动 EduShield 之前设置。项目 `.env` 不是 EduShield 控制变量的运行时来源。
 
 `REASONIX_MEMORY_COMPILER_LLM_CLASSIFICATION=true` 会为 Memory v5 启用可选的 LLM 任务/聊天分类器。
-默认关闭，此时 Reasonix 使用本地 heuristic classifier，不会产生额外 provider 调用。开启后，分类缓存未命中时，
-Reasonix 可能先通过已配置 provider 发送一个很小的分类请求，再决定用户输入是任务还是普通对话；这会增加少量延迟、
+默认关闭，此时 EduShield 使用本地 heuristic classifier，不会产生额外 provider 调用。开启后，分类缓存未命中时，
+EduShield 可能先通过已配置 provider 发送一个很小的分类请求，再决定用户输入是任务还是普通对话；这会增加少量延迟、
 provider 用量和 token 成本。分类结果会在单个 session 内短时间缓存。只有去掉首尾空白后精确等于 `true`
 才会启用；未设置、`false`、`1`、`TRUE` 都会保持默认 heuristic 路径。
 
@@ -146,7 +146,7 @@ REASONIX_MEMORY_COMPILER_LLM_CLASSIFICATION=true wails dev -forcebuild
 
 ## Serve Web 前端
 
-`reasonix serve` 会用同一个本地 Reasonix 引擎启动浏览器 UI。适合不安装桌面端但想用可视化界面、
+`reasonix serve` 会用同一个本地 EduShield 引擎启动浏览器 UI。适合不安装桌面端但想用可视化界面、
 在远程开发机上通过 tunnel 使用，或把当前会话临时共享给浏览器查看的场景。
 
 ```bash
@@ -170,7 +170,7 @@ Token 模式会在终端打印带 `?token=...` 的分享链接；可通过 `--to
 ```bash
 reasonix serve --hash-password --password 'strong-password'
 
-# <Reasonix home>/config.toml
+# <EduShield home>/config.toml
 [serve]
 auth_mode = "password" # none|token|password
 password_hash = "$2a$12$..."
@@ -187,13 +187,13 @@ Goal、由 `todo_write` 工具驱动的实时 Todo 面板，以及已配置 prov
 `reasonix acp` 向 ACP 编辑器客户端公开三条彼此独立的会话轴：
 
 - `modes`：`normal`、`plan`、`goal`。选择 Goal 后，下一条用户输入会成为活动目标，
-  并启动 Reasonix 现有的 Goal 持续推进循环。
+  并启动 EduShield 现有的 Goal 持续推进循环。
 - `work_mode`：`economy`、`balanced`、`delivery`。切换时会原子重建 Controller，
   同时保留历史、协作方式和工具权限。`reasonix acp --profile ...` 仍可设置启动默认值。
 - `tool_approval`：`ask`、`auto`、`yolo`。切换权限不会重建 Controller，也不会改变
   协作方式或工作模式。
 
-模型和推理强度仍是独立的 ACP 配置项。Reasonix 会按 ACP 会话持久化这三条轴；旧会话元数据
+模型和推理强度仍是独立的 ACP 配置项。EduShield 会按 ACP 会话持久化这三条轴；旧会话元数据
 缺少新字段时，工作模式继承 ACP 进程的启动 profile（未传 `--profile` 时为均衡），权限和
 协作方式使用“询问 + 常规”。为兼容旧版混合 mode 列表，`session/set_mode` 仍接受
 `default`（常规 + 询问）和 `auto`（常规 + Yolo），新客户端应使用拆分后的独立选择器。
@@ -203,7 +203,7 @@ Goal、由 `todo_write` 工具驱动的实时 Todo 面板，以及已配置 prov
 在桌面端打开 **设置 -> 模型 -> 接入 -> 添加模型服务 -> 自定义供应商**，用于接入代理、
 聚合平台或自建 OpenAI-compatible chat API / Anthropic-compatible Messages API 服务。
 
-常用服务优先使用 **添加模型服务 -> 推荐预设**。Reasonix 可以预填可编辑的自定义 provider：
+常用服务优先使用 **添加模型服务 -> 推荐预设**。EduShield 可以预填可编辑的自定义 provider：
 Kimi CN、Kimi Global、Kimi Coding Plan、MiMo API、MiMo Anthropic、MiMo Token Plan
 CN/SGP/AMS 及其 Anthropic-compatible 变体、MiniMax CN/Global API、MiniMax
 CN/Global Anthropic、GLM CN、Z.AI Global、GLM/Z.AI Coding Plan 的
@@ -214,21 +214,21 @@ OpenAI-compatible 与 Anthropic-compatible 端点、NovitaAI、GMI Cloud、Verce
 Gateway、HuggingFace Router、NVIDIA NIM、KiloCode 和 Ollama Cloud。Plan 表示
 访问/付费形态；只有服务商确实提供不同区域端点时，预设名才同时带 CN/Global。
 因此 Kimi Coding Plan 是独立 plan 端点，Kimi 直连 API 才拆成 CN 和 Global。
-预设路径通常只需要填写服务商 API Key：真实 key 会写入 Reasonix home `.env`，
+预设路径通常只需要填写服务商 API Key：真实 key 会写入 EduShield home `.env`，
 `config.toml` 只保存端点、模型列表、key 环境变量名、上下文窗口、视觉模型元数据、
 中国区端点直连、MiniMax `reasoning_split`、GLM/MiniMax thinking heuristic、
 Anthropic-compatible 网关需要的 Bearer 认证、Ollama Cloud max-effort 支持，
 以及 OpenCode Go 的每模型 reasoning 覆盖。添加后仍然可以打开 provider 卡片，
 继续修改模型、请求头、端点或兼容设置。
 
-**API 地址** 填写服务端点。默认模式下，Reasonix 会预览并把聊天请求发送到：
+**API 地址** 填写服务端点。默认模式下，EduShield 会预览并把聊天请求发送到：
 
 ```text
 <API 地址>/chat/completions
 ```
 
 如果服务商给的是完整请求 URL，例如 `https://gateway.example.com/v1/chat/completions`，
-开启 **完整 URL**。开启后 Reasonix 会直接使用该地址，不再追加 `/chat/completions`。
+开启 **完整 URL**。开启后 EduShield 会直接使用该地址，不再追加 `/chat/completions`。
 输入框下方的预览就是最终请求地址。
 
 模型发现会基于 API 地址尝试 `/models`、`/v1/models` 等候选地址。如果网关要求单独的
@@ -247,21 +247,21 @@ Anthropic-compatible 网关需要的 Bearer 认证、Ollama Cloud max-effort 支
 
 | 字段 | 作用 | 什么时候改 |
 | --- | --- | --- |
-| `api_key_env` | 该 provider 使用的 API key 环境变量名。桌面端保存的真实 key 会写入 Reasonix home `.env` 的同名变量；TOML 配置里只保存变量名。 | 多个 provider 需要不同 key 时改名；服务不需要 API key 时可以留空。 |
+| `api_key_env` | 该 provider 使用的 API key 环境变量名。桌面端保存的真实 key 会写入 EduShield home `.env` 的同名变量；TOML 配置里只保存变量名。 | 多个 provider 需要不同 key 时改名；服务不需要 API key 时可以留空。 |
 | `models_url` | 只用于自动发现模型列表的 URL。聊天请求仍使用上方的 API 地址或完整 URL。 | `/models` 或 `/v1/models` 不是该网关模型列表地址时填写。 |
 | 额外请求头 | 静态 HTTP header，一行一个 `Header: value`。 | OpenRouter 等网关要求 `HTTP-Referer`、`X-Title` 或类似站点来源 header 时使用。API key 仍放在上方密钥字段，不要重复写到这里。 |
-| 额外请求体 | 合并到聊天请求体顶层的 JSON 对象。 | 仅用于服务商专用开关，例如 `{"enable_thinking": true}`。`model`、`messages`、`tools`、`stream`、`thinking` 等核心字段仍由 Reasonix 控制，且不接受 `null` 值。 |
+| 额外请求体 | 合并到聊天请求体顶层的 JSON 对象。 | 仅用于服务商专用开关，例如 `{"enable_thinking": true}`。`model`、`messages`、`tools`、`stream`、`thinking` 等核心字段仍由 EduShield 控制，且不接受 `null` 值。 |
 | Authorization: Bearer | 对 Anthropic-compatible provider，把已保存的 API key 用 `Authorization: Bearer <key>` 发送，而不是 `x-api-key`。 | MiniMax Global、Vercel AI Gateway 等网关文档明确要求 Bearer 认证时开启。 |
-| 模型能力模式 | 指定 Reasonix 对该 provider 使用哪种 reasoning 请求协议。 | 默认用“自动识别”。只有网关被误判，或模型文档要求特定 reasoning 格式时再切换。 |
+| 模型能力模式 | 指定 EduShield 对该 provider 使用哪种 reasoning 请求协议。 | 默认用“自动识别”。只有网关被误判，或模型文档要求特定 reasoning 格式时再切换。 |
 | Thinking 覆盖 | provider 专用的 `thinking.type` 覆盖项。 | 默认用 Auto。只有后端文档明确支持 `enabled`、`disabled` 或 `adaptive` 时再手动指定；不支持的值可能让中转站拒绝请求。 |
 | 余额查询 URL | 可选的钱包余额查询接口。 | 服务商提供余额接口，且希望桌面端状态栏显示余额时填写。 |
-| 上下文窗口 | 该 provider 可保留的最大上下文 token 数。`0` 表示使用模型服务默认值。 | 模型实际上下文大小和 Reasonix 默认值或内置元数据不一致时填写。 |
+| 上下文窗口 | 该 provider 可保留的最大上下文 token 数。`0` 表示使用模型服务默认值。 | 模型实际上下文大小和 EduShield 默认值或内置元数据不一致时填写。 |
 
 模型能力模式选项：
 
 | 选项 | 作用 |
 | --- | --- |
-| 自动识别（推荐） | Reasonix 根据模型能力元数据和端点自动选择请求格式。 |
+| 自动识别（推荐） | EduShield 根据模型能力元数据和端点自动选择请求格式。 |
 | DeepSeek 思考 | 使用 DeepSeek 风格的 thinking 控制，包括 `thinking.type` 和 DeepSeek 支持的推理深度。 |
 | OpenAI reasoning | 使用标准 OpenAI-compatible 的 `reasoning_effort` 档位。 |
 | 普通聊天（不发送思考参数） | 不发送 reasoning 或 thinking 控制字段。适合会拒绝 reasoning 参数的普通文本代理。 |
@@ -270,7 +270,7 @@ Thinking 覆盖选项：
 
 | 选项 | 作用 |
 | --- | --- |
-| Auto（使用服务默认） | 不写 provider 级 `thinking` 覆盖，让 Reasonix 使用 provider/model 默认行为。 |
+| Auto（使用服务默认） | 不写 provider 级 `thinking` 覆盖，让 EduShield 使用 provider/model 默认行为。 |
 | Enabled（开启） | 对兼容 provider 发送 `thinking.type = "enabled"`。 |
 | Disabled（关闭） | 对兼容 provider 发送 `thinking.type = "disabled"`。DeepSeek 风格 provider 下还会避免继续发送推理深度提示。 |
 | Adaptive（自适应） | 仅在服务文档明确支持 adaptive thinking 时使用，例如 MiniMax-M3 风格端点；语义是发送或保留 `thinking.type = "adaptive"`。 |
@@ -290,7 +290,7 @@ CJK 双宽字符，造成视觉错位。想保留旧的终端块状光标可设�
 
 ### 桌面端 GUI
 
-桌面端快捷键在 **设置 → 快捷键** 中管理。选择一行后按下新的组合键，Reasonix 会为桌面端保存该绑定。
+桌面端快捷键在 **设置 → 快捷键** 中管理。选择一行后按下新的组合键，EduShield 会为桌面端保存该绑定。
 如果新组合键和已有动作冲突，会拒绝保存，避免一个快捷键触发两个动作。按 `?` 或点击 topic bar
 里的帮助按钮可打开快捷键帮助表；帮助表由同一份快捷键 registry 生成，因此会同步显示自定义后的绑定。
 
@@ -346,7 +346,7 @@ CJK 双宽字符，造成视觉错位。想保留旧的终端块状光标可设�
 | `Ctrl+L` 或 `/cls` | 只清空可见 transcript | LLM 上下文、session 文件、工具、记忆和插件都保持加载；想丢弃对话上下文时用 `/clear`。 |
 | `Esc` | 退出当前最具体的动作 | 可在无回复前撤回刚提交的 turn、取消运行中的 turn，或清空非空输入。 |
 | 空闲且输入为空时双击 `Esc` | 打开 rewind 选择器 | 和 `/rewind` 是同一个入口。 |
-| 终端原生选择 | 复制 transcript 文本 | Reasonix 默认不启用鼠标报告，因此终端自己的选择/复制仍可使用。 |
+| 终端原生选择 | 复制 transcript 文本 | EduShield 默认不启用鼠标报告，因此终端自己的选择/复制仍可使用。 |
 | `Ctrl+C` | 取消、清空或退出 | 取消运行中的 turn、清空非空输入；空输入下连按两次退出。 |
 | `Ctrl+D` | 退出 TUI | 立即退出。 |
 | `Ctrl+V`、`Ctrl+Shift+V`、`Meta+V` 或 `Super+V` | 粘贴剪贴板内容 | CLI 会先尝试图片，再回退到文本或文件引用。 |
@@ -408,9 +408,9 @@ Ask 不是只读模式：writer 获得批准后仍会执行。Permissions 决定
 `bash` 本身默认进 OS 沙盒（`[sandbox] bash`：macOS 使用 Seatbelt，Linux 使用 bubblewrap）：
 命令只能写这些 root（外加平台按命令提供的临时/缓存 root），
 OS 沙盒生效时也不能读取配置的 `forbid_read` roots，`[sandbox] network` 为真时才能联网。
-Reasonix 始终会从工具子进程环境中移除已保存的 provider 与 bot 凭据变量，并自动把
+EduShield 始终会从工具子进程环境中移除已保存的 provider 与 bot 凭据变量，并自动把
 全局凭据 `.env` 加入运行时禁读边界；项目 `.env` 仍保持现有的 workspace 范围行为。
-**Windows 说明：**Reasonix 不在 Windows 上提供 OS 级 Bash 沙箱，生效模式固定为
+**Windows 说明：**EduShield 不在 Windows 上提供 OS 级 Bash 沙箱，生效模式固定为
 `off`。旧配置即使写了 `bash = "enforce"` 也会解析为 `off`，`reasonix doctor`
 会提示该设置被忽略，桌面设置中的选择器也为只读。Bash 命令会在不受 OS 沙箱限制的
 环境中运行；专用文件工具仍会在进程内执行 `workspace_root`、`allow_write` 和
@@ -457,7 +457,7 @@ reasonix doctor capabilities --live --timeout 5s
 
 ## 插件（MCP）
 
-Reasonix 是一个 MCP 客户端。`[[plugins]]` 的 `type` 选择传输：`stdio`（默认）启动本地子进
+EduShield 是一个 MCP 客户端。`[[plugins]]` 的 `type` 选择传输：`stdio`（默认）启动本地子进
 程（`command`/`args`/`env`）；`http`（Streamable HTTP）连接远程 `url`，可带静态
 `headers`（`${VAR}` / `${VAR:-default}` 从环境展开，密钥不入文件）。工具以
 `mcp__<server>__<tool>` 暴露给模型，与 Claude Code 一致；声明 MCP `readOnlyHint: true`
@@ -527,7 +527,7 @@ headers = { Authorization = "Bearer ${STRIPE_KEY}" }
 [能力诊断](./CAPABILITY_DIAGNOSTICS.zh-CN.md)
 （`reasonix doctor capabilities` 或 **设置 → 诊断**）。
 
-**已有 Claude Code 的 `.mcp.json`？** 直接放到项目根目录，Reasonix 会原样读取——其
+**已有 Claude Code 的 `.mcp.json`？** 直接放到项目根目录，EduShield 会原样读取——其
 `mcpServers` 规范（`command`/`args`/`env`、`type`/`url`/`headers`、`${VAR}` 展开）
 与 `[[plugins]]` 字段一一对应。两处来源会合并加载；同名时以 `reasonix.toml` 为准。
 
@@ -562,7 +562,7 @@ headers = { Authorization = "Bearer ${STRIPE_KEY}" }
 
 子智能体 profile 是带有 `runAs: subagent` 和 `invocation: manual` 的手动 Skill。
 它与桌面设置页共用项目级/全局 Skill 目录，因此任一端创建的 profile 在会话刷新后都会被
-另一端发现。交互式聊天里使用 `/<name> <任务>` 调用；Reasonix 会启动隔离子智能体，
+另一端发现。交互式聊天里使用 `/<name> <任务>` 调用；EduShield 会启动隔离子智能体，
 父会话只保留任务和最终答案。
 
 Headless CLI 提供显式管理和运行命令，同时不改变普通 `reasonix run` 的任务语义：
@@ -595,7 +595,7 @@ agent 发起的 `remember` 和 `forget` 每次都会要求新的人工确认，�
 Guardian 审查不能代替用户批准，非交互运行会拒绝这类工具而不是自动批准。
 0 结果会提示 agent 改用更少、更有区分度的词继续查。
 Memory v5 在 CLI/TUI、`reasonix serve` 和桌面端默认开启，因为这些入口共用同一套本地
-controller。它会把本地、按项目隔离的执行轨迹和编译器状态写在 Reasonix home 下，并且只有
+controller。它会把本地、按项目隔离的执行轨迹和编译器状态写在 EduShield home 下，并且只有
 历史结果产生可行动约束时，才把下一轮用户输入编译成精简 execution contract。早期轮次可能
 只写入轨迹而不注入任何内容。默认的 `verbosity = "observe"` 只做本地学习和内容无关指标，
 不会把 `<memory-compiler-execution>` 发送到 provider 可见的用户轮次；只有显式切到
@@ -611,7 +611,7 @@ memory 审批，也不会修改 cache-stable system prompt、Provider 前缀或�
 或文件内容。
 
 CLI/TUI 和 `reasonix serve` 使用同一个 user/global 配置。项目内的 `reasonix.toml` 不能覆盖
-这个 user/global 设置。CLI 命令会更新底层配置；高级用户也可以手动编辑 Reasonix home 下的
+这个 user/global 设置。CLI 命令会更新底层配置；高级用户也可以手动编辑 EduShield home 下的
 用户配置：
 
 ```toml
@@ -638,7 +638,7 @@ Review the staged diff. Focus on $ARGUMENTS, list bugs with file:line.
 
 ## Goal 与 AutoResearch
 
-Goal 是长期目标的统一运行机制。普通 `/goal` 继续走轻量 Goal：Reasonix 会持续推进，直到
+Goal 是长期目标的统一运行机制。普通 `/goal` 继续走轻量 Goal：EduShield 会持续推进，直到
 完成、阻塞或被清除。对于明显长周期的目标，Goal 会自动进入 AutoResearch 策略，而不是
 要求用户单独运行 `/auto-research` skill；`auto-research` 也不会作为独立 builtin skill 出现在
 Settings -> Skills 或斜杠菜单里。普通聊天输入如果命中很强的长周期信号，也会被 host 自动
@@ -673,7 +673,7 @@ project memory、tool schema 或 cache-stable system prompt。公开发布、破
 
 ## @ 引用
 
-在消息里写 `@` 引用，Reasonix 会在发送前解析成带标签的上下文块：`@path/to/file`（或
+在消息里写 `@` 引用，EduShield 会在发送前解析成带标签的上下文块：`@path/to/file`（或
 `@dir`）注入本地文件内容（或目录清单），`@<server>:<uri>` 注入 MCP 资源。本地路径**只有
 真实存在**时才当作引用，普通 `@mention` 保持原文。敲 `/` 或 `@` 会弹出补全菜单——斜杠
 命令，或**逐层**的文件导航（一次只列当前一层目录、可下钻进子目录）外加 MCP 资源。
@@ -692,7 +692,7 @@ planner_model = "deepseek-pro"   # 作为低频规划器
 
 Planner 会看到已加载的 `REASONIX.md` / `AGENTS.md` 记忆，并拿到一小组只读研究工具，
 因此可以先检查相关文件再把计划交给执行器。写入类和流程类工具仍只给执行器使用。
-Reasonix 会自动管理正常执行：活跃 Todo 连续 8 个工具调用轮次没有新的完成项、唯一读取、
+EduShield 会自动管理正常执行：活跃 Todo 连续 8 个工具调用轮次没有新的完成项、唯一读取、
 命令或修改时，宿主会要求执行器重新评估；连续 16 个无进展轮次后暂停并保存工作，可在
 下一轮用户消息中继续。完全重复的操作不算进展，新的宿主可观测工作会自动续期。两级任务
 列表保持同一"唯一当前项"契约：唯一的 `in_progress` 是活跃的 level-1 子步骤，其 level-0
@@ -770,7 +770,7 @@ system contract 和工具 Schema 在后续轮次保持稳定；轻量模式下�
 模式；旧的空值/`full` 继续解释为均衡模式。
 
 交互式前端中，计划模式默认手动开启。设置 `agent.auto_plan = "on"` 后，看起来复杂
-的任务会自动进入 plan mode：Reasonix 先生成计划，待用户批准后工作流才切换到实施；规划期间的
+的任务会自动进入 plan mode：EduShield 先生成计划，待用户批准后工作流才切换到实施；规划期间的
 工具调用仍遵守当前 Permissions 与 Sandbox。`auto_plan_classifier` 可以指定便宜的 provider，例如
 `deepseek-flash`；它只在边界输入上调用，分类失败会回退到启发式规则。也可以用
 在 `reasonix` 会话里用 `/auto-plan off|on` 修改用户级设置，或在 shell/脚本里用

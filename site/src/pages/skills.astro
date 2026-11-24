@@ -4,12 +4,12 @@ import SiteHeader from '../components/SiteHeader.astro';
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const repo = 'https://github.com/esengine/DeepSeek-Reasonix';
-const desc = "Browse, publish, and install community skills and MCP servers for Reasonix. One command to add any capability to your agent — install_source does the rest, SSRF-guarded and risk-rated.";
+const desc = "Browse, publish, and install community skills and MCP servers for EduShield. One command to add any capability to your agent — install_source does the rest, SSRF-guarded and risk-rated.";
 ---
 <Base
-  title="Reasonix — Skills & MCP registry"
-  titleEn="Reasonix — Skills & MCP registry"
-  titleZh="Reasonix — 技能与 MCP 市场"
+  title="EduShield — Skills & MCP registry"
+  titleEn="EduShield — Skills & MCP registry"
+  titleZh="EduShield — 技能与 MCP 市场"
   description={desc}>
 
   <SiteHeader active="skills" accountSlot />
@@ -132,8 +132,8 @@ const desc = "Browse, publish, and install community skills and MCP servers for 
 
   <footer>
     <div class="foot-inner">
-      <a class="brand" href={`${base}/`}><img src={`${base}/logo.svg`} alt="Reasonix logo" /><span>Reasonix</span></a>
-      <span><span class="l-en">© 2026 Reasonix · MIT licensed · built to be left running.</span><span class="l-zh">© 2026 Reasonix · MIT 许可 · 为常驻运行而生。</span></span>
+      <a class="brand" href={`${base}/`}><img src={`${base}/logo.svg`} alt="EduShield logo" /><span>EduShield</span></a>
+      <span><span class="l-en">© 2026 EduShield · MIT licensed · built to be left running.</span><span class="l-zh">© 2026 EduShield · MIT 许可 · 为常驻运行而生。</span></span>
       <nav class="foot-links">
         <a href={repo}>GitHub</a>
         <a href={`${base}/`}><span class="l-en">Home</span><span class="l-zh">首页</span></a>
@@ -327,7 +327,7 @@ const desc = "Browse, publish, and install community skills and MCP servers for 
         <div class="pkg-sum">${esc(p.summary) || '<span style="color:var(--ink-3)">No summary.</span>'}</div>
         ${tags ? `<div class="pkg-tags">${tags}</div>` : ''}
         <div class="pkg-foot">
-          <span class="pkg-install" title="Install source — give it to Reasonix"><code>${esc(p.source)}</code><button data-copy="${esc(p.source)}" data-slug="${esc(p.handle)}/${esc(p.name)}">Copy</button></span>
+          <span class="pkg-install" title="Install source — give it to EduShield"><code>${esc(p.source)}</code><button data-copy="${esc(p.source)}" data-slug="${esc(p.handle)}/${esc(p.name)}">Copy</button></span>
         </div>
         <div class="pkg-meta">↓ ${p.installCount || 0} installs · v${esc(p.latestVersion) || '—'}${repo}</div>
       </article>`;

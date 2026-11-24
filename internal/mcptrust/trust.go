@@ -175,7 +175,7 @@ func NewManager(path, workspace string) *Manager {
 	return &Manager{path: path, workspaceFingerprint: WorkspaceFingerprint(workspace)}
 }
 
-// ForWorkspace returns the process-shared manager for one Reasonix home and
+// ForWorkspace returns the process-shared manager for one EduShield home and
 // workspace. Controllers for sibling tabs therefore share session receipts.
 func ForWorkspace(reasonixHome, workspace string) *Manager {
 	path := StatePath(reasonixHome)
@@ -1096,7 +1096,7 @@ func digestBytes(body []byte) string {
 
 // acquireFileLock is a portable advisory lock based on exclusive creation.
 // AtomicWriteFile still provides crash-safe replacement; the lock serializes
-// independent Reasonix processes performing read-modify-write cycles.
+// independent EduShield processes performing read-modify-write cycles.
 func acquireFileLock(path string, wait time.Duration) (func(), error) {
 	token := make([]byte, 16)
 	if _, err := rand.Read(token); err != nil {

@@ -86,7 +86,7 @@ func TestReasonixManagedConfigPathsAreConfigFilesOnly(t *testing.T) {
 		}
 	}
 	// The escape hatch is file-level by contract: no directories, and none of
-	// the sensitive Reasonix-home siblings (credentials, hooks, skills,
+	// the sensitive EduShield-home siblings (credentials, hooks, skills,
 	// sessions) may ride along.
 	for _, got := range paths {
 		if base := filepath.Base(got); base != "config.toml" && base != "config.json" {
@@ -974,7 +974,7 @@ func TestRenderTOMLRoundTripsProviderHeadersAndModelOverrides(t *testing.T) {
 		APIKeyEnv: "GATEWAY_API_KEY",
 		Headers: map[string]string{
 			"HTTP-Referer": "https://app.example",
-			"X-Title":      "Reasonix",
+			"X-Title":      "EduShield",
 		},
 		ExtraBody: map[string]any{
 			"enable_thinking": true,
@@ -995,7 +995,7 @@ func TestRenderTOMLRoundTripsProviderHeadersAndModelOverrides(t *testing.T) {
 	}}
 
 	rendered := RenderTOML(orig)
-	if !strings.Contains(rendered, `headers     = { HTTP-Referer = "https://app.example", X-Title = "Reasonix" }`) {
+	if !strings.Contains(rendered, `headers     = { HTTP-Referer = "https://app.example", X-Title = "EduShield" }`) {
 		t.Fatalf("rendered TOML missing headers:\n%s", rendered)
 	}
 	if !strings.Contains(rendered, `extra_body`) || !strings.Contains(rendered, `"enable_thinking" = true`) {
@@ -1016,7 +1016,7 @@ func TestRenderTOMLRoundTripsProviderHeadersAndModelOverrides(t *testing.T) {
 	if !ok {
 		t.Fatal("gateway provider missing after round trip")
 	}
-	if p.Headers["HTTP-Referer"] != "https://app.example" || p.Headers["X-Title"] != "Reasonix" {
+	if p.Headers["HTTP-Referer"] != "https://app.example" || p.Headers["X-Title"] != "EduShield" {
 		t.Fatalf("headers after round trip = %+v", p.Headers)
 	}
 	if p.ExtraBody["enable_thinking"] != true || p.ExtraBody["top_p"] != 0.8 {

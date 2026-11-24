@@ -2102,7 +2102,7 @@ func TestTwoModelPlannerApprovalUsesHostGate(t *testing.T) {
 		t.Fatal("executor did not run after approval")
 	}
 	reqText := requestMessagesText(execProv.requests[0].Messages)
-	if !strings.Contains(reqText, "Reasonix executor handoff") || !strings.Contains(reqText, "Edit main.go") {
+	if !strings.Contains(reqText, "EduShield executor handoff") || !strings.Contains(reqText, "Edit main.go") {
 		t.Fatalf("approved executor request missing planner handoff:\n%s", reqText)
 	}
 }
@@ -2271,7 +2271,7 @@ func TestTwoModelShortChoiceReplySkipsPlanner(t *testing.T) {
 	if !strings.Contains(reqText, "1. Subagent-Driven") {
 		t.Fatalf("executor request lost the previous assistant options:\n%s", reqText)
 	}
-	if strings.Contains(reqText, "Reasonix executor handoff") {
+	if strings.Contains(reqText, "EduShield executor handoff") {
 		t.Fatalf("short choice reply should not be wrapped as a planner handoff:\n%s", reqText)
 	}
 	if got := lastUserMessage(execProv.requests[0].Messages); got != "1" {
@@ -3549,7 +3549,7 @@ func TestPlanModeReadOnlyTrustApprovalUsesChineseCatalog(t *testing.T) {
 	if !strings.Contains(approval.Subject, "在计划模式中信任") || !strings.Contains(approval.Subject, "gh issue view 5867") {
 		t.Fatalf("approval subject = %q, want Chinese plan-mode trust subject", approval.Subject)
 	}
-	if !strings.Contains(approval.Reason, "不在 Reasonix 内置只读集合中") {
+	if !strings.Contains(approval.Reason, "不在 EduShield 内置只读集合中") {
 		t.Fatalf("approval reason = %q, want Chinese plan-mode trust reason", approval.Reason)
 	}
 
@@ -4376,7 +4376,7 @@ func TestReloadCommandsSameNameAcrossDirs(t *testing.T) {
 
 	// Higher priority: .reasonix/commands
 	reasonixDir := filepath.Join(wsRoot, ".reasonix", "commands")
-	writeCmdFile(t, reasonixDir, "greet", "Reasonix greet", "Hello from Reasonix: $1")
+	writeCmdFile(t, reasonixDir, "greet", "EduShield greet", "Hello from EduShield: $1")
 
 	reg := tool.NewRegistry()
 	c := New(Options{
@@ -4406,7 +4406,7 @@ func TestReloadCommandsSameNameAcrossDirs(t *testing.T) {
 	if !ok {
 		t.Fatal("/greet should be found")
 	}
-	if !strings.Contains(sent, "Hello from Reasonix") {
+	if !strings.Contains(sent, "Hello from EduShield") {
 		t.Errorf("expected .reasonix version to win, got render: %q", sent)
 	}
 }

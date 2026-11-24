@@ -50,8 +50,8 @@ type cliThemeStyle struct {
 var (
 	cliDarkTheme = cliPalette{
 		name:         "dark",
-		style:        "graphite",
-		accent:       cliColor{"#d97757", 173},
+		style:        "aurora",  // 默认使用 aurora (青色) 主题
+		accent:       cliColor{"#34c3a6", 79},
 		muted:        cliColor{"#c0c4cc", 251},
 		faint:        cliColor{"#858b96", 245},
 		success:      cliColor{"#74b87a", 108},
@@ -85,16 +85,16 @@ var (
 		toolProc:     cliColor{"#8a6bb8", 97},
 	}
 	cliThemeStyles = []cliThemeStyle{
+		{name: "aurora", mode: "dark", accent: cliColor{"#34c3a6", 79}, description: "cool teal accent"},  // 默认主题
 		{name: "graphite", mode: "dark", accent: cliColor{"#d97757", 173}, description: "warm clay accent"},
 		{name: "ember", mode: "dark", accent: cliColor{"#f06d38", 209}, description: "hot orange accent"},
-		{name: "aurora", mode: "dark", accent: cliColor{"#34c3a6", 79}, description: "cool teal accent"},
 		{name: "midnight", mode: "dark", accent: cliColor{"#b18cff", 141}, description: "quiet violet accent"},
 		{name: "sandstone", mode: "light", accent: cliColor{"#c2613f", 173}, description: "default warm light accent"},
 		{name: "porcelain", mode: "light", accent: cliColor{"#7d63c8", 104}, description: "soft violet light accent"},
 		{name: "linen", mode: "light", accent: cliColor{"#bd5d4d", 167}, description: "muted coral light accent"},
 		{name: "glacier", mode: "light", accent: cliColor{"#357fa8", 74}, description: "cool blue light accent"},
 	}
-	activeCLITheme                  = applyCLIThemeStyle(cliDarkTheme, cliThemeStyles[0])
+	activeCLITheme                  = applyCLIThemeStyle(cliDarkTheme, cliThemeStyles[0])  // 现在默认是 aurora
 	queryTerminalBackgroundForTheme = queryTerminalBackground
 )
 

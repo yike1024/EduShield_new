@@ -125,7 +125,7 @@ func (*installSourceTool) Name() string   { return "install_source" }
 func (*installSourceTool) ReadOnly() bool { return false }
 
 func (*installSourceTool) Description() string {
-	return "Plan, install, or uninstall a Reasonix skill, MCP server, or plugin package from a URL, local file/folder, .mcp.json, executable, or package name. Two-phase: with apply=false (default) returns a deterministic plan with per-action risk level; with apply=true copies/registers skills, connects/persists MCP servers, or installs plugin packages after validation. op='uninstall' removes a previously installed skill, MCP server, or plugin package by name."
+	return "Plan, install, or uninstall an EduShield skill, MCP server, or plugin package from a URL, local file/folder, .mcp.json, executable, or package name. Two-phase: with apply=false (default) returns a deterministic plan with per-action risk level; with apply=true copies/registers skills, connects/persists MCP servers, or installs plugin packages after validation. op='uninstall' removes a previously installed skill, MCP server, or plugin package by name."
 }
 
 func (*installSourceTool) Schema() json.RawMessage {
@@ -215,7 +215,7 @@ func (t *installSourceTool) Execute(ctx context.Context, raw json.RawMessage) (s
 			Mode:     req.Mode,
 			PlanID:   planID,
 			Warnings: warnings,
-			Next:     "No installable Reasonix skill, MCP server, or plugin package was detected. Ask the user for a direct SKILL.md, skill root, .mcp.json, plugin manifest, MCP endpoint, or package name.",
+			Next:     "No installable EduShield skill, MCP server, or plugin package was detected. Ask the user for a direct SKILL.md, skill root, .mcp.json, plugin manifest, MCP endpoint, or package name.",
 		}
 		return marshalJSON(out), nil
 	}

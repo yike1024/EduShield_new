@@ -3,7 +3,7 @@
 // before a tool approval prompt is shown, UserPromptSubmit before a turn, Stop
 // after it. Hooks come from settings.json — a project
 // (.reasonix/settings.json, only when the project is trusted) and a global
-// (<Reasonix home>/settings.json) file. A hook's exit
+// (<EduShield home>/settings.json) file. A hook's exit
 // code is its verdict: 0 = pass, 2 = block (only on the gating events), other =
 // warn. The payload is delivered as JSON on stdin; output is captured (capped)
 // and surfaced to the user. This package only loads, matches, and runs hooks;
@@ -71,12 +71,12 @@ var Events = []Event{
 
 // IsBlocking reports whether a non-zero/exit-2 (or timed-out) hook on this event
 // can block the loop. Only the gating events qualify. (PreCompact does not block;
-// it only contributes guidance via stdout.) This governs native Reasonix hooks;
+// it only contributes guidance via stdout.) This governs native EduShield hooks;
 // see claudePermissionBlocking for the Claude-imported PermissionRequest case.
 func IsBlocking(e Event) bool { return e == PreToolUse || e == UserPromptSubmit }
 
 // claudePermissionBlocking reports whether exit code 2 (or a timeout) on h
-// aborts the action even though PermissionRequest is not one of Reasonix's own
+// aborts the action even though PermissionRequest is not one of EduShield's own
 // blocking events (docs/DESKTOP_HOOKS.md: "只有 PreToolUse 和 UserPromptSubmit
 // 是阻塞型事件"). Claude's own PermissionRequest contract denies the permission
 // on exit 2 the same way PreToolUse does (https://code.claude.com/docs/en/hooks),
@@ -130,7 +130,7 @@ type HookConfig struct {
 	// Env adds environment variables for this hook invocation.
 	Env map[string]string `json:"env,omitempty"`
 	// Async and PayloadFormat are internal compatibility metadata populated for
-	// imported Claude hooks. Native Reasonix settings keep their old behavior.
+	// imported Claude hooks. Native EduShield settings keep their old behavior.
 	Async         bool   `json:"-"`
 	PayloadFormat string `json:"-"`
 }
@@ -161,7 +161,7 @@ const (
 	SettingsFilename = "settings.json"
 )
 
-// GlobalSettingsPath is <Reasonix home>/settings.json (homeDir overrides ~ for
+// GlobalSettingsPath is <EduShield home>/settings.json (homeDir overrides ~ for
 // tests and legacy callers).
 func GlobalSettingsPath(homeDir string) string {
 	return filepath.Join(reasonixHome(homeDir), SettingsFilename)
@@ -446,7 +446,7 @@ func MatchesTool(h ResolvedHook, toolName string) bool {
 	return false
 }
 
-// claudeAgentSpawningTools are every Reasonix tool that spawns a subagent and
+// claudeAgentSpawningTools are every EduShield tool that spawns a subagent and
 // so corresponds to Claude's single "Agent" tool: the general task delegator
 // (task/read_only_task/parallel_tasks) and the dedicated named wrappers
 // around a runAs=subagent skill (BuiltinSubagentTools in
@@ -460,8 +460,8 @@ var claudeAgentSpawningTools = []string{
 }
 
 // claudeAgentDefaultDescriptions fill Claude Agent's required description
-// field when the corresponding Reasonix tool does not expose one or the model
-// omitted Reasonix's optional description. These are stable operation labels;
+// field when the corresponding EduShield tool does not expose one or the model
+// omitted EduShield's optional description. These are stable operation labels;
 // the complete task remains in prompt for hook policy decisions.
 var claudeAgentDefaultDescriptions = map[string]string{
 	"task":            "Run delegated subagent task",
@@ -473,7 +473,7 @@ var claudeAgentDefaultDescriptions = map[string]string{
 	"security_review": "Review security risks",
 }
 
-// claudeToolNames maps Reasonix's own tool names to the *current* Claude Code
+// claudeToolNames maps EduShield's own tool names to the *current* Claude Code
 // built-in tool name (https://code.claude.com/docs/en/tools-reference) — what
 // an imported hook's emitted tool_name payload field shows, and a script's own
 // tool_name check is written against. MCP tool names already share the
@@ -506,7 +506,7 @@ func buildClaudeToolNames() map[string]string {
 }
 
 // claudeToolMatchAliases lists every tool name — current and legacy — an
-// imported hook's matcher may have been authored against for a Reasonix
+// imported hook's matcher may have been authored against for an EduShield
 // tool, so a matcher written against an older Claude Code tool name keeps
 // firing after Claude renames the tool (Task became Agent; BashOutput/KillShell
 // became TaskOutput/TaskStop). claudeFacingToolName (the emitted tool_name
@@ -526,7 +526,7 @@ func buildClaudeToolMatchAliases() map[string][]string {
 }
 
 // claudeMatchNames returns every name an imported hook's matcher should be
-// tried against for a Reasonix tool call.
+// tried against for an EduShield tool call.
 func claudeMatchNames(name string) []string {
 	if aliases, ok := claudeToolMatchAliases[name]; ok {
 		return aliases
@@ -535,8 +535,8 @@ func claudeMatchNames(name string) []string {
 }
 
 // claudeFacingToolName returns the current Claude tool name a Claude-imported
-// hook's tool_name payload field should see for a Reasonix tool call.
-// Reasonix-only tools (wait, code_index, move_file, ...) have no Claude
+// hook's tool_name payload field should see for an EduShield tool call.
+// EduShield-only tools (wait, code_index, move_file, ...) have no Claude
 // equivalent and pass through unchanged — an imported hook can't have been
 // authored against a name Claude never had.
 func claudeFacingToolName(name string) string {
@@ -546,18 +546,18 @@ func claudeFacingToolName(name string) string {
 	return name
 }
 
-// claudeToolInputKeyRenames maps, per Reasonix tool name, JSON keys in its
+// claudeToolInputKeyRenames maps, per EduShield tool name, JSON keys in its
 // tool-call arguments that must be renamed to Claude's own tool_input field
-// name — Reasonix's file tools use "path", Claude's use "file_path" — so a
+// name — EduShield's file tools use "path", Claude's use "file_path" — so a
 // hook script reading e.g. ".tool_input.file_path" sees the value instead of
-// failing open on an empty field. Only tools whose Reasonix schema differs
+// failing open on an empty field. Only tools whose EduShield schema differs
 // from Claude's by a plain key rename are listed: Bash's "command",
 // Glob/Grep's "pattern"/"path", web_fetch's "url", ask's "questions",
 // todo_write's "todos", and task/read_only_task's "prompt"/"description"
 // already use Claude's field names. Agent description can still be absent and
 // is filled separately below. NotebookEdit's cell_number (a
 // 0-based index) has no Claude field — Claude targets cells only by the
-// opaque cell_id, which Reasonix also accepts — so it passes through as an
+// opaque cell_id, which EduShield also accepts — so it passes through as an
 // extra key. parallel_tasks is a structural mismatch handled separately in
 // claudeFacingToolInput.
 var claudeToolInputKeyRenames = map[string]map[string]string{
@@ -580,7 +580,7 @@ var claudeToolInputKeyRenames = map[string]map[string]string{
 
 // claudeAbsolutePathInputKeys are the translated tool_input keys whose Claude
 // schema demands an absolute path ("must be absolute, not relative" on
-// Read/Write/Edit/NotebookEdit). Reasonix's file tools accept relative paths
+// Read/Write/Edit/NotebookEdit). EduShield's file tools accept relative paths
 // and resolve them against the workspace root (resolveIn in
 // internal/tool/builtin/workspace.go); the payload resolves against
 // payload.Cwd — the same root — so a prefix-matching guard inspects the path
@@ -642,7 +642,7 @@ func claudeFacingToolInput(toolName string, args json.RawMessage, cwd string) js
 				obj["task_id"] = body
 			}
 		}
-		// An unbounded Reasonix wait omits TaskOutput's optional timeout
+		// An unbounded EduShield wait omits TaskOutput's optional timeout
 		// entirely: in Claude's schema timeout is the maximum wait in ms, so
 		// claiming 0 would read as "don't wait" — the opposite of the call.
 		var timeoutSeconds int64
@@ -711,8 +711,8 @@ func claudeFacingToolInput(toolName string, args json.RawMessage, cwd string) js
 	return out
 }
 
-// fillClaudeAskDefaults supplies fields Claude requires but Reasonix treats as
-// optional. Empty option descriptions are honest (Reasonix has no explanation
+// fillClaudeAskDefaults supplies fields Claude requires but EduShield treats as
+// optional. Empty option descriptions are honest (EduShield has no explanation
 // to add), and omitted multiSelect has the same false default in both systems.
 func fillClaudeAskDefaults(obj map[string]json.RawMessage) bool {
 	var questions []map[string]json.RawMessage
@@ -757,7 +757,7 @@ func fillClaudeAskDefaults(obj map[string]json.RawMessage) bool {
 }
 
 // fillClaudeTodoDefaults supplies Claude's required activeForm label from the
-// Reasonix task content when the caller omitted it.
+// EduShield task content when the caller omitted it.
 func fillClaudeTodoDefaults(obj map[string]json.RawMessage) bool {
 	var todos []map[string]json.RawMessage
 	if err := json.Unmarshal(obj["todos"], &todos); err != nil {
@@ -962,7 +962,7 @@ func decideOutcome(h ResolvedHook, r SpawnResult) Decision {
 }
 
 // claudeJSONDeny reports whether a Claude-format hook's exit-0 stdout still
-// carries a JSON deny decision (see HookOutput.Deny). Reasonix must honor it
+// carries a JSON deny decision (see HookOutput.Deny). EduShield must honor it
 // for the events it claims Claude hook compatibility for, or a plugin's
 // "block this dangerous command" hook silently no-ops whenever the script
 // signals deny via JSON instead of exit code 2. UserPromptSubmit uses a
@@ -1097,11 +1097,11 @@ func marshalPayload(payload Payload, format string) string {
 	return string(body) + "\n"
 }
 
-// claudeToolResponse adapts a Reasonix tool result to the tool_response a
+// claudeToolResponse adapts an EduShield tool result to the tool_response a
 // Claude-authored PostToolUse hook reads. Claude's Bash response is an object
 // — {stdout, stderr, interrupted}, the fields the official security-guidance
 // plugin's commit/push checks read (a non-object response is treated as empty
-// and the check silently passes) — while Reasonix's bash returns one combined
+// and the check silently passes) — while EduShield's bash returns one combined
 // output string, so it is wrapped with the failure error as stderr. Other
 // tools' results pass through as before: raw JSON when the result is a JSON
 // document, else the plain string.

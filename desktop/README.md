@@ -1,6 +1,6 @@
-# Reasonix Desktop (Wails shell)
+# EduShield Desktop (Wails shell)
 
-A native desktop window around the Reasonix Go kernel. The same
+A native desktop window around the EduShield Go kernel. The same
 transport-agnostic `control.Controller` that backs the chat TUI and the HTTP/SSE
 server is bound **directly** to a React webview — Go methods in, typed events
 out, no HTTP hop.
@@ -96,7 +96,7 @@ component code and the CSS positioning contract:
 
 ```sh
 cd desktop
-wails build          # → build/bin/Reasonix(.app/.exe)
+wails build          # → build/bin/EduShield(.app/.exe)
 ```
 
 **Linux on WebKitGTK 4.1 only** (Fedora 40+, Ubuntu 24.04+, Arch — no
@@ -149,11 +149,11 @@ not depend on homepage badge semantics. Self-update behavior by platform:
 There are no Apple/Windows code-signing certificates yet, so a downloaded build
 trips the OS gatekeepers on first run:
 
-- **macOS** — open `Reasonix-darwin-universal.dmg` and drag Reasonix into
+- **macOS** — open `EduShield-darwin-universal.dmg` and drag EduShield into
   Applications. Gatekeeper may then report the app "is damaged" or is from an
   unidentified developer; clear the quarantine attribute and open it:
   ```sh
-  xattr -dr com.apple.quarantine /Applications/Reasonix.app
+  xattr -dr com.apple.quarantine /Applications/EduShield.app
   ```
 - **Windows** — SmartScreen shows "Windows protected your PC". Click *More info →
   Run anyway*.
@@ -168,7 +168,7 @@ signature sits next to each artifact in the release; verify with the
 [minisign](https://jedisct1.github.io/minisign/) CLI:
 
 ```sh
-minisign -Vm Reasonix-darwin-arm64.zip \
+minisign -Vm EduShield-darwin-arm64.zip \
   -P RWSw66n0RsoSr6Zhh6qt5YO95YkpCayTOCMFVDNUQSjJYwxoYngNVBSq
 ```
 
@@ -215,7 +215,7 @@ handled here, and what to reach for if a target misbehaves:
   - **Wayland + NVIDIA**: On KDE Plasma Wayland with NVIDIA GPUs, WebKitGTK can
     crash at startup (`Error 71: Protocol error`) due to an upstream WebKit
     explicit-sync bug (WebKit #280210, #317089, NVIDIA/egl-wayland #179).
-    Reasonix automatically sets `__NV_DISABLE_EXPLICIT_SYNC=1` when it detects
+    EduShield automatically sets `__NV_DISABLE_EXPLICIT_SYNC=1` when it detects
     Wayland + NVIDIA GPU. To opt out, set `__NV_DISABLE_EXPLICIT_SYNC=0`.
     Alternative fallbacks: `WEBKIT_DISABLE_DMABUF_RENDERER=1` (poor performance)
     or `GDK_BACKEND=x11` (forces XWayland).

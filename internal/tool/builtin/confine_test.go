@@ -217,7 +217,7 @@ func TestManagedConfigWriteGatedOnApprover(t *testing.T) {
 	}
 
 	// Declined: the approver's reason surfaces to the model and nothing lands.
-	decline := &stubConfigWriteApprover{allow: false, reason: "the user declined this Reasonix config write"}
+	decline := &stubConfigWriteApprover{allow: false, reason: "the user declined this EduShield config write"}
 	dctx := tool.WithConfigWriteApprover(context.Background(), decline)
 	declinedTarget := config.UserConfigPath()
 	if err := os.Remove(declinedTarget); err != nil && !os.IsNotExist(err) {
@@ -231,7 +231,7 @@ func TestManagedConfigWriteGatedOnApprover(t *testing.T) {
 		t.Fatalf("declined config must not be created, stat err=%v", err)
 	}
 
-	// Even with an always-allowing approver, non-config files in the Reasonix
+	// Even with an always-allowing approver, non-config files in the EduShield
 	// home and the rest of the OS home stay denied — the escape hatch is
 	// file-level, not directory-level.
 	for _, target := range []string{

@@ -546,7 +546,7 @@ func TestParseClaudeHooksDoesNotWarnOnMatchersThatCanFire(t *testing.T) {
 			hooksJSON: `{"hooks":{"PreToolUse":[{"matcher":"WebSearch.*","hooks":[{"type":"command","command":"bin/guard"}]}]}}`,
 		},
 		{
-			// A previously-unmapped Reasonix tool the fix now supports.
+			// A previously-unmapped EduShield tool the fix now supports.
 			name:      "run-skill-now-mapped",
 			hooksJSON: `{"hooks":{"PreToolUse":[{"matcher":"Skill","hooks":[{"type":"command","command":"bin/guard"}]}]}}`,
 		},

@@ -1,6 +1,6 @@
-# Contributing to Reasonix
+# Contributing to EduShield
 
-Thank you for your interest in contributing to Reasonix! This guide covers
+Thank you for your interest in contributing to EduShield! This guide covers
 everything you need to get started.
 
 ## Prerequisites
@@ -96,7 +96,7 @@ data leaks in or out.
 
 ### Cache-first review gate
 
-Reasonix treats high prompt-cache hit rate as product behavior. Changes that
+EduShield treats high prompt-cache hit rate as product behavior. Changes that
 touch provider-visible system prompt construction, memory prefix, output styles,
 skill index behavior, default tool surfaces, tool schemas, provider request
 serialization, compaction, or MCP/tool registration need explicit cache review.

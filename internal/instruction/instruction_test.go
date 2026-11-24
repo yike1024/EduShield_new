@@ -13,7 +13,7 @@ func TestExtractHostChecksFromStructuredSection(t *testing.T) {
 		Scope: memory.ScopeProject,
 		Body: strings.Join([]string{
 			"# Project rules",
-			"## Reasonix host checks",
+			"## EduShield host checks",
 			"- verify: go test ./internal/...",
 			"* verify: git diff --check",
 			"- verify: go test ./internal/...",

@@ -6,8 +6,8 @@
       "date": "2026-07-16",
       "channel": "stable",
       "title": {
-        "en": "Reasonix 1.17.14",
-        "zh": "Reasonix 1.17.14"
+        "en": "EduShield 1.17.14",
+        "zh": "EduShield 1.17.14"
       },
       "summary": {
         "en": "This release improves the desktop experience with clearer MCP error messages, Windows plugin hook fixes, executable icons, and a new bilingual changelog.",
@@ -23,8 +23,8 @@
             "zh": "桌面 Hook"
           },
           "body": {
-            "en": "Guide for creating and using hooks in Reasonix Desktop.",
-            "zh": "在 Reasonix 桌面端中创建和使用 Hook 的指南。"
+            "en": "Guide for creating and using hooks in EduShield Desktop.",
+            "zh": "在 EduShield 桌面端中创建和使用 Hook 的指南。"
           },
           "href": "https://github.com/esengine/DeepSeek-Reasonix/blob/cc9b1f52e6bc787719b78e70db8d7e487fe2fdd1/docs/DESKTOP_HOOKS.zh-CN.md"
         },
@@ -34,8 +34,8 @@
             "zh": "插件包"
           },
           "body": {
-            "en": "How to create, configure, and distribute Reasonix plugins.",
-            "zh": "如何创建、配置和分发 Reasonix 插件。"
+            "en": "How to create, configure, and distribute EduShield plugins.",
+            "zh": "如何创建、配置和分发 EduShield 插件。"
           },
           "href": "https://github.com/esengine/DeepSeek-Reasonix/blob/cc9b1f52e6bc787719b78e70db8d7e487fe2fdd1/docs/PLUGIN_PACKAGES.md"
         },
@@ -45,8 +45,8 @@
             "zh": "插件包（中文）"
           },
           "body": {
-            "en": "Chinese guide for creating, configuring, and distributing Reasonix plugins.",
-            "zh": "中文指南：创建、配置和分发 Reasonix 插件。"
+            "en": "Chinese guide for creating, configuring, and distributing EduShield plugins.",
+            "zh": "中文指南：创建、配置和分发 EduShield 插件。"
           },
           "href": "https://github.com/esengine/DeepSeek-Reasonix/blob/cc9b1f52e6bc787719b78e70db8d7e487fe2fdd1/docs/PLUGIN_PACKAGES.zh-CN.md"
         },
@@ -56,8 +56,8 @@
             "zh": "发布流程"
           },
           "body": {
-            "en": "How to build, validate, and publish a Reasonix release.",
-            "zh": "如何构建、验证和发布 Reasonix 版本。"
+            "en": "How to build, validate, and publish an EduShield release.",
+            "zh": "如何构建、验证和发布 EduShield 版本。"
           },
           "href": "https://github.com/esengine/DeepSeek-Reasonix/blob/cc9b1f52e6bc787719b78e70db8d7e487fe2fdd1/docs/RELEASING.md"
         }
@@ -112,8 +112,8 @@
             "zh": "Windows 可执行程序图标"
           },
           "body": {
-            "en": "Windows launcher, guard, and updater now display the Reasonix icon and include version metadata.",
-            "zh": "Windows 启动器、守护程序和更新程序现在显示 Reasonix 图标，并包含版本元数据。"
+            "en": "Windows launcher, guard, and updater now display the EduShield icon and include version metadata.",
+            "zh": "Windows 启动器、守护程序和更新程序现在显示 EduShield 图标，并包含版本元数据。"
           },
           "refs": [
             6549
@@ -157,8 +157,8 @@
               "zh": "Windows 可执行程序图标"
             },
             "body": {
-              "en": "Launcher, guard, and update helper now have the Reasonix icon and version metadata.",
-              "zh": "启动器、守护程序和更新助手现具有 Reasonix 图标及版本元数据。"
+              "en": "Launcher, guard, and update helper now have the EduShield icon and version metadata.",
+              "zh": "启动器、守护程序和更新助手现具有 EduShield 图标及版本元数据。"
             },
             "refs": [
               6549
@@ -315,8 +315,8 @@
             "zh": "Claude 插件兼容"
           },
           "body": {
-            "en": "Reasonix can consume Claude-compatible plugin packages and adapt their commands and hooks into the existing plugin runtime.",
-            "zh": "Reasonix 现在可以加载 Claude 兼容插件包，并把其中的命令与 Hooks 接入现有插件运行时。"
+            "en": "EduShield can consume Claude-compatible plugin packages and adapt their commands and hooks into the existing plugin runtime.",
+            "zh": "EduShield 现在可以加载 Claude 兼容插件包，并把其中的命令与 Hooks 接入现有插件运行时。"
           },
           "refs": [
             6434
@@ -450,8 +450,8 @@
             "zh": "Windows 原生沙箱后端已退役"
           },
           "body": {
-            "en": "If you previously selected the retired native Windows sandbox, open Settings → Sandbox after upgrading and choose a supported isolation mode. Reasonix reports a remediation message instead of silently falling back.",
-            "zh": "如果此前选择了已退役的 Windows 原生沙箱，升级后请打开“设置 → 沙箱”并选择受支持的隔离方式。Reasonix 会显示修复提示，不会静默降级。"
+            "en": "If you previously selected the retired native Windows sandbox, open Settings → Sandbox after upgrading and choose a supported isolation mode. EduShield reports a remediation message instead of silently falling back.",
+            "zh": "如果此前选择了已退役的 Windows 原生沙箱，升级后请打开“设置 → 沙箱”并选择受支持的隔离方式。EduShield 会显示修复提示，不会静默降级。"
           },
           "refs": [
             6516
@@ -464,8 +464,8 @@
             "zh": "MCP 信任可能需要重新确认"
           },
           "body": {
-            "en": "When a package identity or executable no longer matches its stored receipt, Reasonix asks for a new approval rather than reusing stale trust.",
-            "zh": "当插件包身份或可执行文件与已保存回执不一致时，Reasonix 会请求新的审批，而不会沿用过期信任。"
+            "en": "When a package identity or executable no longer matches its stored receipt, EduShield asks for a new approval rather than reusing stale trust.",
+            "zh": "当插件包身份或可执行文件与已保存回执不一致时，EduShield 会请求新的审批，而不会沿用过期信任。"
           },
           "refs": [
             6482
@@ -650,8 +650,8 @@
         "zh": "运行档、插件命令与更安全的会话交接"
       },
       "summary": {
-        "en": "This release introduces configurable subagent and runtime profiles, maps Claude plugin commands into Reasonix, and closes several session handoff gaps that could hide messages, drop turns, or obscure provider failures.",
-        "zh": "这一版新增可配置子智能体与运行档，把 Claude 插件命令接入 Reasonix，并修复多个会话交接缺口，避免消息隐藏、回合丢失或 Provider 错误被掩盖。"
+        "en": "This release introduces configurable subagent and runtime profiles, maps Claude plugin commands into EduShield, and closes several session handoff gaps that could hide messages, drop turns, or obscure provider failures.",
+        "zh": "这一版新增可配置子智能体与运行档，把 Claude 插件命令接入 EduShield，并修复多个会话交接缺口，避免消息隐藏、回合丢失或 Provider 错误被掩盖。"
       },
       "surfaces": [
         "agent",

@@ -51,6 +51,20 @@ function installDom() {
   });
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   globalThis.window = dom.window as unknown as Window & typeof globalThis;
+  // 本文件覆盖 Wails 桌面端行为（intent/profile/approval/model/effort/more 只在桌面版渲染）。
+  // 注入最小 Wails 绑定，让 isWailsRuntime() 返回 true；未列出的方法一律返回 undefined。
+  const desktopBinding = new Proxy({} as Record<string, unknown>, {
+    get: (_target, prop) => {
+      switch (String(prop)) {
+        case "Commands":
+        case "ListSessions":
+          return async () => [];
+        default:
+          return async () => undefined;
+      }
+    },
+  });
+  (dom.window as unknown as { go?: unknown }).go = { main: { App: desktopBinding } };
   globalThis.document = dom.window.document;
   Object.defineProperty(globalThis, "navigator", { configurable: true, value: dom.window.navigator });
   globalThis.Node = dom.window.Node;
@@ -239,7 +253,7 @@ console.log("\ncomposer run strip");
   const ticker = strip?.querySelector(".composer-run-strip__text");
   eq(ticker?.getAttribute("aria-hidden"), "true", "ticking spinner text stays out of the accessibility tree");
   const live = strip?.querySelector(".sr-only[role=\"status\"]");
-  eq(live?.textContent, "Reasonix is working", "live region announces the stable state text only");
+  eq(live?.textContent, "EduShield is working", "live region announces the stable state text only");
   ok(document.querySelector(".composer-card--running") !== null, "running card keeps its running modifier");
 
   const stop = document.querySelector(".composer__btn--stop") as HTMLButtonElement | null;
@@ -427,10 +441,9 @@ console.log("\ncomposer run strip");
   dom.window.close();
 }
 
-// Resize consistency: --composer-height always carries the logical height in
-// every writer (React render, live drag, keyboard), with the run strip's
-// reservation isolated in a CSS calc — so dragging a resized composer during a
-// running turn cannot flash-shrink the card.
+// Fixed-height consistency: --composer-height always carries the logical height
+// in every writer (React render, live drag, keyboard). The run strip no longer
+// adds a reserved height, so running/idle and drag share the same outer height.
 {
   const stylesSource = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "../styles.css"), "utf8");
   ok(
@@ -441,6 +454,9 @@ console.log("\ncomposer run strip");
   const dom = installDom();
   const { root, rerender } = await renderComposer({ running: true, turnStartAt: Date.now() });
 
+  const card = document.querySelector(".composer-card") as HTMLElement;
+  eq(card.style.getPropertyValue("--composer-height"), "166px", "default composer height stays pinned at 166px");
+
   const handle = document.querySelector(".composer-resize-handle") as HTMLButtonElement;
   await act(async () => {
     handle.focus();
@@ -448,9 +464,8 @@ console.log("\ncomposer run strip");
     await flushTimers();
   });
 
-  const card = document.querySelector(".composer-card") as HTMLElement;
   eq(card.style.getPropertyValue("--composer-height"), "104px", "render path writes the logical height, not a compensated one");
-  eq(card.style.getPropertyValue("--composer-run-strip-reserved"), "30px", "running card reserves the strip height via its own variable");
+  eq(card.style.getPropertyValue("--composer-run-strip-reserved"), "0px", "running card keeps a fixed outer height (no strip reservation)");
 
   // Drag while running: the live writer stays in logical-height space.
   await act(async () => {
@@ -465,12 +480,40 @@ console.log("\ncomposer run strip");
     await flushTimers();
   });
   eq(card.style.getPropertyValue("--composer-height"), "124px", "drag release keeps the same logical-height space as the render path");
-  eq(card.style.getPropertyValue("--composer-run-strip-reserved"), "30px", "strip reservation survives the drag");
+  eq(card.style.getPropertyValue("--composer-run-strip-reserved"), "0px", "strip reservation stays fixed during drag");
   eq(handle.getAttribute("aria-valuenow"), "124", "separator reports the logical height");
 
   await rerender({ running: false, turnStartAt: undefined });
-  eq(card.style.getPropertyValue("--composer-run-strip-reserved"), "0px", "idle card releases the strip reservation");
+  eq(card.style.getPropertyValue("--composer-run-strip-reserved"), "0px", "idle card keeps the same zero reservation");
   eq(card.style.getPropertyValue("--composer-height"), "124px", "idle card keeps the user's logical height");
+
+  await act(async () => {
+    root.unmount();
+  });
+  dom.window.close();
+}
+
+// Browser mode (no Wails binding): model / effort / more have no real backend
+// semantics and must be absent from the DOM; intent / profile / approval,
+// "+" menu, and Agent selector stay.
+{
+  const dom = installDom();
+  delete (dom.window as unknown as { go?: unknown }).go;
+  const { root } = await renderComposer();
+
+  for (const selector of [
+    ".composer-meta__control--model",
+    ".composer-meta__control--effort",
+    ".composer-meta__control--more",
+  ]) {
+    eq(document.querySelector(selector), null, `browser mode omits ${selector}`);
+  }
+  eq(document.querySelector(".composer-meta__divider"), null, "browser mode omits the dangling divider");
+  ok(document.querySelector(".composer-meta__control--intent") !== null, "browser mode keeps the task-intent control");
+  ok(document.querySelector(".composer-meta__control--profile") !== null, "browser mode keeps the work-mode control");
+  ok(document.querySelector(".composer-meta__control--approval") !== null, "browser mode keeps the approval bar");
+  ok(document.querySelector(".composer-content-trigger") !== null, "browser mode keeps the + content menu");
+  ok(document.querySelector(".composer-meta__control--agent") !== null, "browser mode keeps the Agent selector");
 
   await act(async () => {
     root.unmount();

@@ -6,7 +6,7 @@
 &nbsp;·&nbsp;
 <a href="./PLUGIN_PACKAGES.zh-CN.md">插件包</a>
 
-Reasonix 提供 CLI 与桌面端 **设置 → 诊断** 共用的只读能力诊断模型，覆盖 Skills、
+EduShield 提供 CLI 与桌面端 **设置 → 诊断** 共用的只读能力诊断模型，覆盖 Skills、
 Commands、Hooks、插件包、MCP 服务器，以及指令文件（`AGENTS.md` /
 `REASONIX.md` / `CLAUDE.md`）。
 

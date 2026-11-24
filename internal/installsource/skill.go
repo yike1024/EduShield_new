@@ -100,7 +100,7 @@ func (t *installSourceTool) skillRootAction(req request, path string, names []st
 func (t *installSourceTool) skillInstallRoot(scope string) (string, error) {
 	if scope == "global" {
 		if t.reasonixHome == "" {
-			return "", newErr(ErrSourceUnreadable, "global skill install requires a Reasonix home directory")
+			return "", newErr(ErrSourceUnreadable, "global skill install requires an EduShield home directory")
 		}
 		return filepath.Join(t.reasonixHome, skill.SkillsDirname), nil
 	}

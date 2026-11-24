@@ -73,7 +73,7 @@ func NewCredentialResolverForRoot(root string) *CredentialResolver {
 	return &CredentialResolver{root: resolveRoot(root)}
 }
 
-// ResolveGlobalFirst resolves key from Reasonix's global .env only. Repeated
+// ResolveGlobalFirst resolves key from EduShield's global .env only. Repeated
 // calls for the same key reuse the first result so UI views with multiple
 // provider entries sharing api_key_env stay consistent.
 func (r *CredentialResolver) ResolveGlobalFirst(key string) CredentialResolution {
@@ -179,7 +179,7 @@ func credentialEnvNamesFromConfig(cfg *Config) []string {
 }
 
 // CredentialEnvNames returns every environment-variable name whose value can
-// be loaded from Reasonix's global credential store. This includes configured
+// be loaded from EduShield's global credential store. This includes configured
 // provider/bot keys and stored keys that are no longer referenced by the
 // current config: loadCredentialStoreForRoot loads the whole credential file,
 // so stale entries must remain outside child-process environments too.
@@ -246,11 +246,11 @@ func loadCredentialStoreForRoot(root string) {
 		return
 	}
 	if p := UserCredentialsPath(); p != "" {
-		loadDotEnvFileAs(p, CredentialSource{Kind: CredentialSourceCredentials, Path: p, Label: "Reasonix credentials (.env)"})
+		loadDotEnvFileAs(p, CredentialSource{Kind: CredentialSourceCredentials, Path: p, Label: "EduShield credentials (.env)"})
 	}
 }
 
-// StoreCredentialLines stores KEY=value assignments in Reasonix's global .env
+// StoreCredentialLines stores KEY=value assignments in EduShield's global .env
 // and pins them into the current process environment.
 func StoreCredentialLines(lines []string) (string, error) {
 	assignments := parseCredentialLines(lines)
@@ -275,7 +275,7 @@ func SetCredential(key, value string) (string, error) {
 	return StoreCredentialLines([]string{key + "=" + value})
 }
 
-// IsValidCredentialKey reports whether key can be stored in Reasonix's dotenv
+// IsValidCredentialKey reports whether key can be stored in EduShield's dotenv
 // credential file and exposed as an environment variable.
 func IsValidCredentialKey(key string) bool {
 	return isCredentialKey(strings.TrimSpace(key))
@@ -354,7 +354,7 @@ func parseCredentialLines(lines []string) map[string]string {
 func pinCredentialAssignments(assignments map[string]string) {
 	for key, value := range assignments {
 		_ = os.Setenv(key, value)
-		recordCredentialSource(key, value, CredentialSource{Kind: CredentialSourceCredentials, Path: UserCredentialsPath(), Label: "Reasonix credentials (.env)"})
+		recordCredentialSource(key, value, CredentialSource{Kind: CredentialSourceCredentials, Path: UserCredentialsPath(), Label: "EduShield credentials (.env)"})
 	}
 }
 
@@ -407,11 +407,11 @@ func credentialSourceLabel(source CredentialSource) string {
 	case CredentialSourceProjectEnv:
 		return "project .env"
 	case CredentialSourceCredentials:
-		return "Reasonix credentials"
+		return "EduShield credentials"
 	case CredentialSourceHomeEnv:
 		return "home .env"
 	case CredentialSourceLegacy:
-		return "legacy Reasonix credentials"
+		return "legacy EduShield credentials"
 	case CredentialSourceEnvironment:
 		return "environment variable"
 	default:
@@ -472,7 +472,7 @@ func resolveCredentialForRootGlobalFirst(root, key string) CredentialResolution 
 func storedCredentialValue(key string) (string, CredentialSource, bool) {
 	if p := UserCredentialsPath(); p != "" {
 		if value, ok := envFileValue(p, key); ok && value != "" {
-			return value, CredentialSource{Kind: CredentialSourceCredentials, Path: p, Label: "Reasonix credentials (.env)"}, true
+			return value, CredentialSource{Kind: CredentialSourceCredentials, Path: p, Label: "EduShield credentials (.env)"}, true
 		}
 	}
 	return "", CredentialSource{}, false

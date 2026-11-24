@@ -1,4 +1,5 @@
 import {
+  Fragment,
   forwardRef,
   useImperativeHandle,
   useLayoutEffect,
@@ -356,9 +357,16 @@ export const RichComposerInput = forwardRef<RichComposerInputHandle, {
   const renderedOrdered = sortComposerInvocations(renderedModel.invocations);
   const children: React.ReactNode[] = [];
   let cursor = 0;
+  let textSegment = 0;
   renderedOrdered.forEach((item) => {
     const offset = Math.max(cursor, Math.min(renderedModel.text.length, item.offset));
-    if (offset > cursor) children.push(renderedModel.text.slice(cursor, offset));
+    if (offset > cursor) {
+      children.push(
+        <Fragment key={`text-${textSegment++}-${cursor}-${offset}`}>
+          {renderedModel.text.slice(cursor, offset)}
+        </Fragment>,
+      );
+    }
     const invocation = invocationDisplayForCommand(item.command);
     children.push(
       <span
@@ -396,7 +404,13 @@ export const RichComposerInput = forwardRef<RichComposerInputHandle, {
     );
     cursor = offset;
   });
-  if (cursor < renderedModel.text.length) children.push(renderedModel.text.slice(cursor));
+  if (cursor < renderedModel.text.length) {
+    children.push(
+      <Fragment key={`text-${textSegment}-${cursor}-tail`}>
+        {renderedModel.text.slice(cursor)}
+      </Fragment>,
+    );
+  }
 
   return (
     <div

@@ -5,8 +5,11 @@
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { RefreshCw, AlertCircle, CheckCircle2, Clock, Play, Pause, Eye, Activity } from 'lucide-react';
+import { RefreshCw, AlertCircle, CheckCircle2, Clock, Play, Pause, Eye, Activity, Loader2 } from 'lucide-react';
 import { aisocApi, type StreamEvent, type Finding } from '../lib/aisoc-api';
+import type { Item } from '../lib/useController';
+import { AssistantMessage } from './Message';
+import { ToolCard } from './ToolCard';
 
 /**
  * Agent状态
@@ -14,13 +17,16 @@ import { aisocApi, type StreamEvent, type Finding } from '../lib/aisoc-api';
 interface AgentStatus {
   domain: string;           // 部件域名
   displayName: string;      // 显示名称
-  status: 'idle' | 'running' | 'error' | 'waiting_approval';
+  status: 'idle' | 'queued' | 'running' | 'waiting_input' | 'error' | 'waiting_approval';
   currentTask?: string;     // 当前任务ID
   currentPhase?: string;    // 当前阶段
   activeTools: ToolStatus[]; // 活跃工具列表
   lastUpdate: string;       // 最后更新时间
   busy?: boolean;           // 忙闲（来自 GET /api/agents/status）
   enabled?: boolean;        // 是否启用（来自 GET /api/agents/status）
+  // v1.1（契约 §2.6）：队列深度 / 正在执行的任务 / 待回答提问
+  queueDepth?: number;
+  pendingAskId?: string | null;
 }
 
 /**
@@ -37,16 +43,47 @@ interface ToolStatus {
 }
 
 /**
- * 任务输出
+ * 任务输出（复 chat Transcript 同款 Item[]：assistant / tool / notice / phase 等）
  */
 interface TaskOutput {
   task_id: string;
-  messages: Array<{
-    timestamp: string;
-    type: 'text' | 'reasoning' | 'tool_result' | 'error' | 'info';
-    content: string;
-  }>;
+  items: Item[];
+  /** 该 streamTabId 创建时刻（提交任务时戳），用于'等待首字节'已耗时显示。 */
+  createdAt?: number;
 }
+
+/**
+ * 阶段状态（用于 data_leak / pentest 等 pipeline 的多智能体协作可视化）
+ * - 数据源：SSE stage_start / stage_finished / stage_failed / status_completed / status_failed 帧
+ * - 兜底：当 SSE 没推全 stages 时，按 KNOWN_PIPELINES 的预定义顺序填充 pending 占位
+ * - 单域任务（domain=pentest 等）：用一个 stage 占位，跟'完整 pipeline'视觉一致
+ */
+type StageStatus = 'pending' | 'running' | 'completed' | 'failed';
+interface StageState {
+  stage: string;          // 原始 stage 名，如 'logaudit' / 'pentest' / 'verdict' / 'report'
+  label: string;          // 中文显示
+  status: StageStatus;
+  startedAt?: number;
+  finishedAt?: number;
+  findingsCount?: number;
+  error?: string;
+}
+
+/** 阶段名 → 中文显示 */
+const STAGE_LABELS: Record<string, string> = {
+  logaudit: '日志审计',
+  pentest: '渗透测试',
+  verdict: '威胁判定',
+  tir: '威胁情报',
+  report: '报告',
+  intel: '分析',
+  incident: '应急响应',
+};
+
+/** 已知 pipeline 的 stages 顺序（后端没推 stage_start 帧时按这个填充 pending 占位） */
+const KNOWN_PIPELINES: Record<string, string[]> = {
+  data_leak: ['logaudit', 'pentest', 'verdict', 'report'],
+};
 
 /**
  * 实时面板属性
@@ -58,32 +95,83 @@ interface RealtimePanelProps {
   showTimestamp?: boolean;   // 是否显示时间戳
   onTaskClick?: (taskId: string) => void; // 任务点击回调
   onFindingClick?: (finding: Finding) => void; // 证据点击回调
+  /**
+   * 父组件透传的 chat/stream 帧（复用 chat/stream onFrame 的输出）。
+   * 每项表示一个任务的一个帧。AisocDashboard.submitTask 调 chat/stream(pass_through=true)
+   * 后会把 text / reasoning / tool_dispatch / tool_progress / tool_result 都 push 到这里，
+   * RealtimePanel 负责把它们按 task_id 合并到 taskOutputs.messages，流式输出区立即可见。
+   */
+  streamItemsByTask?: Record<string, { items: Item[]; version: number; createdAt?: number }>;
+  /**
+   * v1.1（02 文档 §12）：SSE 断线/重连时通知父组件对账
+   * （GET /api/tasks/{id} 与 GET /api/queue），避免幽灵任务与过期排队位置。
+   */
+  onConnectionError?: () => void;
+}
+
+/**
+ * 等待首字节占位（优化 pass_through=true 模式下大脑首字节 36 秒的视觉空白）。
+ * - Spinner + 文本提示
+ * - 已耗时计时器（createdAt → now）
+ * - 超过 60 秒附加安抚文案
+ */
+function WaitingPlaceholder({ createdAt }: { createdAt?: number }) {
+  const [elapsedMs, setElapsedMs] = useState(0);
+  useEffect(() => {
+    const start = createdAt ?? Date.now();
+    const tick = () => setElapsedMs(Math.max(0, Date.now() - start));
+    tick();
+    const id = setInterval(tick, 500);
+    return () => clearInterval(id);
+  }, [createdAt]);
+  const secs = Math.floor(elapsedMs / 1000);
+  const veryLongWait = secs >= 60;
+  return (
+    <div className="flex flex-col items-center justify-center h-full gap-3 text-zinc-500">
+      <Loader2 className="h-6 w-6 animate-spin text-fuchsia-500" />
+      <div className="text-sm">
+        等待大脑响应（已等待 {secs}s）
+      </div>
+      <div className="text-[11px] text-zinc-400 max-w-xs text-center leading-snug">
+        {veryLongWait
+          ? '⏳ 透传模式首字节较慢（reasoning 模型推理中），最长约 1–2 分钟，请稍候'
+          : '⏳ 首次响应通常 5–30 秒，复杂推理任务可能更久'}
+      </div>
+    </div>
+  );
 }
 
 export function RealtimePanel({
   authToken: _authToken,
   autoConnect = true,
   maxMessages = 1000,
-  showTimestamp = true,
+  showTimestamp: _showTimestamp = true,
   onTaskClick,
   onFindingClick: _onFindingClick,
+  streamItemsByTask,
+  onConnectionError,
 }: RealtimePanelProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [agentStatuses, setAgentStatuses] = useState<Record<string, AgentStatus>>({});
   const [taskOutputs, setTaskOutputs] = useState<Record<string, TaskOutput>>({});
+  /** Pipeline 阶段进度（data_leak: logaudit → pentest → verdict → report） */
+  const [stagesByTask, setStagesByTask] = useState<Record<string, StageState[]>>({});
   const [mainTab, setMainTab] = useState<string>('agents'); // 主Tab：agents/outputs
+  // 已合并到 taskOutputs 的 version（避免父组件 prop 重复触发）
+  const mergedVersionRef = useRef<Record<string, number>>({});
   const [activeTaskFilter, setActiveTaskFilter] = useState<string>('all'); // 任务过滤
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 部件显示名称映射
+  // 部件显示名称映射（大脑侧部件名为 'intel'）
   const domainDisplayNames: Record<string, string> = {
     brain: '大脑',
     pentest: '渗透测试',
     logaudit: '日志审计',
-    threatintel: '威胁情报',
+    intel: '威胁情报',
+    threatintel: '威胁情报', // 兼容旧调用
     incident: '应急响应',
   };
 
@@ -127,6 +215,39 @@ export function RealtimePanel({
         case 'task_created':
         case 'status_running':
           agent.status = 'running';
+          break;
+        // === v1.1（契约 §3.2）===
+        case 'task_queued': {
+          agent.status = 'queued';
+          const depth = payload?.queue_depth;
+          if (typeof depth === 'number') agent.queueDepth = depth;
+          const pos = payload?.position;
+          if (typeof pos === 'number') agent.currentPhase = `排队第 ${pos} 位`;
+          break;
+        }
+        case 'queue_position': {
+          const pos = payload?.position;
+          if (typeof pos === 'number') agent.currentPhase = `排队第 ${pos} 位`;
+          break;
+        }
+        case 'task_started':
+          agent.status = 'running';
+          agent.currentPhase = typeof payload?.domain === 'string' ? String(payload.domain) : 'running';
+          break;
+        case 'ask':
+          agent.status = 'waiting_input';
+          agent.currentPhase = '等待用户回答';
+          break;
+        case 'ask_answered':
+          agent.status = 'running';
+          agent.currentPhase = '已回答，继续执行';
+          break;
+        case 'task_cancelled':
+          agent.status = 'idle';
+          agent.currentPhase = 'cancelled';
+          break;
+        case 'queue_full':
+          agent.currentPhase = '队列已满';
           break;
         case 'stage_start':
           agent.status = 'running';
@@ -180,39 +301,134 @@ export function RealtimePanel({
   }, [initializeAgentStatus]);
 
   /**
-   * 添加任务输出（按新事件名转为可读文本）
+   * 添加任务输出（按新事件名转为 notice item，与 chat/stream 透传的 items 一起渲染在同一个 outputs 区）。
+   * 设计：SSE 元事件（task_created/status_running/stage_start/...）本质是“系统提示”，
+   * 转化为 Item(kind=notice) 后复用 chat Transcript 同款 notice 样式（黄/蓝框），与 chat/stream
+   * 透传的 text/reasoning/tool 一同显示，流式输出区完全统一。
    */
   const addTaskOutput = useCallback((event: StreamEvent) => {
     if (!event.task_id) return;
 
-    const { event: eventName, payload, domain } = event;
+    const { event: eventName, payload, domain, task_id } = event;
 
-    const messageTypes: Record<string, TaskOutput['messages'][number]['type']> = {
+    // 元事件 → notice level 映射（之前是 info/error；现在跟 notice.kind 对齐）
+    const levelByEvent: Record<string, 'info' | 'warn'> = {
       task_created: 'info',
       status_running: 'info',
       stage_start: 'info',
       stage_finished: 'info',
-      stage_failed: 'error',
-      findings_stored: 'tool_result',
-      verdict: 'text',
-      report_ready: 'text',
+      stage_failed: 'warn',
+      findings_stored: 'info',
+      verdict: 'info',
+      report_ready: 'info',
       status_completed: 'info',
-      status_failed: 'error',
+      status_failed: 'warn',
+      // v1.1（契约 §3.2）
+      task_queued: 'info',
+      queue_position: 'info',
+      task_started: 'info',
+      ask: 'warn',
+      ask_answered: 'info',
+      task_cancelled: 'warn',
+      queue_full: 'warn',
+      plan_created: 'info',
+      plan_step: 'info',
+      completion_check: 'info',
+      plan_finished: 'info',
     };
-    const messageType = messageTypes[eventName] || 'info';
+
+    // 安全读取 payload 字段
+    const p = (payload ?? {}) as Record<string, unknown>;
+    const stage = typeof p.stage === 'string' ? p.stage : null;
+    const errMsg = typeof p.error === 'string' ? p.error : null;
+    const count = typeof p.count === 'number' ? p.count : null;
+    const verdict = typeof p.verdict === 'string' ? p.verdict : null;
+    const confidence = typeof p.confidence === 'number' ? p.confidence : null;
+    const findingsCount = typeof p.findings_count === 'number' ? p.findings_count : null;
+    const currentStage = typeof p.current_stage === 'string' ? p.current_stage : null;
+    const domainField = domain || p.domain as string || 'unknown';
+    const shortId = task_id.length > 14 ? `${task_id.slice(0, 10)}…${task_id.slice(-4)}` : task_id;
+    // v1.1 新事件字段（全部可选，缺失时文案自动降级）
+    const position = typeof p.position === 'number' ? p.position : null;
+    const queueDepth = typeof p.queue_depth === 'number' ? p.queue_depth : null;
+    const askId = typeof p.ask_id === 'string' ? p.ask_id : null;
+    const retryAfter = typeof p.retry_after_s === 'number' ? p.retry_after_s : null;
+    const reason = typeof p.reason === 'string' ? p.reason : null;
+    const done = typeof p.done === 'boolean' ? p.done : null;
+    const missing = Array.isArray(p.missing) ? p.missing.filter((m): m is string => typeof m === 'string') : [];
+    const goal = typeof p.goal === 'string' ? p.goal : null;
+    const stepSeq = typeof p.seq === 'number' ? p.seq : null;
+    const stepAction = typeof p.action === 'string' ? p.action : null;
+    const stepStatus = typeof p.status === 'string' ? p.status : null;
 
     let content = '';
     switch (eventName) {
-      case 'task_created': content = `任务已创建（domain=${domain}）`; break;
-      case 'status_running': content = '任务开始运行'; break;
-      case 'stage_start': content = `阶段开始：${payload?.stage ?? '未知'}`; break;
-      case 'stage_finished': content = `阶段完成：${payload?.stage ?? '未知'}`; break;
-      case 'stage_failed': content = `阶段失败：${payload?.stage ?? '未知'}${payload?.error ? ` — ${payload.error}` : ''}`; break;
-      case 'findings_stored': content = `新发现入库（domain=${domain}）${typeof payload?.count === 'number' ? ` ×${payload.count}` : ''}`; break;
-      case 'verdict': content = `判定：${payload?.verdict ?? '未知'}${typeof payload?.confidence === 'number' ? `（置信度 ${Math.round(payload.confidence * 100)}%）` : ''}`; break;
-      case 'report_ready': content = '报告已就绪'; break;
-      case 'status_completed': content = '任务已完成'; break;
-      case 'status_failed': content = `任务失败${payload?.error ? `：${payload.error}` : ''}`; break;
+      case 'task_created':
+        content = `🚀 任务创建（domain=${domainField}）\n   task_id=${shortId}\n   target=${typeof p.target === 'string' ? p.target : '—'}`;
+        break;
+      case 'status_running':
+        content = `▶ 任务开始运行（部件 ${domainField} 已接单）`;
+        break;
+      case 'stage_start':
+        content = `🔵 阶段开始：${stage ?? '未知'}\n   domain=${domainField} | task=${shortId}${findingsCount !== null ? ` | 已累计发现×${findingsCount}` : ''}`;
+        break;
+      case 'stage_finished':
+        content = `✅ 阶段完成：${stage ?? '未知'}\n   domain=${domainField} | task=${shortId}${findingsCount !== null ? ` | 本阶段发现×${findingsCount}` : ''}`;
+        break;
+      case 'stage_failed':
+        content = `❌ 阶段失败：${stage ?? '未知'}\n   domain=${domainField} | task=${shortId}\n   原因：${errMsg ?? '未知'}`;
+        break;
+      case 'findings_stored':
+        content = `🧩 新发现入库（domain=${domainField}）\n   task=${shortId}\n   本批入库×${count ?? '?'}${findingsCount !== null ? ` | 累计发现×${findingsCount}` : ''}`;
+        break;
+      case 'verdict':
+        content = `⚖️ 判定：${verdict ?? '未知'}${confidence !== null ? `（置信度 ${Math.round(confidence * 100)}%）` : ''}\n   task=${shortId}${currentStage ? ` | 当前阶段=${currentStage}` : ''}`;
+        break;
+      case 'report_ready':
+        content = `📄 报告已就绪\n   task=${shortId}\n   提示：切到“详情”tab 查看完整报告`;
+        break;
+      case 'status_completed':
+        content = `🏁 任务已完成\n   task=${shortId}\n   提示：切到“详情”tab 查看报告`;
+        break;
+      case 'status_failed':
+        content = `💥 任务失败\n   task=${shortId}\n   原因：${errMsg ?? '未知'}`;
+        break;
+      // === v1.1（契约 §3.2）===
+      case 'task_queued':
+        content = `⏳ 任务已入队${position !== null ? ` · 第 ${position} 位` : ''}${queueDepth !== null ? `（队列深度 ${queueDepth}）` : ''}\n   domain=${domainField} | task=${shortId}`;
+        break;
+      case 'queue_position':
+        content = `⏳ 排队位置更新${position !== null ? ` · 第 ${position} 位` : ''}\n   task=${shortId}`;
+        break;
+      case 'task_started':
+        content = `▶ 出队开始执行（domain=${domainField}${typeof p.worker === 'string' ? ` · ${p.worker}` : ''}）\n   task=${shortId}`;
+        break;
+      case 'ask':
+        content = `❓ 智能体需要用户回答${askId ? `（${askId}）` : ''}\n   task=${shortId}\n   提示：问答卡片已弹出，不回答则一直等待`;
+        break;
+      case 'ask_answered':
+        content = `✅ 回答已受理${askId ? `（${askId}）` : ''}，任务继续执行\n   task=${shortId}`;
+        break;
+      case 'task_cancelled':
+        content = `⛔ 任务已取消${reason ? `：${reason}` : ''}\n   task=${shortId}`;
+        break;
+      case 'queue_full':
+        content = `🚦 队列已满${retryAfter !== null ? `，请 ${retryAfter} 秒后重试` : ''}\n   code=${typeof p.code === 'string' ? p.code : 'QUEUE_FULL'}`;
+        break;
+      case 'plan_created':
+        content = `🧭 计划已生成${goal ? `：${goal}` : ''}\n   task=${shortId}`;
+        break;
+      case 'plan_step':
+        content = `• 计划步骤${stepSeq !== null ? ` ${stepSeq}` : ''}${stepAction ? ` ${stepAction}` : ''}${stepStatus ? `（${stepStatus}）` : ''}\n   domain=${domainField} | task=${shortId}`;
+        break;
+      case 'completion_check':
+        content = `完成判定：${done === true ? '已达目标' : done === false ? '未达目标' : '判定中'}${missing.length > 0 ? ` · 缺 ${missing.join('、')}` : ''}${confidence !== null ? ` · 置信度 ${Math.round(confidence * 100)}%` : ''}\n   task=${shortId}`;
+        break;
+      case 'plan_finished':
+        content = `🏁 计划结束${verdict ? ` · ${verdict}` : ''}\n   task=${shortId}`;
+        break;
+      default:
+        content = `[${eventName}] task=${shortId}`;
     }
 
     setTaskOutputs(prev => {
@@ -220,25 +436,144 @@ export function RealtimePanel({
       if (!updated[event.task_id!]) {
         updated[event.task_id!] = {
           task_id: event.task_id!,
-          messages: [],
+          items: [],
+          createdAt: Date.now(),
         };
       }
 
       const taskOutput = updated[event.task_id!];
-      taskOutput.messages.push({
-        timestamp: new Date().toISOString(),
-        type: messageType,
-        content,
-      });
+      const noticeItem: Item = {
+        kind: 'notice',
+        id: `notice-sse-${task_id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        level: levelByEvent[eventName] ?? 'info',
+        text: content,
+      };
+      taskOutput.items.push(noticeItem);
 
-      // 限制消息数量
-      if (taskOutput.messages.length > maxMessages) {
-        taskOutput.messages = taskOutput.messages.slice(-maxMessages);
+      // 限制 items 数量（避免长任务推 event 过多撑爆 DOM）
+      if (taskOutput.items.length > maxMessages) {
+        taskOutput.items = taskOutput.items.slice(-maxMessages);
       }
 
       return updated;
     });
   }, [maxMessages]);
+
+  /**
+   * 同步维护 stagesByTask（pipeline 横道图数据源）
+   * 必须在 handleRealtimeEvent 之前定义（避免 useCallback deps 的 TDZ）。
+   * - stage_start：把对应 stage 状态置为 running、记录 startedAt
+   * - stage_finished：把对应 stage 状态置为 completed、记录 finishedAt + findingsCount
+   * - stage_failed：状态置为 failed、记录 error
+   * - status_completed：把剩下未结束的 stage 全置为 completed
+   * - status_failed：把当前 running 的 stage 置为 failed
+   * - task_created (domain != 'all' 即单域任务)：预填 1 个 stage 占位（domain 本身）
+   */
+  const upsertStage = useCallback((event: StreamEvent) => {
+    const { event: eventName, payload, domain, task_id } = event;
+    if (!task_id) return;
+    const p = (payload ?? {}) as Record<string, unknown>;
+    const stageName = typeof p.stage === 'string' ? p.stage : null;
+    const findingsCount = typeof p.findings_count === 'number' ? p.findings_count : undefined;
+    const errMsg = typeof p.error === 'string' ? p.error : null;
+
+    setStagesByTask(prev => {
+      const cur = prev[task_id] ? [...prev[task_id]] : [];
+
+      // 工具函数：根据 stage 名找现有下标
+      const findIdx = (name: string) => cur.findIndex(s => s.stage === name);
+
+      // 工具函数：新建 stage
+      const newStage = (name: string, status: StageStatus): StageState => ({
+        stage: name,
+        label: STAGE_LABELS[name] ?? name,
+        status,
+        startedAt: status === 'running' ? Date.now() : undefined,
+      });
+
+      switch (eventName) {
+        case 'task_created': {
+          // 单域任务（domain != 'all'）：预填该 domain 作为唯一 stage 占位
+          // pipeline 任务（domain='all'）：等 stage_start 推再补，不在这里瞎填
+          if (domain && domain !== 'all' && KNOWN_PIPELINES[domain] === undefined && findIdx(domain) < 0) {
+            cur.push(newStage(domain, 'pending'));
+          }
+          break;
+        }
+        case 'stage_start': {
+          if (!stageName) break;
+          const idx = findIdx(stageName);
+          if (idx >= 0) {
+            cur[idx] = { ...cur[idx], status: 'running', startedAt: Date.now() };
+          } else {
+            cur.push(newStage(stageName, 'running'));
+          }
+          break;
+        }
+        case 'stage_finished': {
+          if (!stageName) break;
+          const idx = findIdx(stageName);
+          if (idx >= 0) {
+            cur[idx] = {
+              ...cur[idx],
+              status: 'completed',
+              finishedAt: Date.now(),
+              findingsCount: findingsCount ?? cur[idx].findingsCount,
+            };
+          } else {
+            cur.push({
+              ...newStage(stageName, 'completed'),
+              finishedAt: Date.now(),
+              findingsCount,
+            });
+          }
+          break;
+        }
+        case 'stage_failed': {
+          if (!stageName) break;
+          const idx = findIdx(stageName);
+          if (idx >= 0) {
+            cur[idx] = { ...cur[idx], status: 'failed', finishedAt: Date.now(), error: errMsg ?? undefined };
+          } else {
+            cur.push({ ...newStage(stageName, 'failed'), finishedAt: Date.now(), error: errMsg ?? undefined });
+          }
+          break;
+        }
+        case 'status_completed': {
+          // 整体任务完成 → 把所有未完成的 stage 都标记 completed
+          for (let i = 0; i < cur.length; i++) {
+            if (cur[i].status === 'running' || cur[i].status === 'pending') {
+              cur[i] = { ...cur[i], status: 'completed', finishedAt: Date.now() };
+            }
+          }
+          break;
+        }
+        case 'status_failed': {
+          // 整体任务失败 → 把当前 running 的 stage 标记 failed
+          for (let i = 0; i < cur.length; i++) {
+            if (cur[i].status === 'running') {
+              cur[i] = { ...cur[i], status: 'failed', finishedAt: Date.now(), error: errMsg ?? '未知错误' };
+            }
+          }
+          break;
+        }
+      }
+
+      // 没有任何变化：保持原 state（避免不必要的 re-render）
+      if (cur.length === (prev[task_id]?.length ?? 0)) {
+        let same = true;
+        for (let i = 0; i < cur.length; i++) {
+          if (cur[i].status !== prev[task_id][i].status || cur[i].findingsCount !== prev[task_id][i].findingsCount) {
+            same = false;
+            break;
+          }
+        }
+        if (same) return prev;
+      }
+
+      return { ...prev, [task_id]: cur };
+    });
+  }, []);
 
   /**
    * 处理实时事件
@@ -251,7 +586,10 @@ export function RealtimePanel({
 
     // 添加任务输出
     addTaskOutput(event);
-  }, [updateAgentStatus, addTaskOutput]);
+
+    // 同步维护 stagesByTask（横道图数据源）
+    upsertStage(event);
+  }, [updateAgentStatus, addTaskOutput, upsertStage]);
 
   /**
    * 连接SSE流
@@ -268,6 +606,8 @@ export function RealtimePanel({
           console.error('SSE connection error:', error);
           setConnectionError('连接中断，正在重连...');
           setIsConnected(false);
+          // 02 文档 §12：断线期间事件可能丢失，通知父组件对账任务/队列状态
+          onConnectionError?.();
 
           // 自动重连
           if (reconnectTimeoutRef.current) {
@@ -287,8 +627,9 @@ export function RealtimePanel({
       console.error('Failed to connect to SSE stream:', error);
       setConnectionError('连接失败');
       setIsConnected(false);
+      onConnectionError?.();
     }
-  }, [handleRealtimeEvent]);
+  }, [handleRealtimeEvent, onConnectionError]);
 
   /**
    * 断开连接
@@ -317,18 +658,37 @@ export function RealtimePanel({
         const next = { ...prev };
         for (const p of data.parts) {
           const d = p.domain;
+          // v1.1（契约 §2.6）：queue_depth / running_task_id / pending_ask 全部可选
+          const pendingAskId = p.pending_ask && typeof p.pending_ask.ask_id === 'string'
+            ? p.pending_ask.ask_id
+            : null;
+          const derivedStatus: AgentStatus['status'] = pendingAskId
+            ? 'waiting_input'
+            : !!p.busy ? 'running' : 'idle';
           if (!next[d]) {
             next[d] = {
               domain: d,
               displayName: domainDisplayNames[d] || d,
-              status: 'idle',
+              status: derivedStatus,
+              currentTask: p.running_task_id ?? undefined,
               activeTools: [],
               lastUpdate: new Date().toISOString(),
               busy: !!p.busy,
               enabled: p.enabled,
+              queueDepth: p.queue_depth,
+              pendingAskId,
             };
           } else {
-            next[d] = { ...next[d], busy: !!p.busy, enabled: p.enabled, lastUpdate: new Date().toISOString() };
+            next[d] = {
+              ...next[d],
+              busy: !!p.busy,
+              enabled: p.enabled,
+              lastUpdate: new Date().toISOString(),
+              queueDepth: p.queue_depth ?? next[d].queueDepth,
+              pendingAskId,
+              // 仅在没有活动提问/SSE error 时用忙闲推导；SSE 事件仍是更高优先级
+              status: pendingAskId ? 'waiting_input' : (next[d].status === 'error' ? 'error' : derivedStatus),
+            };
           }
         }
         return next;
@@ -343,6 +703,33 @@ export function RealtimePanel({
     const id = setInterval(refreshAgentsStatus, 5000);
     return () => clearInterval(id);
   }, [refreshAgentsStatus]);
+
+  /**
+   * 合并父组件透传的 chat/stream Item[]（修复：SSE 实时流不推 reasonix 流式帧，
+   * AisocDashboard.submitTask 调 webApiProxy.AisocSubmitForTab 走与聊天同源的 onFrame → emitEvent，
+   * 拿到 text/reasoning/tool_dispatch/tool_result 后转成 Item[] 推到这里，与 SSE 元事件一起显示）。
+   * 按 version 去重，避免父组件重复触发同一帧被重复渲染。
+   */
+  useEffect(() => {
+    if (!streamItemsByTask) return;
+    setTaskOutputs(prev => {
+      const updated = { ...prev };
+      let changed = false;
+      for (const [taskId, payload] of Object.entries(streamItemsByTask)) {
+        if (mergedVersionRef.current[taskId] === payload.version) continue;
+        mergedVersionRef.current[taskId] = payload.version;
+        const trimmed = payload.items.length > maxMessages ? payload.items.slice(-maxMessages) : payload.items;
+        const prevOutput = updated[taskId];
+        updated[taskId] = {
+          task_id: taskId,
+          items: trimmed,
+          createdAt: payload.createdAt ?? prevOutput?.createdAt,
+        };
+        changed = true;
+      }
+      return changed ? updated : prev;
+    });
+  }, [streamItemsByTask, maxMessages]);
 
   /**
    * 清理定时器和连接
@@ -380,26 +767,17 @@ export function RealtimePanel({
     switch (status) {
       case 'idle':
         return 'bg-gray-100 border-gray-300';
+      case 'queued':
+        return 'bg-amber-50 border-amber-300';
       case 'running':
         return 'bg-blue-50 border-blue-300';
+      case 'waiting_input':
+        return 'bg-purple-50 border-purple-300';
       case 'error':
         return 'bg-red-50 border-red-300';
       case 'waiting_approval':
         return 'bg-yellow-50 border-yellow-300';
     }
-  };
-
-  /**
-   * 格式化时间戳
-   */
-  const formatTimestamp = (timestamp: string) => {
-    if (!showTimestamp) return '';
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString('zh-CN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
   };
 
   /**
@@ -413,12 +791,16 @@ export function RealtimePanel({
       <div className="flex items-center justify-between mb-3">
         <div className="text-lg font-semibold">{agent.displayName}</div>
         <div className={`px-2 py-1 rounded text-xs font-medium ${
+          agent.status === 'queued' ? 'bg-amber-100 text-amber-800' :
           agent.status === 'running' ? 'bg-blue-100 text-blue-800' :
+          agent.status === 'waiting_input' ? 'bg-purple-100 text-purple-800' :
           agent.status === 'error' ? 'bg-red-100 text-red-800' :
           agent.status === 'waiting_approval' ? 'bg-yellow-100 text-yellow-800' :
           'bg-gray-100 text-gray-800'
         }`}>
-          {agent.status}
+          {agent.status === 'queued' ? '排队中'
+            : agent.status === 'waiting_input' ? '等待回答'
+            : agent.status}
         </div>
       </div>
       {typeof agent.busy === 'boolean' && (
@@ -426,6 +808,12 @@ export function RealtimePanel({
           {agent.busy ? '● 忙（有任务排队执行）' : '○ 空闲'}
           {typeof agent.enabled === 'boolean' && !agent.enabled && (
             <span className="ml-2 text-red-600">（部件未启用）</span>
+          )}
+          {typeof agent.queueDepth === 'number' && agent.queueDepth > 0 && (
+            <span className="ml-2 text-amber-600">排队 {agent.queueDepth} 个</span>
+          )}
+          {agent.pendingAskId && (
+            <span className="ml-2 text-purple-600">等待用户回答</span>
           )}
         </div>
       )}
@@ -461,7 +849,71 @@ export function RealtimePanel({
   );
 
   /**
-   * 渲染任务输出
+   * 渲染 Pipeline 横道图（多智能体协作进度的核心可视化）
+   * 输入：stagesByTask[taskId] 数组（已按出现顺序）
+   * 输出：横排的 stage 节点 + 连接箭头
+   *   [✓ 日志审计] → [● 渗透测试 0:23] → [○ 判定] → [○ 报告]
+   */
+  const renderStagePipeline = (stages: StageState[]) => {
+    if (!stages || stages.length === 0) return null;
+    return (
+      <div className="mb-2 flex flex-wrap items-center gap-1 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2">
+        <span className="text-[10px] uppercase tracking-wider text-zinc-500 mr-1">pipeline</span>
+        {stages.map((s, idx) => {
+          const meta = getStageMeta(s.status);
+          const Icon = meta.icon;
+          const elapsedSec = s.startedAt && !s.finishedAt
+            ? Math.floor((Date.now() - s.startedAt) / 1000)
+            : null;
+          return (
+            <div key={`${s.stage}-${idx}`} className="flex items-center">
+              <div
+                className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs ${meta.cls}`}
+                title={
+                  s.error
+                    ? `失败：${s.error}`
+                    : elapsedSec !== null
+                      ? `运行中（已耗时 ${elapsedSec}s）`
+                      : `${s.label}`
+                }
+              >
+                <Icon className="h-3 w-3" />
+                <span>{s.label}</span>
+                {typeof s.findingsCount === 'number' && s.findingsCount > 0 && (
+                  <span className="ml-0.5 text-[10px] opacity-80">×{s.findingsCount}</span>
+                )}
+                {elapsedSec !== null && (
+                  <span className="ml-0.5 text-[10px] opacity-80">{elapsedSec}s</span>
+                )}
+              </div>
+              {idx < stages.length - 1 && (
+                <span className="mx-1 text-zinc-400">→</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  /**
+   * 阶段状态 → 颜色 + 图标
+   */
+  const getStageMeta = (status: StageStatus): { cls: string; icon: typeof CheckCircle2 } => {
+    switch (status) {
+      case 'pending':
+        return { cls: 'bg-zinc-100 text-zinc-600 border border-zinc-200', icon: Clock };
+      case 'running':
+        return { cls: 'bg-blue-50 text-blue-700 border border-blue-200', icon: Loader2 };
+      case 'completed':
+        return { cls: 'bg-emerald-50 text-emerald-700 border border-emerald-200', icon: CheckCircle2 };
+      case 'failed':
+        return { cls: 'bg-red-50 text-red-700 border border-red-200', icon: AlertCircle };
+    }
+  };
+
+  /**
+   * 渲染任务输出（复用 chat Transcript 同款 AssistantMessage + ToolCard，与聊天视觉一致）
    */
   const renderTaskOutput = (taskId: string, output: TaskOutput) => (
     <div key={taskId} className="mb-4">
@@ -479,27 +931,40 @@ export function RealtimePanel({
           </button>
         )}
       </div>
-      <div className="h-96 w-full rounded border overflow-y-auto">
-        <div className="p-3 space-y-1">
-          {output.messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`text-sm ${
-                msg.type === 'error' ? 'text-red-600' :
-                msg.type === 'reasoning' ? 'text-blue-600' :
-                msg.type === 'tool_result' ? 'text-green-600' :
-                'text-gray-700'
-              }`}
-            >
-              <span className="text-xs text-gray-500 mr-2">
-                {formatTimestamp(msg.timestamp)}
-              </span>
-              <span className={msg.type === 'reasoning' ? 'italic' : ''}>
-                {msg.content}
-              </span>
-            </div>
-          ))}
-        </div>
+      {/* Pipeline 横道图（多智能体协作进度，data_leak 等 pipeline 任务才有多 stage；单域任务只有 1 个） */}
+      {renderStagePipeline(stagesByTask[taskId])}
+      <div className="h-[28rem] w-full rounded border overflow-y-auto p-3 space-y-3 bg-white">
+        {output.items.length === 0 ? (
+          <WaitingPlaceholder createdAt={output.createdAt} />
+        ) : null}
+        {output.items.map((item, index) => {
+          if (item.kind === 'assistant') {
+            return <AssistantMessage key={item.id || index} item={item} creationMode={false} />;
+          }
+          if (item.kind === 'tool') {
+            return <ToolCard key={item.id || index} item={item} />;
+          }
+          if (item.kind === 'phase') {
+            return (
+              <div key={item.id || index} className="text-xs text-gray-500 italic border-l-2 border-gray-300 pl-2">
+                {item.text}
+              </div>
+            );
+          }
+          if (item.kind === 'notice') {
+            return (
+              <div
+                key={item.id || index}
+                className={`text-sm rounded px-3 py-2 ${
+                  item.level === 'warn' ? 'bg-yellow-50 text-yellow-800 border border-yellow-200' : 'bg-blue-50 text-blue-800 border border-blue-200'
+                }`}
+              >
+                {item.text}
+              </div>
+            );
+          }
+          return null;
+        })}
       </div>
     </div>
   );

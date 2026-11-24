@@ -2,7 +2,7 @@ import { Check, ChevronDown, ChevronRight, FileText, Pencil, Plus, RefreshCw, Se
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { app } from "../lib/bridge";
 import { useT } from "../lib/i18n";
-import type { MemoryArchive, MemoryFact, MemorySuggestion, MemorySuggestionsView, MemoryView, SkillSuggestion, TabMeta } from "../lib/types";
+import type { MemoryArchive, MemoryCompilerStats, MemoryFact, MemorySuggestion, MemorySuggestionsView, MemoryView, SkillSuggestion, TabMeta } from "../lib/types";
 import { AnchoredPopover } from "./AnchoredPopover";
 import { ResizableDrawer } from "./ResizableDrawer";
 import { Tooltip } from "./Tooltip";
@@ -746,7 +746,13 @@ export function MemoryPanel({
 
 // MemorySettingsPage is a self-contained memory management page embedded inside
 // the settings centre. It loads its own data and handles all memory operations.
-export function MemorySettingsPage() {
+export function MemorySettingsPage({
+  memoryCompilerStats,
+}: {
+  // Latest Memory v5 compiler statistics from the memory_compiler_stats event,
+  // forwarded from the app shell; shows whether memory was injected this turn.
+  memoryCompilerStats?: MemoryCompilerStats;
+}) {
 	const t = useT();
 	const [view, setView] = useState<MemoryView | null>(null);
 	const [tabs, setTabs] = useState<TabMeta[]>([]);
@@ -1099,11 +1105,53 @@ export function MemorySettingsPage() {
 				)}
 			</div>
 			{showStorage && view.storeDir && (
-				<div className="memory-storage-path">
-					<span>{t("memory.storagePathLabel")}</span>
-					<code>{view.storeDir}</code>
+			<div className="memory-storage-path">
+				<span>{t("memory.storagePathLabel")}</span>
+				<code>{view.storeDir}</code>
+			</div>
+		)}
+		{memoryCompilerStats && (
+			<div className="mem-inject-stats" aria-label={t("memory.injectionStatus")}>
+				<div className="mem-inject-stats__heading">
+					<Sparkles size={14} aria-hidden="true" />
+					<span className="mem-inject-stats__title">{t("memory.injectionStatus")}</span>
+					<span className={`mem-inject-stats__badge${memoryCompilerStats.injected ? " mem-inject-stats__badge--ok" : " mem-inject-stats__badge--muted"}`}>
+						{memoryCompilerStats.injected ? t("memory.injectedYes") : t("memory.injectedNo")}
+					</span>
 				</div>
-			)}
+				<dl className="mem-inject-stats__grid">
+					<div className="mem-inject-stats__cell">
+						<dt>{t("memory.compiledTokens")}</dt>
+						<dd>{(memoryCompilerStats.compiledTokens ?? 0).toLocaleString()}</dd>
+					</div>
+					<div className="mem-inject-stats__cell">
+						<dt>{t("memory.memoryReferences")}</dt>
+						<dd>{memoryCompilerStats.memoryReferences ?? 0}</dd>
+					</div>
+					<div className="mem-inject-stats__cell">
+						<dt>{t("memory.constraints")}</dt>
+						<dd>{memoryCompilerStats.constraints ?? 0}</dd>
+					</div>
+					<div className="mem-inject-stats__cell">
+						<dt>{t("memory.strategyCount")}</dt>
+						<dd>{memoryCompilerStats.strategyCount ?? 0}</dd>
+					</div>
+					<div className="mem-inject-stats__cell">
+						<dt>{t("memory.learningCount")}</dt>
+						<dd>{memoryCompilerStats.learningCount ?? 0}</dd>
+					</div>
+					<div className="mem-inject-stats__cell">
+						<dt>{t("memory.executionSteps")}</dt>
+						<dd>{memoryCompilerStats.executionSteps ?? 0}</dd>
+					</div>
+				</dl>
+				<p className="mem-inject-stats__hint">
+					{memoryCompilerStats.usefulIR === false ? t("memory.usefulIRNo") : t("memory.usefulIRYes")}
+					{" · "}
+					{t("memory.injectionStatusHint")}
+				</p>
+			</div>
+		)}
 			<div className="memory-tabs-row" role="tablist" aria-label={t("settings.tab.memory")}>
 				<div className="settings-subtabs memory-tabs-row__primary" role="presentation">
 					<button

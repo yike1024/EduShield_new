@@ -186,7 +186,7 @@ ok(
 );
 
 ok(
-  /\{!appChromeHidden && \(/.test(appSource),
+  /\{!appChromeHidden && (?:viewMode === "chat" && )?\(/.test(appSource),
   "workbench skips rendering the top AppChrome row",
 );
 
@@ -260,8 +260,8 @@ ok(
 );
 
 ok(
-  /commitThenSendRef\.current\(sourceTabId, trimmed, submitText\.trim\(\), structured\)/.test(appSource) &&
-    /sendToTab\(sourceTabId, displayText, submitText, undefined, structured\)/.test(appSource) &&
+  /commitThenSendRef\.current\(sourceTabId, trimmed, submitText\.trim\(\), structured, route\)/.test(appSource) &&
+    /sendToTab\(sourceTabId, displayText, submitText, undefined, structured, route\)/.test(appSource) &&
     /onSteer=\{handleSteer\}/.test(appSource) &&
     /composerInsertRequestsByTab\[activeTabId\]/.test(appSource) &&
     /consumedInsertIdByDraftRef\.current\[draftKey\]/.test(composerSource),

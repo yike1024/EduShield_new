@@ -1,5 +1,5 @@
-// Package memory implements Reasonix's persistent memory. It mirrors Claude
-// Code's two-layer model while honoring Reasonix's cache-first architecture:
+// Package memory implements EduShield's persistent memory. It mirrors Claude
+// Code's two-layer model while honoring EduShield's cache-first architecture:
 //
 //   - Hierarchical doc memory: REASONIX.md / AGENTS.md files discovered from the
 //     user config dir and up the project tree, with "@path" imports. This is the

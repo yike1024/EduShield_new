@@ -45,6 +45,12 @@ export type InvocationTextSegment =
 const invocationNamePattern = "[A-Za-z0-9_.:-]+";
 const knownSubagents = new Set(["general-purpose", "explore", "research", "review", "security_review"]);
 
+// 品牌词大小写修正：命令名按 Title Case 渲染时，edushield 会被转成 "Edushield"，
+// 与产品名 "EduShield" 不一致，这里按词表还原。
+const brandTokens: Readonly<Record<string, string>> = {
+  edushield: "EduShield",
+};
+
 export function commandUsesStructuredInvocation(command: CommandInfo): boolean {
   return command.kind === "skill" || command.kind === "subagent";
 }
@@ -54,7 +60,7 @@ export function invocationLabel(name: string): string {
   return unqualified
     .split(/[-_.]+/)
     .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .map((part) => brandTokens[part.toLowerCase()] ?? part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
 }
 

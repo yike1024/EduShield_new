@@ -7,12 +7,12 @@ import (
 )
 
 func TestInstallerCommandLineIsSilentAndKeepsDFlagLast(t *testing.T) {
-	got := installerCommandLine(`C:\Temp\Reasonix Installer.exe`, `D:\Tools\Reasonix App`)
-	want := `"C:\Temp\Reasonix Installer.exe" /S /D=D:\Tools\Reasonix App`
+	got := installerCommandLine(`C:\Temp\EduShield Installer.exe`, `D:\Tools\EduShield App`)
+	want := `"C:\Temp\EduShield Installer.exe" /S /D=D:\Tools\EduShield App`
 	if got != want {
 		t.Fatalf("installerCommandLine = %q, want %q", got, want)
 	}
-	if !strings.HasSuffix(got, `/D=D:\Tools\Reasonix App`) {
+	if !strings.HasSuffix(got, `/D=D:\Tools\EduShield App`) {
 		t.Fatalf("/D= must be the final unquoted NSIS token, got %q", got)
 	}
 }
@@ -20,17 +20,17 @@ func TestInstallerCommandLineIsSilentAndKeepsDFlagLast(t *testing.T) {
 func TestWindowsUpdateHandoffArgsCarryParentInstallAndRelaunch(t *testing.T) {
 	got := windowsUpdateHandoffArgs(
 		4242,
-		`C:\Users\Jane Doe\AppData\Local\Reasonix\updates\Reasonix-windows-amd64-installer.exe`,
-		`D:\Tools\Reasonix App`,
-		`D:\Tools\Reasonix App\reasonix-desktop.exe`,
+		`C:\Users\Jane Doe\AppData\Local\EduShield\updates\EduShield-windows-amd64-installer.exe`,
+		`D:\Tools\EduShield App`,
+		`D:\Tools\EduShield App\reasonix-desktop.exe`,
 		"v1.6.0",
 	)
 	want := []string{
 		"--parent-pid", "4242",
-		"--installer", `C:\Users\Jane Doe\AppData\Local\Reasonix\updates\Reasonix-windows-amd64-installer.exe`,
+		"--installer", `C:\Users\Jane Doe\AppData\Local\EduShield\updates\EduShield-windows-amd64-installer.exe`,
 		"--to-version", "v1.6.0",
-		"--install-dir", `D:\Tools\Reasonix App`,
-		"--relaunch", `D:\Tools\Reasonix App\reasonix-desktop.exe`,
+		"--install-dir", `D:\Tools\EduShield App`,
+		"--relaunch", `D:\Tools\EduShield App\reasonix-desktop.exe`,
 	}
 	if strings.Join(got, "\x00") != strings.Join(want, "\x00") {
 		t.Fatalf("args = %#v, want %#v", got, want)
@@ -47,7 +47,7 @@ func TestWindowsInstallerScriptWaitsBeforeCopyingExecutable(t *testing.T) {
 		`!define REASONIX_UPDATE_HELPER "reasonix-update-helper.exe"`,
 		`!define REASONIX_GUARD "reasonix-guard.exe"`,
 		`!define REASONIX_LAUNCHER "reasonix-launcher.exe"`,
-		`!define REASONIX_PORTABLE_ENTRY "Reasonix.exe"`,
+		`!define REASONIX_PORTABLE_ENTRY "EduShield.exe"`,
 		"Function reasonix.waitForExecutableUnlock",
 		`FileOpen $1 "$INSTDIR\${PRODUCT_EXECUTABLE}" a`,
 		`FileOpen $1 "$INSTDIR\${REASONIX_GUARD}" a`,

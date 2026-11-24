@@ -77,7 +77,7 @@ func doctorRepairCommand(args []string) int {
 			return 1
 		}
 	} else {
-		fmt.Println("Reasonix repair report")
+		fmt.Println("EduShield repair report")
 		for _, check := range report.Checks {
 			status := "ok"
 			if !check.Exists {

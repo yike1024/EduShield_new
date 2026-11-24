@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=Reasonix
-Comment=Reasonix desktop — a Wails shell around the Go kernel
+Name=EduShield
+Comment=EduShield desktop — a Wails shell around the Go kernel
 Exec=reasonix-guard launch --detach
 Icon=reasonix-desktop
 Categories=Development;Utility;

@@ -1,4 +1,4 @@
-// Command reasonix-desktop is the Wails shell around the Reasonix kernel: a native
+// Command reasonix-desktop is the Wails shell around the EduShield kernel: a native
 // window hosting a webview frontend, with the Go-side control.Controller bound
 // directly to the UI (no HTTP hop — bindings in, runtime events out). It lives in
 // a nested module (reasonix/desktop) so the CGO/WebKit desktop build never touches
@@ -185,10 +185,12 @@ func main() {
 			// wrappers) which desynchronizes React 19's virtual DOM from the real
 			// tree, causing a "removeChild: node is not a child of this node"
 			// crash in components like TaskList.  The HTML-level `translate="no"`
-			// attribute in index.html is the primary guard; this Chromium flag
-			// provides a belt-and-suspenders defense so even the translate prompt
-			// never appears.
-			AdditionalBrowserArgs: []string{"--disable-features=Translate"},
+			// attribute in index.html is the primary guard.
+			//
+			// NOTE: the belt-and-suspenders Chromium flag
+			// `AdditionalBrowserArgs: []string{"--disable-features=Translate"}`
+			// was removed because it is a Wails v3-only field and this project is
+			// on Wails v2.12.0, where windows.Options has no such field.
 		},
 		Linux: &linux.Options{
 			ProgramName: "EduShield",

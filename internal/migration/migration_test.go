@@ -193,7 +193,7 @@ func TestRunLegacyRescueSkipsImplicitSourcesWhenIsolated(t *testing.T) {
 
 func TestRunLegacyRescueCommandImportsFromExplicitInstallDir(t *testing.T) {
 	home := isolateMigrationHome(t)
-	installRoot := filepath.Join(home, "Custom Reasonix")
+	installRoot := filepath.Join(home, "Custom EduShield")
 	legacySessions := filepath.Join(installRoot, "sessions")
 	if err := os.MkdirAll(legacySessions, 0o755); err != nil {
 		t.Fatal(err)
@@ -247,7 +247,7 @@ func TestMigrateLegacySessionSourcesSkipsCurrentProjectTree(t *testing.T) {
 	t.Setenv("REASONIX_HOME", "")
 	t.Setenv("REASONIX_STATE_HOME", "")
 	if !samePath(config.MemoryUserDir(), filepath.Join(home, ".reasonix")) {
-		t.Skip("current Reasonix home is not ~/.reasonix on this platform")
+		t.Skip("current EduShield home is not ~/.reasonix on this platform")
 	}
 
 	projectSessions := filepath.Join(config.MemoryUserDir(), "projects", "current-project", "sessions")

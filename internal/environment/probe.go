@@ -85,6 +85,76 @@ func DefaultProbes() []string {
 	}
 }
 
+// SecurityProbes returns commands to probe for common security tools available
+// on the host (Kali Linux tools, network scanners, forensics tools, etc.).
+// These probes are appended to the environment section so the agent knows
+// which external security tools it can invoke via bash.
+func SecurityProbes() []string {
+	return []string{
+		// Network scanning
+		"nmap --version",
+		"masscan --version",
+		"fscan -h",
+		"naabu -version",
+		"rustscan --version",
+		"zmap --version",
+		// Web testing
+		"sqlmap --version",
+		"nikto -Version",
+		"wfuzz --version",
+		"ffuf -V",
+		"dirb --version",
+		"gobuster --version",
+		"whatweb --version",
+		"wafw00f --version",
+		// Exploitation
+		"msfconsole --version",
+		"searchsploit --version",
+		// Password testing
+		"hydra --version",
+		"john --version",
+		"hashcat --version",
+		"medusa --version",
+		// Forensics
+		"volatility3 --version",
+		"volatility --version",
+		"autopsy --version",
+		"binwalk --version",
+		"foremost -V",
+		"exiftool -ver",
+		// OSINT
+		"theHarvester --version",
+		// Protocol analysis
+		"tcpdump --version",
+		"tshark --version",
+		"netcat -h",
+		// Wireless
+		"aircrack-ng --version",
+		// Reverse engineering
+		"radare2 -v",
+		"objdump --version",
+		"strace --version",
+		"ltrace --version",
+		// Network utilities
+		"curl --version",
+		"wget --version",
+		"dig -v",
+		"whois --version",
+		"nslookup -version",
+		// Additional Kali tools
+		"metasploit --version",
+		"burpsuite --version",
+		"maltego --version",
+		"recon-ng --version",
+		"spiderfoot --version",
+		"beef --version",
+		"setoolkit --version",
+		"yersinia --version",
+		"responder --version",
+		"impacket --version",
+	}
+}
+
 func RunProbes(ctx context.Context, commands []string) []ProbeResult {
 	return RunProbesWithOverrides(ctx, commands, nil)
 }

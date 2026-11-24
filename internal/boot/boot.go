@@ -242,7 +242,7 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 	if stepLimitsMigrated || cfg.IgnoredLegacyAgentStepLimits() {
 		level := event.LevelInfo
 		text := "Deprecated agent step limits were removed."
-		detail := "[agent].max_steps and planner_max_steps are no longer used; Reasonix now manages interactive progress automatically. " +
+		detail := "[agent].max_steps and planner_max_steps are no longer used; EduShield now manages interactive progress automatically. " +
 			"Use the CLI --max-steps flag for a one-off run or [bot].max_steps for unattended bot sessions."
 		if stepLimitMigErr != nil {
 			level = event.LevelWarn
@@ -345,6 +345,8 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 	if st, ok := outputstyle.Resolve(cfg.Agent.OutputStyle, outputstyle.Dirs()); ok {
 		sysPrompt = outputstyle.Apply(sysPrompt, st)
 	}
+	sysPrompt += "\n\n" + config.SecurityEthicsPolicy
+	sysPrompt += "\n\n" + config.SecurityToolBridgePolicy
 	sysPrompt += "\n\n" + config.UserDecisionPolicy
 	sysPrompt += "\n\n" + config.LanguagePolicy
 	if workspaceLine := currentWorkspacePromptLine(root); workspaceLine != "" {
@@ -361,7 +363,7 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 			shellLabel = shell.Path
 		}
 		envSection := environment.FormatSection(
-			environment.RunProbesWithOptions(ctx, environment.DefaultProbes(), environment.ProbeOptions{
+			environment.RunProbesWithOptions(ctx, append(environment.DefaultProbes(), environment.SecurityProbes()...), environment.ProbeOptions{
 				Overrides: cfg.Environment.Tools,
 				DenyRoots: []string{root},
 				// Persist probe results across restarts: the section below sits
@@ -424,7 +426,7 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 	writeRoots := cfg.WriteRootsForRoot(root)
 	writeRoots = appendUniquePaths(writeRoots, additionalDirs...)
 	forbidReadRoots := RuntimeForbidReadRoots(cfg, root)
-	// managedConfig names the Reasonix-owned config FILES (config.toml,
+	// managedConfig names the EduShield-owned config FILES (config.toml,
 	// compatibility TOMLs, legacy v0.x config.json) the file-writers may repair
 	// outside the workspace after a fresh per-write human approval. The bash
 	// OS-sandbox write roots deliberately stay unwidened: config repair goes
@@ -432,7 +434,7 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 	managedConfig := builtin.NewManagedConfigPaths(config.ReasonixManagedConfigPaths())
 	bashSpec := sandbox.Spec{Mode: cfg.BashMode(), WriteRoots: writeRoots, ForbidReadRoots: forbidReadRoots, Network: cfg.Sandbox.Network}
 	bashSpec.Shell = shell
-	// The session-data guard blocks agent writes into Reasonix's own session
+	// The session-data guard blocks agent writes into EduShield's own session
 	// stores (they race the app's saves and surface as conflict-copy loops);
 	// explicit allow_write entries stay a sanctioned escape hatch.
 	sessionGuard := builtin.NewSessionDataGuard(config.MemoryUserDir(), cfg.AllowWriteRoots())
@@ -1878,7 +1880,7 @@ func appendUniquePaths(base []string, extra ...string) []string {
 	return out
 }
 
-// RuntimeForbidReadRoots returns the configured deny roots plus Reasonix's
+// RuntimeForbidReadRoots returns the configured deny roots plus EduShield's
 // global credential FILE when it exists. It also registers the corresponding
 // credential environment names for subprocess filtering. Runtime tool
 // assemblers outside Build must use this helper instead of reading the config
@@ -2036,9 +2038,9 @@ func NewProviderWithProxy(e *config.ProviderEntry, proxy netclient.ProxySpec) (p
 // the listed directories.
 // When workDir is non-empty, tools resolve relative paths against it instead of
 // the process cwd, enabling concurrent multi-project sessions.
-// sessionGuard blocks writer-tool targets inside Reasonix's own session stores
+// sessionGuard blocks writer-tool targets inside EduShield's own session stores
 // and makes bash warn when a command references them. managedConfig names the
-// Reasonix-owned config files writable outside writeRoots after a fresh
+// EduShield-owned config files writable outside writeRoots after a fresh
 // per-write human approval.
 func addBuiltins(reg *tool.Registry, enabled, writeRoots []string, bashSpec sandbox.Spec, bashTimeout time.Duration, searchSpec builtin.SearchSpec, stderr io.Writer, workDir string, proxySpec netclient.ProxySpec, forbidReadRoots []string, readPathResolver *builtin.PathResolver, sessionGuard builtin.SessionDataGuard, managedConfig builtin.ManagedConfigPaths, overlay builtin.FileOverlay, terminal builtin.TerminalRunner) {
 	// If a workspace directory is set, use workspace-bound tools that resolve

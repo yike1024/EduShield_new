@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Reasonix API 网关
+ * EduShield API 网关
  *
  * 拓扑：
- *   前端/大脑 → 8787（/api/* 网关）→ 8791（裸 reasonix 原生路由）
+ *  
  *
  * 两套路由表（参考 frontend-api.md）：
  *   A. 直通端点：/api/status、/api/models、/api/history、/api/sessions、/api/context、/api/submit、/api/approve、/api/cancel
@@ -203,6 +203,8 @@ const server = http.createServer(async (req, res) => {
       if (apiPath === 'balance') return jsonResponse(res, 200, await handleBalance());
       if (apiPath === 'settings') return jsonResponse(res, 200, await handleSettings());
       if (apiPath === 'capabilities') return jsonResponse(res, 200, handleCapabilities());
+      // reasonix 无 /health 路由，网关提供规范健康检查端点
+      if (apiPath === 'health') return jsonResponse(res, 200, { status: 'ok', service: 'reasonix', version: '1.0' });
 
       // A. 直通端点：/api/xxx → reasonix /xxx
       const allowed = ['status', 'models', 'history', 'sessions', 'context', 'submit', 'approve', 'cancel'];

@@ -78,7 +78,7 @@ func manifestEndpoints() []string {
 // lets the release edge allowlist updater requests and makes them attributable
 // in server logs.
 func updaterUserAgent() string {
-	return fmt.Sprintf("Reasonix-Updater/%s (%s/%s; %s)", version, runtime.GOOS, runtime.GOARCH, channel)
+	return fmt.Sprintf("EduShield-Updater/%s (%s/%s; %s)", version, runtime.GOOS, runtime.GOARCH, channel)
 }
 
 // downloadPage is the human-facing releases page shown when self-update is
@@ -243,7 +243,7 @@ func defaultUpdateCacheBaseDir() (string, error) {
 	if err != nil {
 		base = os.TempDir()
 	}
-	return filepath.Join(base, "Reasonix", "updates"), nil
+	return filepath.Join(base, "EduShield", "updates"), nil
 }
 
 func updateCacheDir() (string, error) {
@@ -272,7 +272,7 @@ func assetFileName(asset update.Asset, version string) string {
 		}
 	}
 	clean := strings.NewReplacer("/", "-", "\\", "-", ":", "-", " ", "-").Replace(version)
-	return "Reasonix-" + clean + "-" + update.CurrentPlatform() + ".update"
+	return "EduShield-" + clean + "-" + update.CurrentPlatform() + ".update"
 }
 
 func writeAtomic(path string, data []byte, mode os.FileMode) error {
@@ -657,7 +657,7 @@ func updateSiblingArtifacts() []string {
 func updateSiblingNames(goos string) []string {
 	switch goos {
 	case "windows":
-		return []string{"reasonix-guard.exe", "reasonix-launcher.exe", "reasonix-update-helper.exe", "Reasonix.exe"}
+		return []string{"reasonix-guard.exe", "reasonix-launcher.exe", "reasonix-update-helper.exe", "EduShield.exe"}
 	case "linux":
 		return []string{"reasonix-guard"}
 	default:

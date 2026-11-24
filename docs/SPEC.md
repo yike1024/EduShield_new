@@ -1,6 +1,6 @@
-# Reasonix Engineering Spec
+# EduShield Engineering Spec
 
-> Reasonix is a coding agent: a thin harness driving multiple models, with **all
+> EduShield is a coding agent: a thin harness driving multiple models, with **all
 > capabilities supplied by configuration and plugins**. This document is the
 > contract — code follows it. Change the contract first, then the code.
 
@@ -184,7 +184,7 @@ prefix cache-stable:
 
 ### 3.6 Context management (compaction)
 
-Long tasks eventually fill the model's context window. Reasonix manages this with
+Long tasks eventually fill the model's context window. EduShield manages this with
 **low-frequency compaction** that respects the cache-first design:
 
 - Each provider declares its `context_window` (tokens). Context maintenance is
@@ -425,7 +425,7 @@ Review the staged diff. Focus on $ARGUMENTS, list bugs with file:line.
 ```
 
 - Frontmatter is an optional `---`-fenced block of simple `key: value` lines;
-  `description` and `argument-hint` are recognised (no YAML dependency — Reasonix
+  `description` and `argument-hint` are recognised (no YAML dependency — EduShield
   stays lean). The remainder is the body template.
 - Substitution in the body: `$ARGUMENTS` (all args, space-joined), `$1`…`$N`
   (positional, empty when absent), `$$` (a literal `$`). Arguments are the
@@ -539,17 +539,17 @@ type Chunk struct {
 ## 5. Configuration (TOML)
 
 Resolution order: **flag > project `./reasonix.toml` > the user config file
-> built-in defaults**. Starting with **Reasonix v1.8.1**, the user config lives
+> built-in defaults**. Starting with **EduShield v1.8.1**, the user config lives
 at `~/.reasonix/config.toml` on macOS/Linux and
 `%AppData%\reasonix\config.toml` on Windows. See
 [Configuration paths](./CONFIG_PATHS.md) for migration and related data paths.
 Fields marked user/global only are not overridden by project `reasonix.toml`.
 Provider entries name secrets with `api_key_env`; saved key values live in
-Reasonix's global `<Reasonix home>/.env`, shared by CLI and desktop. Project
+EduShield's global `<EduShield home>/.env`, shared by CLI and desktop. Project
 `.env`, home `.env`, inherited shell environment variables, legacy credentials,
 and the OS keyring are not provider-key runtime fallbacks. Project `.env` still
 feeds workspace-scoped, non-provider `${VAR}` expansion for MCP/plugin settings
-without importing provider keys or Reasonix control variables. Project
+without importing provider keys or EduShield control variables. Project
 `reasonix.toml` does not override the user-level Memory v5 compiler switch.
 
 ```toml
@@ -561,7 +561,7 @@ default_model = "deepseek"   # provider name (→ its default model) or "provide
 # cursor_shape = "underline"        # CLI/TUI textarea cursor: underline|block|bar
 
 [agent]
-system_prompt = "You are Reasonix, a coding agent..."  # or system_prompt_file = "..."
+system_prompt = "You are EduShield, a coding agent..."  # or system_prompt_file = "..."
 temperature       = 0.0
 memory_compiler = { enabled = true, verbosity = "observe" }   # user/global only; observe|compact; CLI: reasonix config memory-v5 off|observe|compact|on|status
 reasoning_language = "auto"       # visible reasoning text: auto|zh|en
@@ -678,8 +678,8 @@ MCP servers may also be declared in a project-root `.mcp.json` using Claude
 Code's exact `mcpServers` schema (`command`/`args`/`env`, `type`/`url`/`headers`,
 `${VAR}` expansion). It is read after the TOML files and merged into
 `[[plugins]]`; on a name collision `reasonix.toml` wins (it is the more explicit,
-Reasonix-specific source). This lets a server already configured for Claude work in
-Reasonix unchanged.
+EduShield-specific source). This lets a server already configured for Claude work in
+EduShield unchanged.
 
 ```json
 { "mcpServers": {
@@ -690,7 +690,7 @@ Reasonix unchanged.
 
 `[sandbox]` is the *enforcement* layer beneath permissions (which are *policy*).
 Phase 0 confines the file-writing built-ins (`write_file`, `edit_file`,
-`multi_edit`, `move_file`) to `workspace_root` (default cwd), the Reasonix user
+`multi_edit`, `move_file`) to `workspace_root` (default cwd), the EduShield user
 config dir, plus `allow_write`: a write whose target — resolved to an absolute,
 symlink-free path so a symlinked dir or `..` cannot tunnel out — falls outside
 every root is refused, and the error is fed back to the model. Confinement is on
@@ -704,7 +704,7 @@ Linux): each command is allowed to write only
 the same roots plus platform-specific command temp/cache roots, denied reads
 under `forbid_read`, and allowed to reach the network only when
 `network = true`.
-**Windows status:** Reasonix does not ship an OS-level Bash sandbox on Windows.
+**Windows status:** EduShield does not ship an OS-level Bash sandbox on Windows.
 The effective mode is fixed to `off`; an older config containing
 `bash = "enforce"` remains readable but resolves to `off`, `reasonix doctor`
 reports the ignored value, and the desktop control is read-only. Bash therefore

@@ -135,7 +135,7 @@ func TestCreateSubagentProfileScopeIsStrictButEmptyRemainsGlobal(t *testing.T) {
 		t.Fatalf("empty scope should preserve the legacy global default: %v", err)
 	}
 	if !strings.Contains(filepath.ToSlash(path), "/.reasonix/skills/") {
-		t.Fatalf("empty scope path = %q, want global Reasonix skills dir", path)
+		t.Fatalf("empty scope path = %q, want global EduShield skills dir", path)
 	}
 	if _, err := a.CreateSubagentProfile(SubagentProfileInput{
 		Name: "bad-scope", Description: "d", SystemPrompt: "body", Scope: "custom",

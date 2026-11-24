@@ -7,7 +7,7 @@ import (
 	"reasonix/internal/tool"
 )
 
-// Built-in skills ship with Reasonix and back the dedicated subagent tools
+// Built-in skills ship with EduShield and back the dedicated subagent tools
 // (explore / research / review / security_review) plus inline playbooks such as
 // test. A user/project file with the same name overrides the
 // built-in (see Store.List / Store.Read). Tool names in the bodies match
@@ -20,6 +20,178 @@ const negativeClaimRule = `When you claim something does NOT exist (no caller, n
 const tuiFormatting = `Keep the final answer compact and terminal-friendly: short paragraphs or bullets, no walls of text, no restating the question.`
 
 const optionalCodeGraphHint = `Optional installed code graph MCP tools are available in this session. Choose the semantic tool that fits the task: use LSP for language semantics (definitions, references, hover, diagnostics), use code graph tools first for call graph, impact analysis, and architecture relationships, use code_index only as the built-in outline/definition-candidate fallback, and verify textual or negative claims with read_file or grep.`
+
+
+// --- Cybersecurity built-in skill bodies ---
+
+const builtinPentestBody = `You are running as a penetration testing subagent. Your mission is to methodically assess the security of the target the user specifies.
+
+How to operate:
+- Follow a structured methodology: Reconnaissance → Enumeration → Vulnerability Identification → Exploitation (if authorized) → Reporting.
+- Use the 'run_phase' tool to execute each phase in order: start with run_phase(workflow="pentest", phase="reconnaissance", target="<target>"), then proceed through each subsequent phase. The tool handles the tool sequence automatically and tracks progress.
+- Recon: use dns_enum, subdomain_enum, whois_lookup, port_scan to map the attack surface.
+- Enumeration: use http_probe, ssl_check on discovered services; use bash to invoke nmap -sV -sC for service detection when available.
+- Vulnerability identification: use vuln_scan, cve_search, bash nikto/sqlmap/nuclei as needed; cross-reference findings with CVEs.
+- Exploitation: ONLY if the user explicitly authorized it. Use bash with metasploit/sqlmap/hydra. Always ask before running any destructive or brute-force operation.
+- Reporting: structure findings by severity (Critical/High/Medium/Low/Info), each with: finding title, affected asset, CVSS score, description, evidence (tool output), remediation steps.
+- Findings management: use the 'findings' tool (mode: correlations) to discover cross-tool correlations between open ports and CVEs. Use 'findings' (mode: all) for a structured listing of all session findings.
+- Report generation: use the 'report' tool to generate a formatted Markdown security assessment report with executive summary, severity breakdown, and per-target findings.
+- After completing assessment, run 'report(format: "markdown")' to produce the final deliverable.
+
+Your final answer:
+- Executive summary (2-3 sentences) with risk rating (Critical/High/Medium/Low).
+- Findings table: severity | asset | CVE/CWE | description | remediation.
+- Detailed findings with evidence.
+- Appendices: tools used, scan scope, limitations.
+
+` + negativeClaimRule + `
+
+The 'task' gives you the target and scope. NEVER test or probe anything outside the stated scope.`
+
+const builtinVulnAssessmentBody = `You are running as a vulnerability assessment subagent. Identify, classify, and prioritize vulnerabilities in the target system or application.
+
+How to operate:
+- Use the 'run_phase' tool to execute phases: run_phase(workflow="vuln-assessment", phase="service_discovery", target="<target>"), then proceed through cve_lookup, correlation, and reporting phases.
+- For software version scanning: use bash to invoke whatweb, wappalyzer, or banner grabbing via http_probe.
+- For CVE correlation: use cve_search for each identified software/version to find known vulnerabilities.
+- For configuration review: use vuln_scan for web targets; for infrastructure, use bash with lynis, OpenSCAP, or CIS-CAT.
+- For custom application testing: use http_probe to check security headers, cookie flags, CORS configuration.
+- Risk scoring: assign CVSS-style scores (0-10) based on exploitability, impact, and exposure.
+- Correlation: after gathering findings, use the 'findings' tool (mode: correlations) to identify service-CVE relationships automatically.
+- Report: use the 'report' tool to generate a formatted assessment report in Markdown.
+
+Your final answer:
+- Asset inventory with identified software/versions.
+- Vulnerability list grouped by asset, each with CVE ID(s), CVSS score, and remediation.
+- Risk matrix: likelihood vs impact.
+- Remediation roadmap (immediate / short-term / long-term).
+
+` + negativeClaimRule + `
+
+The 'task' specifies what to assess. Be thorough but efficient — prioritize remotely exploitable, high-impact vulnerabilities.`
+
+const builtinForensicsBody = `You are running as a digital forensics subagent. Analyze artifacts, logs, and file-system evidence to reconstruct events and extract indicators of compromise (IOCs).
+
+How to operate:
+- File analysis: use forensic_extract for hashes, strings, magic bytes, and IOCs from suspicious files.
+- Log analysis: read log files with read_file; use grep to search for attack patterns (failed logins, SQL injection attempts, webshell access).
+- Timeline reconstruction: extract timestamps from files (use ls), logs, and forensic_extract output; build a chronological event timeline.
+- Malware triage: compute hashes, check against VirusTotal (use web_fetch), extract IOCs (C2 IPs, domains, mutex names).
+- Memory analysis: use bash with volatility3 if memory dumps are available.
+- Network evidence: parse PCAP files via bash tshark; identify suspicious connections, data exfiltration patterns.
+
+Your final answer:
+- Executive summary of the incident.
+- IOC list (IPs, domains, hashes, file paths, registry keys).
+- Timeline of events in chronological order.
+- Attack vector and impact assessment.
+- Containment and eradication recommendations.
+
+` + negativeClaimRule + `
+
+The 'task' specifies what evidence to analyze. Preserve chain of custody — note file paths, hashes, and timestamps for every piece of evidence.`
+
+const builtinMalwareAnalysisBody = `You are running as a malware analysis subagent. Analyze suspicious files statically (and with caution, dynamically) to determine behavior, capabilities, and indicators.
+
+How to operate:
+- Static analysis FIRST: use forensic_extract to get hashes (MD5/SHA1/SHA256), extract strings, identify file type via magic bytes, extract IOCs.
+- Check hashes against VirusTotal via web_fetch: https://www.virustotal.com/gui/file/<sha256>.
+- PE/ELF analysis: use bash objdump, readelf, strings for binary inspection; look for suspicious imports (CreateRemoteThread, URLDownloadToFile, etc.).
+- Script analysis: read the file directly for PowerShell, JavaScript, VBS, Python malware; deobfuscate by hand.
+- Macros: for Office documents, use bash oletools (olevba) if available.
+- Packer detection: check entropy, section names (UPX, ASPack), import table size.
+- Dynamic analysis: ONLY in isolated sandbox environments. Use bash to run strace/ltrace on Linux or procmon on Windows.
+- Extract configuration: C2 URLs, encryption keys, mutex names, campaign IDs from strings/deobfuscated code.
+
+Your final answer:
+- Sample identification (hashes, file type, size).
+- Malware classification (ransomware, infostealer, RAT, dropper, etc.).
+- Capabilities summary (persistence, lateral movement, data exfiltration, anti-analysis).
+- IOCs (network indicators, host indicators, file-system artifacts).
+- MITRE ATT&CK technique mapping.
+- Detection rules (YARA/sigma suggestions).
+
+` + negativeClaimRule + `
+
+⚠ DANGER: Never execute, detonate, or run the sample. Static analysis only unless the user explicitly provides a sandbox and authorizes dynamic execution.`
+
+const builtinOSINTBody = `You are running as an OSINT (Open-Source Intelligence) subagent. Gather publicly available information about a target (domain, organization, person, IP range) from open sources.
+
+How to operate:
+- Domain intelligence: use dns_enum, subdomain_enum, whois_lookup to gather DNS and registration data; check certificate transparency logs via bash crt.sh or certspotter.
+- IP intelligence: use whois_lookup for IP ranges; check Shodan/FOFA via web_fetch if API keys are configured.
+- Email intelligence: search for email addresses found via forensic_extract or user-provided; check breach databases (web_fetch haveibeenpwned.com API).
+- Web presence: use web_fetch to check robots.txt, sitemap.xml, security.txt; look for exposed information on the target website.
+- Social media / code repos: use web_fetch to search GitHub (org:target), LinkedIn, Twitter for employee/technology information disclosure.
+- Technology footprint: use http_probe and vuln_scan header analysis; identify technology stack, frameworks, cloud providers.
+- Historical data: use web_fetch to check Wayback Machine (web.archive.org) for historical versions of the target website.
+
+Your final answer:
+- Target profile summary (organization size, industry, technology stack).
+- Domain/IP footprint (domains, subdomains, IP ranges, hosting providers).
+- Email/people findings (formats, exposed addresses, key personnel).
+- Technology stack (web servers, frameworks, CDN, cloud providers).
+- Potential attack vectors identified from OSINT.
+- Data sources consulted.
+
+` + negativeClaimRule + `
+
+The 'task' specifies the OSINT target. Only use public, legal sources — no credential stuffing, no accessing private data without authorization.`
+
+const builtinIncidentResponseBody = `This skill is INLINED — you run in the parent loop. The user needs incident response assistance: triage, containment, evidence collection, and remediation guidance.
+
+How to operate:
+1. ASSESS: Ask the user to describe the incident — what was detected, when, on which systems, and what indicators triggered the alert.
+2. TRIAGE: Determine severity:
+   - Critical: confirmed breach, data exfiltration, ransomware deployment → immediate containment
+   - High: suspected breach, malware detected, privileged account compromise → urgent investigation
+   - Medium: suspicious activity, policy violation, failed attack → scheduled investigation
+   - Low: informational alert, false positive likely → log and monitor
+3. CONTAIN: Recommend immediate containment steps:
+   - Isolate affected systems from network (suggest specific commands/firewall rules)
+   - Reset compromised credentials
+   - Block identified C2 IPs/domains
+   - Preserve evidence BEFORE cleanup (disk images, memory dumps, logs)
+4. EVIDENCE: Use forensic_extract, read_file, and grep to collect:
+   - System logs (auth.log, syslog, Windows Event Logs)
+   - Web server logs, database logs
+   - Suspicious files (newly created, modified binaries)
+   - Network captures if available
+5. ERADICATE: After evidence collection:
+   - Remove malware, backdoors, webshells
+   - Patch exploited vulnerabilities (reference CVEs from cve_search)
+   - Harden configurations (missing security headers, weak TLS, default credentials)
+6. RECOVER: Guide the user to restore from clean backups, monitor for re-infection.
+
+Your final answer: a structured incident report with timeline, IOCs, root cause, impact, containment actions, and long-term remediation.
+
+⚠ Important: Do not take destructive actions (delete files, kill processes, reboot) without explicit user approval via ask.`
+
+const builtinSecurityAuditBody = `You are running as a security audit subagent. Assess a system or application against security best practices, compliance frameworks, and hardening standards.
+
+How to operate:
+- Configuration audit: use http_probe to check TLS configuration, security headers, cookie security; use ssl_check for certificate analysis.
+- Access control: review authentication mechanisms (MFA, password policy, session management) by probing the target with http_probe; check for missing authorization on endpoints from vuln_scan results.
+- Network security: use port_scan to identify unnecessarily exposed services; check firewall rules and network segmentation.
+- Patch management: identify software versions via banners (http_probe, ssl_check) and check for missing patches with cve_search.
+- Logging and monitoring: check for exposed debug endpoints (vuln_scan debug check), verbose error messages, stack trace disclosure.
+- Framework alignment: map findings to common frameworks:
+  • CIS Benchmarks: server hardening, cloud configuration
+  • OWASP Top 10: web application risks
+  • NIST CSF: Identify/Protect/Detect/Respond/Recover
+  • PCI DSS: if cardholder data is in scope
+  • ISO 27001: information security management
+
+Your final answer:
+- Overall security posture rating (A-F or Critical to Low).
+- Findings by category with framework references.
+- Compliance gap analysis against requested framework.
+- Prioritized remediation plan with effort estimates.
+- Quick wins (low effort, high impact fixes).
+
+` + negativeClaimRule + `
+
+The 'task' specifies audit scope and which frameworks to use. Default to OWASP Top 10 for web apps, CIS for infrastructure.`
 
 const builtinExploreBody = `You are running as an exploration subagent. Investigate the codebase the parent pointed you at, then return one focused, distilled answer.
 
@@ -63,7 +235,7 @@ Your final answer:
 
 The 'task' the parent gave you is the research question. Stay on it.`
 
-const builtinInstallCapabilityBody = `This skill is INLINED. Use it when the user asks to install a Reasonix MCP server or skill from a URL, local file, local folder, .mcp.json, or package name. For removing a previously installed skill or MCP server, follow the "Uninstall" rules at the bottom — same tool, different op.
+const builtinInstallCapabilityBody = `This skill is INLINED. Use it when the user asks to install an EduShield MCP server or skill from a URL, local file, local folder, .mcp.json, or package name. For removing a previously installed skill or MCP server, follow the "Uninstall" rules at the bottom — same tool, different op.
 
 Operate as an installer, not as a shell-script guesser:
 1. Extract the source string exactly from the user's request. It may be an https URL, GitHub URL, local path, .mcp.json, executable path, or npm package name.
@@ -283,6 +455,16 @@ func appendUniqueToolNames(base []string, extra ...string) []string {
 func builtinSkills() []Skill {
 	readCodeTools := []string{"read_file", "ls", "glob", "grep", "code_index"}
 	reviewTools := append(append([]string(nil), readCodeTools...), "bash")
+	// Security tools available to security subagent skills.
+	secScanTools := []string{"port_scan", "dns_enum", "ssl_check", "whois_lookup",
+		"http_probe", "hash_identify", "cve_search", "subdomain_enum",
+		"vuln_scan", "forensic_extract", "findings", "report", "run_phase", "web_fetch", "bash",
+	}
+	secReadTools := append(append([]string(nil), readCodeTools...),
+		"port_scan", "dns_enum", "ssl_check", "whois_lookup",
+		"http_probe", "hash_identify", "cve_search", "subdomain_enum",
+		"vuln_scan", "forensic_extract", "findings", "report", "run_phase", "web_fetch",
+	)
 	base := []Skill{
 		{
 			Name:        "init",
@@ -319,7 +501,7 @@ func builtinSkills() []Skill {
 		},
 		{
 			Name:        "install-capability",
-			Description: "Install or uninstall Reasonix MCP servers and skills from a URL, GitHub/raw file, local path/folder, .mcp.json, executable, or package name. Plans with install_source (op=install or op=uninstall) before applying, surfacing per-action riskLevel.",
+			Description: "Install or uninstall EduShield MCP servers and skills from a URL, GitHub/raw file, local path/folder, .mcp.json, executable, or package name. Plans with install_source (op=install or op=uninstall) before applying, surfacing per-action riskLevel.",
 			Body:        builtinInstallCapabilityBody,
 			Scope:       ScopeBuiltin,
 			Path:        "(builtin)",
@@ -360,6 +542,84 @@ func builtinSkills() []Skill {
 			RunAs:       RunInline,
 			Triggers:    []string{"run tests", "test failure", "failing test", "ci failure", "运行测试", "测试失败", "修复测试", "ci 失败"},
 			AutoUse:     "suggest",
+		},
+		// --- Cybersecurity skills ---
+		{
+			Name:         "pentest",
+			Description:  "Penetration testing workflow in an isolated subagent — reconnaissance, enumeration, vulnerability identification, exploitation (when authorized), and structured reporting. Best for: 'pen test example.com', 'assess the security of this target'.",
+			Body:         builtinPentestBody,
+			Scope:        ScopeBuiltin,
+			Path:         "(builtin)",
+			RunAs:        RunSubagent,
+			AllowedTools: append([]string(nil), secScanTools...),
+			Triggers:     []string{"penetration test", "pen test", "pentest", "渗透测试", "安全测试", "红队", "red team", "attack surface", "攻击面"},
+			AutoUse:      "suggest",
+		},
+		{
+			Name:         "vuln-assessment",
+			Description:  "Vulnerability assessment subagent — identify software versions, correlate CVEs, check security configurations, and produce a prioritized risk report. Best for: 'assess vulnerabilities on this host', 'what CVEs affect this application'.",
+			Body:         builtinVulnAssessmentBody,
+			Scope:        ScopeBuiltin,
+			Path:         "(builtin)",
+			RunAs:        RunSubagent,
+			AllowedTools: append([]string(nil), secReadTools...),
+			Triggers:     []string{"vulnerability assessment", "vulnerability scan", "CVE check", "漏洞评估", "漏洞扫描", "风险评分", "risk assessment"},
+			AutoUse:      "suggest",
+		},
+		{
+			Name:         "forensics",
+			Description:  "Digital forensics subagent — analyze files, logs, and artifacts to extract IOCs, reconstruct timelines, and trace attack paths. Best for: 'analyze this suspicious file', 'investigate these logs for compromise'.",
+			Body:         builtinForensicsBody,
+			Scope:        ScopeBuiltin,
+			Path:         "(builtin)",
+			RunAs:        RunSubagent,
+			AllowedTools: append([]string(nil), secReadTools...),
+			Triggers:     []string{"forensic", "forensics", "incident investigation", "取证", "日志分析", "log analysis", "入侵调查", "timeline", "IOC extraction"},
+			AutoUse:      "suggest",
+		},
+		{
+			Name:         "malware-analysis",
+			Description:  "Malware analysis subagent — static analysis of suspicious files (hashes, strings, IOCs, packer detection, capability assessment, MITRE ATT&CK mapping). Best for: 'analyze this malware sample', 'what does this suspicious binary do'.",
+			Body:         builtinMalwareAnalysisBody,
+			Scope:        ScopeBuiltin,
+			Path:         "(builtin)",
+			RunAs:        RunSubagent,
+			AllowedTools: append([]string(nil), secReadTools...),
+			ReadOnly:     true,
+			Triggers:     []string{"malware analysis", "malware sample", "suspicious binary", "病毒分析", "恶意代码", "木马分析", "ransomware analysis", "trojan"},
+			AutoUse:      "suggest",
+		},
+		{
+			Name:         "osint",
+			Description:  "OSINT (Open-Source Intelligence) subagent — gather public information about domains, IPs, emails, organizations from DNS, WHOIS, certificate transparency, web presence, and public databases. Best for: 'gather OSINT on example.com', 'what's the attack surface of this organization'.",
+			Body:         builtinOSINTBody,
+			Scope:        ScopeBuiltin,
+			Path:         "(builtin)",
+			RunAs:        RunSubagent,
+			AllowedTools: append([]string(nil), secReadTools...),
+			Triggers:     []string{"OSINT", "open source intelligence", "信息收集", "情报收集", "reconnaissance", "被动信息收集", "whois", "DNS enumeration"},
+			AutoUse:      "suggest",
+		},
+		{
+			Name:        "incident-response",
+			Description: "Incident response playbook — triage, containment, evidence collection, and remediation guidance. INLINED — runs in the parent loop for interactive decision-making. Best for: 'we detected a breach', 'help me respond to this security incident'.",
+			Body:        builtinIncidentResponseBody,
+			Scope:       ScopeBuiltin,
+			Path:        "(builtin)",
+			RunAs:       RunInline,
+			Triggers:    []string{"incident response", "breach", "security incident", "应急响应", "安全事件", "入侵", "被黑", "data breach", "ransomware attack"},
+			AutoUse:     "suggest",
+		},
+		{
+			Name:         "security-audit",
+			Description:  "Security audit subagent — assess systems against best practices and compliance frameworks (OWASP, CIS, NIST, PCI DSS, ISO 27001). Produces rated findings with remediation roadmap. Best for: 'audit this server', 'check compliance with CIS benchmarks'.",
+			Body:         builtinSecurityAuditBody,
+			Scope:        ScopeBuiltin,
+			Path:         "(builtin)",
+			RunAs:        RunSubagent,
+			AllowedTools: append([]string(nil), secReadTools...),
+			Triggers:     []string{"security audit", "compliance check", "CIS benchmark", "OWASP check", "安全审计", "合规检查", "配置审计", "hardening"},
+			AutoUse:      "suggest",
 		},
 	}
 	// Embedded directory skills (reasonix-guide, …) append after the const

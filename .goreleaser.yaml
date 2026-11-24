@@ -59,4 +59,4 @@ homebrew_casks:
 release:
   prerelease: auto
   make_latest: false
-  name_template: "Reasonix CLI {{ .Tag }}"
+  name_template: "EduShield CLI {{ .Tag }}"

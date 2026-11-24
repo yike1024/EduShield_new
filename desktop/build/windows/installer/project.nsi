@@ -1,7 +1,7 @@
 Unicode true
 
 ####
-## Reasonix per-user NSIS installer.
+## EduShield per-user NSIS installer.
 ##
 ## This file is COMMITTED and customized (Wails leaves an existing project.nsi
 ## untouched and only regenerates wails_tools.nsh). The customizations vs.
@@ -17,8 +17,8 @@ Unicode true
 ##      InstallLocation (HKCU\...\Uninstall\InstallLocation). When upgrading from
 ##      a build that did not write InstallLocation yet, .onInit falls back to the
 ##      old DisplayIcon path before using the default. Without this, every release
-##      forces the user back to %LOCALAPPDATA%\Programs\Reasonix even if they had
-##      moved the install to a different drive (e.g. D:\Tools\Reasonix); the silent
+##      forces the user back to %LOCALAPPDATA%\Programs\EduShield even if they had
+##      moved the install to a different drive (e.g. D:\Tools\EduShield); the silent
 ##      auto-updater would re-run with /S into the wrong dir, leaving the old
 ##      install orphaned.
 ##
@@ -80,7 +80,7 @@ OutFile "..\..\bin\${INFO_PROJECTNAME}-${ARCH}-installer.exe" # Name of the inst
 !define REASONIX_UPDATE_HELPER "reasonix-update-helper.exe"
 !define REASONIX_GUARD "reasonix-guard.exe"
 !define REASONIX_LAUNCHER "reasonix-launcher.exe"
-!define REASONIX_PORTABLE_ENTRY "Reasonix.exe"
+!define REASONIX_PORTABLE_ENTRY "EduShield.exe"
 !define REASONIX_UNLOCK_RETRIES 60
 InstallDirRegKey HKCU "${UNINST_KEY}" "InstallLocation" # Reuse the previous install path on update; .onInit falls back to the default on first install.
 InstallDir "${REASONIX_DEFAULT_INSTALLDIR}" # Per-user install location (no admin rights required).
@@ -101,8 +101,8 @@ ShowInstDetails show # This will always show the installation details.
     WriteRegStr HKCU "${UNINST_KEY}" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
     # Persist the resolved install path so a subsequent update picks it up
     # via InstallDirRegKey above. Without this, every release would force the
-    # user back to %LOCALAPPDATA%\Programs\Reasonix even if they had moved
-    # the install to a different drive (e.g. D:\Tools\Reasonix). The auto-
+    # user back to %LOCALAPPDATA%\Programs\EduShield even if they had moved
+    # the install to a different drive (e.g. D:\Tools\EduShield). The auto-
     # updater re-runs this installer with /S and trusts the persisted path,
     # so it has to be present before the silent re-install.
     WriteRegStr HKCU "${UNINST_KEY}" "InstallLocation" "$INSTDIR"
@@ -178,14 +178,14 @@ failed:
    IfSilent silent interactive
 
 interactive:
-   MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Reasonix is still running. Close Reasonix, then click Retry to continue the installation." IDRETRY retry IDCANCEL abort
+   MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "EduShield is still running. Close EduShield, then click Retry to continue the installation." IDRETRY retry IDCANCEL abort
    Goto retry
 
 silent:
    SetErrorLevel 1618
 
 abort:
-   Abort "Reasonix is still running. Close Reasonix and run the installer again."
+   Abort "EduShield is still running. Close EduShield and run the installer again."
 
 done:
 FunctionEnd
@@ -210,7 +210,7 @@ Section
     !endif
     !if /FileExists "${REASONIX_LAUNCHER}"
     File "/oname=${REASONIX_LAUNCHER}" "${REASONIX_LAUNCHER}"
-    ; Portable archives expose Reasonix.exe as a second copy of the Guard
+    ; Portable archives expose EduShield.exe as a second copy of the Guard
     ; launcher. Preserve that layout only when upgrading an existing portable
     ; directory, and keep the alias in lockstep with the canonical launcher.
     IfFileExists "$INSTDIR\${REASONIX_PORTABLE_ENTRY}" 0 reasonix_no_portable_entry

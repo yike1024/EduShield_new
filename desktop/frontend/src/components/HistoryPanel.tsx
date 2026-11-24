@@ -9,6 +9,7 @@ import { Transcript } from "./Transcript";
 import { ContextMenu, contextMenuPointFromEvent, type ContextMenuItem, type ContextMenuPoint } from "./ContextMenu";
 import { useDeferredClose } from "../lib/useMountTransition";
 import { ModalCloseButton } from "./ModalCloseButton";
+import { useToast } from "../lib/toast";
 
 type HistoryScopeFilter = "all" | "project" | "global";
 type HistoryStatusFilter = "all" | "current" | "open";
@@ -47,6 +48,7 @@ export function HistoryPanel({
   onClose: () => void;
 }) {
   const tr = useT();
+  const { showToast } = useToast();
   const isTrash = kind === "trash";
   // Play the modal exit animation, then let the parent unmount us.
   const { status, requestClose } = useDeferredClose(onClose, 240);
@@ -78,7 +80,12 @@ export function HistoryPanel({
   };
   const commitRename = (path: string) => {
     if (running) return;
-    onRename(path, draft.trim());
+    const title = draft.trim();
+    if (!title) {
+      showToast(tr("history.nameRequired"), "warn");
+      return;
+    }
+    onRename(path, title);
     setEditing(null);
   };
   const loadPreview = useCallback(

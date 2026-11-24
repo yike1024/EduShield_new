@@ -11,6 +11,13 @@ import type { ContextPanelInfo } from "../lib/types";
 let passed = 0;
 let failed = 0;
 
+// Node 22+ 暴露 globalThis.navigator（取系统 locale），会让 LocaleProvider
+// 把标签切成中文，导致断言的英文行匹配不到。固定 en-US 保证结果可重复。
+Object.defineProperty(globalThis, "navigator", {
+  configurable: true,
+  value: { language: "en-US" },
+});
+
 function ok(value: boolean, label: string) {
   if (value) {
     process.stdout.write(`  PASS  ${label}\n`);

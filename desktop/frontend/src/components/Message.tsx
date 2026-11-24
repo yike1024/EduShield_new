@@ -1,6 +1,6 @@
 import { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent as ReactKeyboardEvent } from "react";
-import { BrainCircuit, ChevronDown, ChevronRight, FileText, Folder, GitBranch, Image, MessageSquare, Pencil, RotateCcw, ScrollText } from "lucide-react";
+import { BrainCircuit, ChevronDown, ChevronRight, Download, Eye, FileText, Folder, GitBranch, Image, MessageSquare, Pencil, RotateCcw, ScrollText } from "lucide-react";
 import { Markdown } from "./Markdown";
 import { CopyButton } from "./CopyButton";
 import { ProcessBrainIcon } from "./ProcessCard";
@@ -8,6 +8,7 @@ import { ComposerContextCard } from "./ComposerContextCard";
 import { formatAttachmentRefForDisplay, formatAttachmentRefForSubmit, parseAttachmentRefsForDisplay, sortDisplayAttachments } from "../lib/attachmentDisplay";
 import type { DisplayAttachment } from "../lib/attachmentDisplay";
 import { app } from "../lib/bridge";
+import { authApi } from "../lib/auth";
 import { replaySubmitText } from "../lib/editReplay";
 import { useT } from "../lib/i18n";
 import { ImageViewer } from "./ImageViewer";
@@ -72,6 +73,17 @@ function attachmentIcon(kind: "image" | "file" | "folder") {
   if (kind === "folder") return <Folder size={15} />;
   return <FileText size={15} />;
 }
+
+/** 21 号方案：附件服务端副本大小的人性化展示（未知大小返回空串）。 */
+function formatAttachmentSize(size?: number): string {
+  if (!size || size <= 0) return "";
+  if (size < 1024) return ` · ${size} B`;
+  if (size < 1024 * 1024) return ` · ${(size / 1024).toFixed(1).replace(/\.0$/, "")} KB`;
+  return ` · ${(size / (1024 * 1024)).toFixed(1).replace(/\.0$/, "")} MB`;
+}
+
+type AttachmentServerInfo = { serverPath: string; size?: number };
+type ServerPreviewState = { path: string; name: string; text: string; truncated: boolean; unavailable?: boolean };
 
 function mergeDisplayAttachments(existing: DisplayAttachment[], incoming: DisplayAttachment[]): DisplayAttachment[] {
   if (incoming.length === 0) return existing;
@@ -231,6 +243,65 @@ export function UserMessage({
     setImageViewer((prev) => (prev.open ? { ...prev, open: false } : prev));
   }, []);
 
+  // 21 号方案：附件服务端落盘信息（预览/下载按钮）。仅 web 桥实现了 AttachmentServerInfo，
+  // 桌面端/mock 无此方法 → typeof 守卫后整段逻辑不生效。
+  const [serverInfos, setServerInfos] = useState<Record<string, AttachmentServerInfo>>({});
+  const [serverPreview, setServerPreview] = useState<ServerPreviewState | null>(null);
+  const [serverPreviewLoading, setServerPreviewLoading] = useState<string | null>(null);
+
+  const fetchServerPreview = useCallback(async (attachment: DisplayAttachment) => {
+    const info = serverInfos[attachment.path];
+    if (!info) return;
+    // 再次点击同一附件的预览按钮 = 收起
+    if (serverPreview?.path === attachment.path) {
+      setServerPreview(null);
+      return;
+    }
+    setServerPreviewLoading(attachment.path);
+    try {
+      const token = authApi.getCurrentSession()?.token;
+      const resp = await fetch(`/api/attachments/preview?path=${encodeURIComponent(info.serverPath)}&max_bytes=65536`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (resp.status === 415) {
+        // 二进制不可预览：给出明确提示（图片类本就无此按钮）
+        setServerPreview({ path: attachment.path, name: attachment.name, text: "", truncated: false, unavailable: true });
+        return;
+      }
+      if (!resp.ok) return; // 401/404/网络异常：保持现状，不展示预览
+      const j = (await resp.json()) as { text?: unknown; truncated?: unknown };
+      setServerPreview({
+        path: attachment.path,
+        name: attachment.name,
+        text: typeof j.text === "string" ? j.text : "",
+        truncated: j.truncated === true,
+      });
+    } catch { /* 预览失败静默 */ } finally {
+      setServerPreviewLoading(null);
+    }
+  }, [serverInfos, serverPreview]);
+
+  const downloadServerAttachment = useCallback(async (attachment: DisplayAttachment) => {
+    const info = serverInfos[attachment.path];
+    if (!info) return;
+    try {
+      const token = authApi.getCurrentSession()?.token;
+      const resp = await fetch(`/api/attachments/file?path=${encodeURIComponent(info.serverPath)}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!resp.ok) return; // 401/404：端点未上线或无权限，静默
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = attachment.name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch { /* 下载失败静默 */ }
+  }, [serverInfos]);
+
   const pasteBlocks = useMemo(() => parsePastedBlocks(actionText, submitText), [actionText, submitText]);
   const [expandedPasteLabels, setExpandedPasteLabels] = useState<Record<string, boolean>>({});
 
@@ -374,6 +445,30 @@ export function UserMessage({
       cancelled = true;
     };
   }, [imagePreviewKey]);
+
+  // 21 号方案：拉取附件服务端落盘信息（有 serverPath 的卡片才显示预览/下载按钮）
+  const attachmentInfoKey = orderedAttachments
+    .filter((attachment) => attachment.source === "attachment")
+    .map((attachment) => attachment.path)
+    .join("\n");
+  useEffect(() => {
+    if (typeof app.AttachmentServerInfo !== "function") return;
+    const paths = attachmentInfoKey ? attachmentInfoKey.split("\n") : [];
+    if (paths.length === 0) return;
+    let cancelled = false;
+    for (const path of paths) {
+      if (serverInfos[path]) continue;
+      app.AttachmentServerInfo(path)
+        .then((info) => {
+          if (cancelled || !info) return;
+          setServerInfos((prev) => (prev[path] ? prev : { ...prev, [path]: info }));
+        })
+        .catch(() => {});
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [attachmentInfoKey]);
   return (
     <div
       className={`msg msg--user${imSource ? " msg--im-source" : ""}${failed ? " msg--user-failed" : ""}`}
@@ -494,11 +589,12 @@ export function UserMessage({
           <div className="msg-attachments" aria-label={t("msg.attachments")}>
             {orderedAttachments.map((attachment, index) => {
               const isImage = attachment.kind === "image";
+              const serverInfo = serverInfos[attachment.path];
               const el = (
                 <div
-                  className={`msg-attachment msg-attachment--${attachment.kind}`}
+                  className={`msg-attachment msg-attachment--${attachment.kind}${serverInfo ? " msg-attachment--with-actions" : ""}`}
                   key={isImage ? undefined : `${attachment.path}:${index}`}
-                  title={isImage ? undefined : attachment.path}
+                  title={isImage ? undefined : serverInfo ? `${attachment.path}\n${t("msg.attachmentServerPath")}: ${serverInfo.serverPath}` : attachment.path}
                   onClick={isImage ? () => openImageViewer(attachment.path, attachment.name) : undefined}
                   role={isImage ? "button" : undefined}
                   tabIndex={isImage ? 0 : undefined}
@@ -513,8 +609,34 @@ export function UserMessage({
                       {attachment.kind === "folder"
                         ? t("msg.folderReference")
                         : `${attachment.ext || t("msg.fileAttachment")} · ${attachment.source === "workspace" ? t("msg.workspaceReference") : attachment.kind === "image" ? t("msg.imageAttachment") : t("msg.fileAttachment")}`}
+                      {serverInfo ? `${formatAttachmentSize(serverInfo.size)} · ${t("msg.attachmentStoredServer")}` : ""}
                     </span>
                   </span>
+                  {serverInfo && (
+                    <span className="msg-attachment__actions">
+                      {!isImage && attachment.kind !== "folder" && (
+                        <Tooltip label={t("msg.attachmentPreview")}>
+                          <button
+                            type="button"
+                            aria-label={t("msg.attachmentPreview")}
+                            disabled={serverPreviewLoading === attachment.path}
+                            onClick={(e) => { e.stopPropagation(); void fetchServerPreview(attachment); }}
+                          >
+                            <Eye size={14} />
+                          </button>
+                        </Tooltip>
+                      )}
+                      <Tooltip label={t("msg.attachmentDownload")}>
+                        <button
+                          type="button"
+                          aria-label={t("msg.attachmentDownload")}
+                          onClick={(e) => { e.stopPropagation(); void downloadServerAttachment(attachment); }}
+                        >
+                          <Download size={14} />
+                        </button>
+                      </Tooltip>
+                    </span>
+                  )}
                 </div>
               );
               if (isImage) {
@@ -526,6 +648,21 @@ export function UserMessage({
               }
               return el;
             })}
+            {serverPreview && (
+              <div className="msg-attachment-preview">
+                <div className="msg-attachment-preview__head">
+                  <FileText size={14} />
+                  <span className="msg-attachment-preview__name">{serverPreview.name}</span>
+                  {serverPreview.truncated && <span className="msg-attachment-preview__badge">{t("msg.attachmentPreviewTruncated")}</span>}
+                  <button type="button" onClick={() => setServerPreview(null)}>{t("common.collapse")}</button>
+                </div>
+                {serverPreview.unavailable ? (
+                  <div className="msg-attachment-preview__unavailable">{t("msg.attachmentPreviewUnavailable")}</div>
+                ) : (
+                  <pre className="msg-attachment-preview__body">{serverPreview.text}</pre>
+                )}
+              </div>
+            )}
             <ImageViewer
               open={imageViewer.open}
               imageUrl={imageViewer.url}

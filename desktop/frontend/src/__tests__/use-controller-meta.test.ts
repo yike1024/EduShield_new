@@ -99,8 +99,8 @@ console.log("\nuse controller meta");
     "model busy guard is localized",
   );
   eq(
-    modelSwitchNoticeText("this session is already open in another Reasonix window or still running in the background; close the other window or open a copy before changing model"),
-    "This session is open in another Reasonix window or still running in the background. Close that window, stop the background run, or open a copy before changing models.",
+    modelSwitchNoticeText("this session is already open in another EduShield window or still running in the background; close the other window or open a copy before changing model"),
+    "This session is open in another EduShield window or still running in the background. Close that window, stop the background run, or open a copy before changing models.",
     "model lease conflict explains the safe path",
   );
   eq(
@@ -132,8 +132,8 @@ console.log("\nuse controller meta");
     "effort busy guard is worded as temporary",
   );
   eq(
-    effortSwitchNoticeText("this session is already open in another Reasonix window or still running in the background; close the other window or open a copy before changing effort"),
-    "This session is open in another Reasonix window or still running in the background. Close that window, stop the background run, or open a copy before changing effort.",
+    effortSwitchNoticeText("this session is already open in another EduShield window or still running in the background; close the other window or open a copy before changing effort"),
+    "This session is open in another EduShield window or still running in the background. Close that window, stop the background run, or open a copy before changing effort.",
     "effort lease conflict explains the safe path",
   );
   eq(
@@ -204,12 +204,12 @@ console.log("\nuse controller meta");
   );
   eq(
     localizedBackendNoticeText("session changed on disk; adopted the newer transcript"),
-    "The session changed on disk, so Reasonix adopted the newer transcript.",
+    "The session changed on disk, so EduShield adopted the newer transcript.",
     "adopted transcript notice can be normalized",
   );
   eq(
     localizedBackendNoticeText("session changed on disk; adopted the newer transcript (local changes already covered)"),
-    "The session changed on disk, so Reasonix adopted the newer transcript; the local changes were already covered.",
+    "The session changed on disk, so EduShield adopted the newer transcript; the local changes were already covered.",
     "covered adopted transcript notice can be normalized",
   );
   eq(
@@ -590,6 +590,38 @@ console.log("\nuse controller meta");
   eq(users[1]?.kind === "user" && users[1].text, "recent prompt", "older history keeps the current window");
   eq(s.historyHasOlder, false, "older history clears hasOlder when all pages are loaded");
   eq(s.historyOlderLoading, false, "older history clears loading");
+}
+
+{
+  const memoryStats = {
+    injected: true,
+    usefulIR: true,
+    compiledTokens: 1200,
+    irOverheadTokens: 40,
+    memoryReferences: 3,
+    constraints: 2,
+    riskNotes: 0,
+    executionSteps: 5,
+    totalNodes: 30,
+    highSignalNodes: 8,
+    toolResultNodes: 4,
+    decisionNodes: 3,
+    strategyCount: 1,
+    learningCount: 0,
+  } as const;
+  const s = reducer(initialState, { type: "event", e: { kind: "memory_compiler_stats", memoryCompiler: memoryStats } });
+  eq(s.memoryCompilerStats, memoryStats, "memory_compiler_stats event stores compiler stats in state");
+  eq(s.seq, 0, "memory_compiler_stats does not consume sequence ids");
+
+  const withoutStats = reducer(initialState, { type: "event", e: { kind: "memory_compiler_stats" } });
+  eq(withoutStats.memoryCompilerStats, undefined, "memory_compiler_stats without payload is ignored");
+
+  // Background participation stats must not resolve an optimistic user bubble.
+  const pending = reducer(initialState, { type: "user", text: "hello", seq: 0 });
+  const withBubble = reducer(pending, { type: "event", e: { kind: "memory_compiler_stats", memoryCompiler: memoryStats } });
+  eq(withBubble.items.find((item) => item.kind === "user")?.id, "u0", "memory_compiler_stats does not confirm an optimistic user bubble");
+  const nonBubbleUser = withBubble.items.filter((item) => item.kind === "user");
+  eq(nonBubbleUser.length, 1, "optimistic user bubble stays unconfirmed after memory stats");
 }
 
 console.log(`\n${passed} passed, ${failed} failed, ${passed + failed} total`);

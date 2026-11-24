@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// SessionDataGuard rejects agent writes into Reasonix's own session stores:
+// SessionDataGuard rejects agent writes into EduShield's own session stores:
 // <state root>/sessions and <state root>/projects/<slug>/sessions. The runtime
 // is the only writer of those files (CAS ledger + autosave); an agent editing
 // them from inside a chat races the app's own saves, which surfaces to the user
@@ -25,7 +25,7 @@ type SessionDataGuard struct {
 	hintNeedles []string
 }
 
-// NewSessionDataGuard builds a guard for the given Reasonix state root
+// NewSessionDataGuard builds a guard for the given EduShield state root
 // (config.MemoryUserDir()) and the explicit allow_write entries. Both are
 // resolved to absolute, symlink-free paths once here, mirroring realRoots.
 // An empty stateRoot yields an unconfined guard.
@@ -56,14 +56,14 @@ func (g SessionDataGuard) Check(target string) error {
 		return nil // can't resolve -> let the caller's normal error path handle it
 	}
 	if g.deniesSecurity(abs) {
-		return fmt.Errorf("path %q is a Reasonix security boundary file (%s holds the global hooks and hook trust store; hooks execute arbitrary shell commands on every future session). Agents may not modify it. "+
+		return fmt.Errorf("path %q is an EduShield security boundary file (%s holds the global hooks and hook trust store; hooks execute arbitrary shell commands on every future session). Agents may not modify it. "+
 			"Ask the user to edit it themselves, or to add the directory to [sandbox] allow_write in reasonix.toml if raw access is truly intended",
 			target, g.stateRoot)
 	}
 	if !g.denies(abs) {
 		return nil
 	}
-	return fmt.Errorf("path %q is inside Reasonix's own session/state data (%s); the app is the only writer of these files, and edits from a chat race its saves — that surfaces as repeated save-conflict copies. "+
+	return fmt.Errorf("path %q is inside EduShield's own session/state data (%s); the app is the only writer of these files, and edits from a chat race its saves — that surfaces as repeated save-conflict copies. "+
 		"Do not modify session or runtime-state files directly; report the underlying problem instead. If raw access is truly intended, add the directory to [sandbox] allow_write in reasonix.toml",
 		target, g.stateRoot)
 }
@@ -198,7 +198,7 @@ func (g SessionDataGuard) CommandHint(workDir, command string) string {
 	if g.stateRoot == "" || command == "" {
 		return ""
 	}
-	warn := fmt.Sprintf("WARNING: this command referenced Reasonix's own session/state data under %s. "+
+	warn := fmt.Sprintf("WARNING: this command referenced EduShield's own session/state data under %s. "+
 		"The app is actively saving those files; external modifications conflict with its saves and are preserved as conflict copies, so an edit can look like it \"did not take\". "+
 		"Do not modify session files from a chat — stop retrying and report the underlying problem instead.", g.stateRoot)
 	haystack := strings.ToLower(filepath.ToSlash(command))

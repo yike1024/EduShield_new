@@ -11,6 +11,7 @@ import {
   CircleHelp,
   Command,
   Copy as RestoreIcon,
+  Database,
   Download,
   Minus,
   Search,
@@ -25,6 +26,8 @@ import {
   GitBranch,
   MessageSquare,
   Network,
+  Radar,
+  ShieldAlert,
   Settings as SettingsIcon,
   Pencil,
   Trash2,
@@ -32,6 +35,10 @@ import {
   Brain,
   Cpu,
   Palette,
+  FileSearch,
+  Sparkles,
+  TerminalSquare,
+  ChevronUp,
   X,
 } from "lucide-react";
 import { useToast } from "./lib/toast";
@@ -39,11 +46,11 @@ import { useWailsResizeFix } from "./lib/useWailsResizeFix";
 import { asArray } from "./lib/array";
 import { clearLegacyLangPref, normalizeLangPref, readLegacyLangPref, t, useI18n, useT, type Translator } from "./lib/i18n";
 import { localizedNoticeText, useController, type Item, type LiveStream } from "./lib/useController";
-import { app, onEvent, onProjectTreeChanged, onReady, onRuntimeRebuilt, onSessionRecovered, openExternal } from "./lib/bridge";
+import { app, isWailsRuntime, onEvent, onProjectTreeChanged, onReady, onRuntimeRebuilt, onSessionRecovered, openExternal } from "./lib/bridge";
 import { generativeMusic, isGenerativeMusicEnabled } from "./lib/generative-music";
 import { clearAttentionChimeKeys, playAttentionChime, playSuccessChime, shouldPlayAttentionChimeForEvent } from "./lib/sound";
 import { NoticeCard, Transcript } from "./components/Transcript";
-import { Composer } from "./components/Composer";
+import { Composer, getComposerController, type ComposerChatAgent, type ComposerRoute } from "./components/Composer";
 import { TranscriptSelectionMenu } from "./components/TranscriptSelectionMenu";
 import { TodoPanel } from "./components/TodoPanel";
 import { ApprovalModal } from "./components/ApprovalModal";
@@ -55,6 +62,8 @@ import { ClearContextCard } from "./components/ClearContextCard";
 type DecisionSurfaceKind = "tool_approval" | "plan_approval" | "ask" | "clear_context";
 import { StatusBar } from "./components/StatusBar";
 import { CommandPalette, type PaletteItem } from "./components/CommandPalette";
+import CreateProjectDialog, { type CreateProjectInput } from "./components/CreateProjectDialog";
+import { projectRoot } from "./lib/webProjects";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { ContextPanel } from "./components/ContextPanel";
 import { WorkspacePanel } from "./components/WorkspacePanel";
@@ -63,6 +72,9 @@ import { StartupSplash } from "./components/StartupSplash";
 import { OnboardingOverlay } from "./components/OnboardingOverlay";
 import { AppChrome } from "./components/AppChrome";
 import { AisocDashboard } from "./components/AisocDashboard";
+import AlertsPanel from "./components/AlertsPanel";
+import RagDemoPanel from "./components/RagDemoPanel";
+import ReportsPanel from "./components/ReportsPanel";
 import { ShortcutsCheatsheet } from "./components/ShortcutsCheatsheet";
 import { ProjectTree } from "./components/ProjectTree";
 import { WorktreeBadge } from "./components/WorktreeBadge";
@@ -153,7 +165,8 @@ import {
   useLayoutStore,
 } from "./store/layout";
 import { useOverlayStore } from "./store/overlays";
-import { hydrateDisplayMode } from "./lib/displayMode";
+import { useAuthStore } from "./store/auth";
+import { AuthGate } from "./components/AuthGate";
 import { DEFAULT_STATUS_BAR_ITEMS, normalizeStatusBarItems, type StatusBarItemId } from "./lib/statusBarItems";
 import { paletteSessionDisplayTitle, paletteSessionHint, paletteSessionKeywords, sessionActivityTime } from "./lib/session";
 import { enqueueNavigationRequest, type PendingNavigationRequest } from "./lib/openTopicCoalescing";
@@ -215,7 +228,7 @@ function noticePreviewItems(): Item[] {
     notice(11, "info", "Plan detection was uncertain; using the fallback planner heuristic.", "plan detector confidence=0.48; fallback heuristic selected because files and tests are involved"),
     notice(12, "info", "Goal is not ready to complete yet; continuing the remaining work.", "goal completion check found pending validation: desktop/frontend typecheck"),
     notice(13, "info", "Goal still has unfinished task state; continuing the remaining work.", "active goal has open task state: implement preview, verify browser, report result"),
-    notice(14, "warn", "AutoResearch status update failed.", "autoresearch task completion update failed: write .reasonix/autoresearch/task-42/state/task_spec.json: permission denied"),
+    notice(14, "warn", "AutoResearch status update failed.", "autoresearch task completion update failed: write .edushield/autoresearch/task-42/state/task_spec.json: permission denied"),
     notice(15, "warn", "AutoResearch task marked blocked.", "autoresearch task blocked: task-42\nreason: missing accepted verification evidence after three turns"),
     notice(16, "warn", "background export failed: needs attention", "background export failed: session archive upload returned 503 after 3 retries"),
     notice(17, "warn", "Job artifact migration failed.", "artifact migration failed for job job_123: checksum mismatch while moving output.zip"),
@@ -833,6 +846,29 @@ function normalizeDesktopPlatform(value: string): DesktopPlatform {
   return "linux";
 }
 
+/**
+ * AiSOC 浮动 Popover 菜单项的统一样式。
+ * muted=true → 弱化色（“进入 dashboard”这种次要动作），
+ * muted=false → 主色（紫调）。
+ */
+function aisocPopoverItemStyle(muted: boolean): CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "6px 10px",
+    border: 0,
+    background: "transparent",
+    color: muted ? "var(--muted, #9ca3af)" : "var(--fg, #e5e7eb)",
+    fontSize: 13,
+    cursor: "pointer",
+    borderRadius: 8,
+    textAlign: "left",
+    width: "100%",
+    transition: "background-color 100ms ease",
+  };
+}
+
 function browserPlatformOverride(): DesktopPlatform | null {
   if (typeof window === "undefined" || window.runtime) return null;
   const value = new URLSearchParams(window.location.search).get("platform");
@@ -979,7 +1015,7 @@ function sessionItemsToJson(title: string, items: Item[], live?: LiveStream): st
 
 function safeFilename(name: string): string {
   const cleaned = name.trim().replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").slice(0, 80);
-  return cleaned || "reasonix-session";
+  return cleaned || "edushield-session";
 }
 
 /** Global hotkey handler for shell-expand toggle (Ctrl/Cmd+B). */
@@ -1069,8 +1105,77 @@ export default function App() {
   const setSettingsTarget = useOverlayStore((s) => s.setSettingsTarget);
   const settingsFocus = useOverlayStore((s) => s.settingsFocus);
   const setSettingsFocus = useOverlayStore((s) => s.setSettingsFocus);
+  // ── 用户认证状态 ────────────────────────────────────────────────────────
+  const authUser = useAuthStore((s) => s.user);
+  const authInitialized = useAuthStore((s) => s.initialized);
+  const restoreAuthSession = useAuthStore((s) => s.restoreSession);
   const [desktopLayoutStyle, setDesktopLayoutStyle] = useState<DesktopLayoutStyle>("workbench");
-  const [viewMode, setViewMode] = useState<"chat" | "aisoc">("chat");
+  const [viewMode, setViewMode] = useState<"chat" | "aisoc" | "alerts" | "reports" | "rag-demo">("chat");
+  // 浮动 AiSOC 入口的 Popover 菜单状态。
+  //  选中 Agent 后调用 getComposerController().setAgentAndSend(agent)：
+  //    - 若 Composer 输入框有文本 → Composer 以该 Agent 模式提交（submitText 自动加 trigger 前缀）
+  //    - 若输入框空 → Composer 切换 Agent 模式 + focus 输入框供用户输入
+  // 也支持"进 dashboard"路径（点主按钮进 dashboard；点菜单项"进入 AiSOC 大脑..."选中 Agent 后进 dashboard）
+  const [aisocMenuOpen, setAisocMenuOpen] = useState(false);
+  const aisocMenuRef = useRef<HTMLDivElement | null>(null);
+
+  // 启动时从 localStorage/sessionStorage 恢复登录会话
+  useEffect(() => {
+    restoreAuthSession();
+  }, [restoreAuthSession]);
+
+  // 16 号方案 F4：任意大脑 /api/* 请求返回 401（token 失效/被吊销）时统一登出，
+  // AuthGate 依赖 user==null 自动弹出登录界面。aisoc-api.request 是唯一广播点。
+  const authLogout = useAuthStore((s) => s.logout);
+  useEffect(() => {
+    const onUnauthorized = () => {
+      authLogout();
+    };
+    window.addEventListener("edushield:unauthorized", onUnauthorized);
+    return () => window.removeEventListener("edushield:unauthorized", onUnauthorized);
+  }, [authLogout]);
+
+  // 点击外部关闭 Popover
+  useEffect(() => {
+    if (!aisocMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (aisocMenuRef.current && !aisocMenuRef.current.contains(e.target as Node)) {
+        setAisocMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [aisocMenuOpen]);
+
+  /**
+   * 浮动 Popover 选中 Agent 后的核心动作：
+   *   1) 默认走 Composer：直接以该 Agent 模式提交 Composer 输入框内容（或仅 setAgent + focus）
+   *   2) 不再默认跳 dashboard（避免用户说"指定 Agent 后直接发送"）
+   *  后者在主按钮 onClick 直接进 dashboard（保持 dashboard 入口）。
+   */
+  const pickAgentFromPopover = async (agent: ComposerChatAgent) => {
+    setAisocMenuOpen(false);
+    const controller = getComposerController();
+    if (!controller) {
+      // Composer 未挂载（理论不会发生）；fallback 进 dashboard
+      setViewMode("aisoc");
+      return;
+    }
+    try {
+      await controller.setAgentAndSend(agent);
+    } catch (err) {
+      console.warn("[aisoc-popover] setAgentAndSend failed", err);
+    }
+  };
+
+  // AiSOC dashboard 入口预选的 Agent（auto / pentest / logaudit / intel）
+  // 仅从侧栏/主按钮 onClick 进 dashboard 时用；浮动 Popover 默认不再走 dashboard。
+  const [aisocInitialAgent, setAisocInitialAgent] = useState<ComposerChatAgent | null>(null);
+  const openAisocDashboardWithAgent = (agent: ComposerChatAgent | null) => {
+    setAisocInitialAgent(agent);
+    setAisocMenuOpen(false);
+    setViewMode("aisoc");
+  };
   const [safeMode, setSafeMode] = useState(false);
   const singleSurfaceLayout = desktopLayoutStyle === "workbench" || desktopLayoutStyle === "creation";
   const [startupUpdateChecksEnabled, setStartupUpdateChecksEnabled] = useState<boolean | null>(null);
@@ -1345,7 +1450,8 @@ export default function App() {
       if (cancelled) return;
       applyDesktopPreferences(settings);
       setSafeMode(settings.safeMode === true);
-      hydrateDisplayMode(settings.displayMode);
+      // 显示模式（standard/compact）由 displayMode.ts 在 Web 模式下本地持久化，
+      // SettingsPanel 切换时双写保证一致；这里不再用 settings 的占位默认值覆盖本地选择。
       setSidebarImConnections(sidebarImConnectionsFromBot(settings.bot, t, runtimeStatus));
       setImTopicSources(sidebarImTopicSourcesFromBot(settings.bot, t));
     };
@@ -1387,7 +1493,7 @@ export default function App() {
   const footerHeightRef = useRef(0);
   const footerRef = useRef<HTMLElement>(null);
   const activeTabIdRef = useRef(activeTabId);
-  const commitThenSendRef = useRef<(tabId: string, displayText: string, submitText?: string, structured?: StructuredInvocationSubmit) => Promise<void>>(async () => {});
+  const commitThenSendRef = useRef<(tabId: string, displayText: string, submitText?: string, structured?: StructuredInvocationSubmit, route?: ComposerRoute) => Promise<void>>(async () => {});
   const handleInvocationMetadataChange = useCallback((metadata: InvocationMetadataMap) => {
     const sourceTabId = activeTabIdRef.current;
     if (!sourceTabId) return;
@@ -1898,7 +2004,7 @@ export default function App() {
   // (/skill, /hooks, /mcp) — goes straight to Submit, which the controller
   // resolves (a turn, or a listing Notice).
   const handleSend = useCallback(
-    async (displayText: string, submitText = displayText, requestedTabId = activeTabId, structured?: StructuredInvocationSubmit) => {
+    async (displayText: string, submitText = displayText, requestedTabId = activeTabId, structured?: StructuredInvocationSubmit, route?: ComposerRoute) => {
       const sourceTabId = requestedTabId || activeTabId;
       if (!sourceTabId) throw new Error(t("composer.workspaceStarting"));
       const trimmed = displayText.trim();
@@ -1994,7 +2100,7 @@ export default function App() {
       await setControllerCollaborationModeForTab(sourceTabId, controllerComposerProfileCollaborationMode(composerProfile));
       await setControllerToolApprovalModeForTab(sourceTabId, toolApprovalMode);
       if (goal.trim()) await setControllerGoalForTab(sourceTabId, goal);
-      await commitThenSendRef.current(sourceTabId, trimmed, submitText.trim(), structured);
+      await commitThenSendRef.current(sourceTabId, trimmed, submitText.trim(), structured, route);
     },
     [activeTabId, applyGoal, closeTransientOverlays, collaborationMode, composerProfile, controllerReady, goal, notice, runShellForTab,
       setControllerCollaborationModeForTab, setControllerGoalForTab, setControllerToolApprovalModeForTab, switchModel, t, toolApprovalMode, showToast],
@@ -2383,6 +2489,10 @@ export default function App() {
       closeWorkspacePanel();
       return;
     }
+    if (workspacePanelAvailableWidth < rightDockMinRenderWidth) {
+      showToast(t("rightDock.tooNarrow"), "warn");
+      return;
+    }
     // Creation hides the overview tab; never reopen into the invisible "context"
     // mode or neither 文件/改动 will show an active selection.
     if (desktopLayoutStyle === "creation") {
@@ -2390,7 +2500,7 @@ export default function App() {
       return;
     }
     openWorkspacePanel("context");
-  }, [closeWorkspacePanel, desktopLayoutStyle, openWorkspacePanel, pulseWorkspaceToggle, rightDockMode, workspacePanelRenderable]);
+  }, [closeWorkspacePanel, desktopLayoutStyle, openWorkspacePanel, pulseWorkspaceToggle, rightDockMinRenderWidth, rightDockMode, showToast, t, workspacePanelAvailableWidth, workspacePanelRenderable]);
 
   const openRightDockMode = useCallback(
     (mode: RightDockMode) => {
@@ -2621,7 +2731,7 @@ export default function App() {
   }, [state.items]);
 
   // send wrapper: commits any pending optimistic rewind before sending.
-  const commitThenSend = useCallback(async (sourceTabId: string, displayText: string, submitText?: string, structured?: StructuredInvocationSubmit) => {
+  const commitThenSend = useCallback(async (sourceTabId: string, displayText: string, submitText?: string, structured?: StructuredInvocationSubmit, route?: ComposerRoute) => {
     const sourceTab = tabMetas.find((tab) => tab.id === sourceTabId);
     if (!sourceTab) throw new Error(t("composer.workspaceStarting"));
     if (sourceTab.readOnly) throw new Error(t("composer.readOnlyChannel"));
@@ -2649,7 +2759,7 @@ export default function App() {
         setProjectRevision((v) => v + 1);
       }
     }
-    await sendToTab(sourceTabId, displayText, submitText, undefined, structured);
+    await sendToTab(sourceTabId, displayText, submitText, undefined, structured, route);
   }, [rewindForTab, sendToTab, setRewindCommittingForTab, setRewindStateForTab, t, tabMetas]);
 
   const handleTranscriptPrompt = useCallback((text: string) => {
@@ -2658,6 +2768,15 @@ export default function App() {
       console.warn("Failed to submit transcript prompt", err);
     });
   }, [activeTabId, commitThenSend, controllerReady]);
+
+  // 欢迎页场景卡：只把研判指令预填到输入框并聚焦，由用户补充 IP/域名后再发送。
+  // 直接发送会因消息里没有目标而落成普通问答，大脑不会创建任务。
+  const handleScenarioPrefill = useCallback((text: string) => {
+    const controller = getComposerController();
+    if (!controller) return;
+    controller.setText(text);
+    controller.focus();
+  }, []);
 
   const handleDeliveryContinue = useCallback(async () => {
     await continueDelivery({
@@ -3181,6 +3300,31 @@ export default function App() {
     }
   }, [activeTabId, refreshTabMetas, syncActiveTab]);
 
+  // 17 号方案 · 方案 B：Web 形态"添加新项目"对话框
+  const [createProjectOpen, setCreateProjectOpen] = useState(false);
+
+  const handleAddProjectClick = useCallback(() => {
+    if (isWailsRuntime()) {
+      // 桌面端保留原生选目录流程
+      void switchFolder();
+      return;
+    }
+    closeTransientOverlays();
+    setCreateProjectOpen(true);
+  }, [switchFolder, closeTransientOverlays]);
+
+  const handleCreateProjectSubmit = useCallback(async (input: CreateProjectInput) => {
+    const project = await app.CreateProject(input);
+    const root = projectRoot(project.id);
+    setCreateProjectOpen(false);
+    // 切换激活项目（webApiProxy.SwitchWorkspace 会写 webProjects:active）
+    await switchFolder(root);
+    // 自动在该项目下开一个空白会话
+    await openBlankSession("project", root);
+    // 会话打开会刷新 tabs；再补发一次树刷新，确保新项目立即出现
+    await refreshProjectsAndTabs();
+  }, [openBlankSession, refreshProjectsAndTabs, switchFolder]);
+
   const renameTopic = useCallback(async (topicId: string, title: string) => {
     const nextTitle = title.trim();
     if (!topicId || !nextTitle) return;
@@ -3295,9 +3439,207 @@ export default function App() {
         !sidebarWorkbench && !sidebarCreation ? "app--classic" : "",
       ].filter(Boolean).join(" ")}
     >
+      {/* 认证门控：未登录时全屏覆盖，强制先登录 */}
+      {authInitialized && !authUser && <AuthGate />}
       {viewMode === "aisoc" && (
         <div style={{ position: "fixed", inset: 0, zIndex: 40, background: "var(--bg, #05080d)" }}>
-          <AisocDashboard onExit={() => setViewMode("chat")} />
+          <AisocDashboard
+            onExit={() => setViewMode("chat")}
+            initialAgent={aisocInitialAgent ?? undefined}
+          />
+        </div>
+      )}
+      {viewMode === "alerts" && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 40, background: "var(--bg, #05080d)" }}>
+          <AlertsPanel onExit={() => setViewMode("chat")} />
+        </div>
+      )}
+      {viewMode === "reports" && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 40, background: "var(--bg, #05080d)" }}>
+          <ReportsPanel onExit={() => setViewMode("chat")} />
+        </div>
+      )}
+      {viewMode === "rag-demo" && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 40, background: "var(--bg, #05080d)" }}>
+          <RagDemoPanel onExit={() => setViewMode("chat")} />
+        </div>
+      )}
+      {viewMode === "chat" && (
+        //  浮动 AiSOC 入口：Popover 菜单 + 4 个 Agent。
+        // 主按钮右侧有 ChevronUp 图标暗示"展开"。点击主按钮 / 徽点展开菜单。
+        // 选中 Agent 默认走 Composer 直接发送（详见 pickAgentFromPopover）；最后一项"进入 AiSOC 大脑..."走 dashboard。
+        <div
+          ref={aisocMenuRef}
+          data-testid="aisoc-quick-entry"
+          style={{
+            position: "fixed",
+            right: 16,
+            bottom: 16,
+            zIndex: 30,
+            display: "inline-flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+            gap: 8,
+          }}
+        >
+          {aisocMenuOpen && (
+            <div
+              role="menu"
+              aria-label="选择发送时使用的智能体"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                padding: 6,
+                borderRadius: 12,
+                border: "1px solid rgba(192,38,211,0.45)",
+                background: "color-mix(in srgb, var(--bg-elev, #1f2937) 96%, transparent)",
+                boxShadow: "0 12px 28px rgba(0,0,0,0.36), 0 2px 6px rgba(0,0,0,0.22)",
+                backdropFilter: "blur(8px)",
+                minWidth: 200,
+              }}
+            >
+              <div style={{ padding: "4px 10px", fontSize: 11, opacity: 0.7, letterSpacing: 0.4 }}>
+                直接以智能体发送（不需再点发送）
+              </div>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => void pickAgentFromPopover("auto")}
+                style={aisocPopoverItemStyle(false)}
+                title="自动路由（不加 trigger 前缀）"
+              >
+                <Sparkles size={14} aria-hidden="true" />
+                <span style={{ flex: 1, textAlign: "left" }}>自动</span>
+                <span style={{ fontSize: 11, opacity: 0.6 }}>不加前缀</span>
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => void pickAgentFromPopover("pentest")}
+                style={aisocPopoverItemStyle(false)}
+                title="路由到渗透测试任务"
+              >
+                <TerminalSquare size={14} aria-hidden="true" />
+                <span style={{ flex: 1, textAlign: "left" }}>渗透测试</span>
+                <span style={{ fontSize: 11, opacity: 0.6 }}>渗透测试 …</span>
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => void pickAgentFromPopover("logaudit")}
+                style={aisocPopoverItemStyle(false)}
+                title="路由到日志审计任务"
+              >
+                <FileSearch size={14} aria-hidden="true" />
+                <span style={{ flex: 1, textAlign: "left" }}>日志审计</span>
+                <span style={{ fontSize: 11, opacity: 0.6 }}>日志审计 …</span>
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => void pickAgentFromPopover("intel")}
+                style={aisocPopoverItemStyle(false)}
+                title="路由到情报收集任务"
+              >
+                <Radar size={14} aria-hidden="true" />
+                <span style={{ flex: 1, textAlign: "left" }}>情报收集</span>
+                <span style={{ fontSize: 11, opacity: 0.6 }}>情报收集 …</span>
+              </button>
+              <div style={{ height: 1, background: "rgba(192,38,211,0.18)", margin: "4px 2px" }} />
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setAisocMenuOpen(false);
+                  setViewMode("alerts");
+                }}
+                style={aisocPopoverItemStyle(true)}
+                title="独立告警中心：跨 XDR/SIEM 实时告警 + 严重度筛选 + 处置"
+              >
+                <ShieldAlert size={14} aria-hidden="true" />
+                <span style={{ flex: 1, textAlign: "left" }}>告警中心…</span>
+                <span style={{ fontSize: 11, opacity: 0.6 }}>独立面板</span>
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setAisocMenuOpen(false);
+                  setViewMode("reports");
+                }}
+                style={aisocPopoverItemStyle(true)}
+                title="独立预案报告中心：任务报告 + 预案库 + 告警→预案关联"
+              >
+                <FileText size={14} aria-hidden="true" />
+                <span style={{ flex: 1, textAlign: "left" }}>预案报告中心…</span>
+                <span style={{ fontSize: 11, opacity: 0.6 }}>独立面板</span>
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setAisocMenuOpen(false);
+                  setViewMode("rag-demo");
+                }}
+                style={aisocPopoverItemStyle(true)}
+                title="独立 RAG 检索 Demo：调用 /api/rag/search 演示本地安全知识库召回效果"
+              >
+                <Database size={14} aria-hidden="true" />
+                <span style={{ flex: 1, textAlign: "left" }}>RAG 检索 Demo…</span>
+                <span style={{ fontSize: 11, opacity: 0.6 }}>独立面板</span>
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => openAisocDashboardWithAgent(null)}
+                style={aisocPopoverItemStyle(true)}
+                title="进入 AiSOC 大脑查看多任务"
+              >
+                <Network size={14} aria-hidden="true" />
+                <span style={{ flex: 1, textAlign: "left" }}>进入 AiSOC 大脑…</span>
+              </button>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => setAisocMenuOpen((open) => !open)}
+            aria-label="AiSOC 大脑"
+            aria-haspopup="menu"
+            aria-expanded={aisocMenuOpen}
+            title="AiSOC 大脑（多智能体安全运营平台）"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "8px 14px",
+              borderRadius: 999,
+              border: "1px solid var(--accent, #c026d3)",
+              background: "color-mix(in srgb, var(--bg-elev, #1f2937) 92%, var(--accent, #c026d3))",
+              color: "var(--accent, #c026d3)",
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: "pointer",
+              boxShadow: "0 6px 18px rgba(192,38,211,0.28), 0 2px 4px rgba(0,0,0,0.18)",
+              transition: "transform 120ms ease, box-shadow 120ms ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow = "0 10px 22px rgba(192,38,211,0.4), 0 2px 4px rgba(0,0,0,0.22)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "";
+              e.currentTarget.style.boxShadow = "0 6px 18px rgba(192,38,211,0.28), 0 2px 4px rgba(0,0,0,0.18)";
+            }}
+          >
+            <Network size={16} aria-hidden="true" />
+            <span>AiSOC 大脑</span>
+            <ChevronUp
+              size={12}
+              aria-hidden="true"
+              style={{ transition: "transform 120ms ease", transform: aisocMenuOpen ? "rotate(180deg)" : "" }}
+            />
+          </button>
         </div>
       )}
       <div
@@ -3317,7 +3659,9 @@ export default function App() {
           .join(" ")}
         style={layoutStyle}
       >
-        {!appChromeHidden && (
+        {/* 仅 chat 模式显示顶栏 tabs；其他 viewMode（aisoc/alerts/reports/rag-demo）
+            被下方的 fixed inset-0 全屏覆盖层接管，顶栏 z-index=70 会漏出来，必须隐藏 */}
+        {!appChromeHidden && viewMode === "chat" && (
           <AppChrome
             platform={desktopPlatform}
             browserPreviewChrome={browserPreviewChrome}
@@ -3458,9 +3802,7 @@ export default function App() {
               onTopicsChanged={refreshProjectsAndTabs}
               onRenameTopic={renameTopic}
               refreshSignal={projectRevision}
-              onAddProject={async () => {
-                await switchFolder();
-              }}
+              onAddProject={handleAddProjectClick}
               timeFilter={topicTimeFilter}
               onTimeFilterChange={setTopicTimeFilter}
               variant={sidebarWorkbench ? "workbench" : sidebarCreation ? "creation" : "classic"}
@@ -3843,6 +4185,7 @@ export default function App() {
                 tabId={activeTabId}
                 footerHeight={footerHeight}
                 onPrompt={handleTranscriptPrompt}
+                onScenarioPrompt={handleScenarioPrefill}
                 onDeliveryContinue={() => void handleDeliveryContinue()}
                 onEditPrompt={handleEditPrompt}
                 onRewind={handleMessageAction}
@@ -4022,6 +4365,7 @@ export default function App() {
               modelLabel={state.meta?.label}
               labelStyle={statusBarStyle}
               items={statusBarItems}
+              memoryCompilerStats={state.memoryCompilerStats}
 	              workspacePath={state.meta?.workspacePath || state.meta?.workspaceRoot || state.meta?.cwd}
 	              workspaceName={state.meta?.workspaceName}
 	              gitBranch={state.meta?.gitBranch}
@@ -4164,6 +4508,7 @@ export default function App() {
             initialFocus={settingsFocus ?? undefined}
             agentRunning={state.running}
             desktopPlatform={desktopPlatform}
+            memoryCompilerStats={state.memoryCompilerStats}
             onUseSubagent={prefillSubagentCommand}
             onClose={() => {
               setSettingsFocus(null);
@@ -4199,6 +4544,13 @@ export default function App() {
         onClose={() => setShortcutsOpen(false)}
         t={t}
       />
+
+      {createProjectOpen && (
+        <CreateProjectDialog
+          onClose={() => setCreateProjectOpen(false)}
+          onSubmit={handleCreateProjectSubmit}
+        />
+      )}
 
       {startupSplashVisible && (
         <StartupSplash hold={startupSplashHold} onDone={() => setStartupSplashVisible(false)} />

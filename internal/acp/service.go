@@ -542,8 +542,8 @@ func (s *service) initialize(_ context.Context, raw json.RawMessage) (any, error
 func reasonixSetupAuthMethod() AuthMethod {
 	return AuthMethod{
 		ID:          "reasonix-setup",
-		Name:        "Reasonix setup",
-		Description: "Configure Reasonix providers and credentials in a terminal",
+		Name:        "EduShield setup",
+		Description: "Configure EduShield providers and credentials in a terminal",
 		Type:        "terminal",
 		Args:        []string{"setup"},
 	}

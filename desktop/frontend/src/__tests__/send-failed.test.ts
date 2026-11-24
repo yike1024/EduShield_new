@@ -59,7 +59,14 @@ const memoryStatsEvent = {
   },
 } as WireEvent;
 const statsOnly = reducer(sent, { type: "event", e: memoryStatsEvent });
-eq(statsOnly, sent, "memory compiler stats do not confirm or mutate the visible turn");
+eq(statsOnly.items, sent.items, "memory compiler stats do not mutate transcript items");
+eq(statsOnly.running, sent.running, "memory compiler stats do not confirm the turn");
+eq(statsOnly.pendingPrompt, sent.pendingPrompt, "memory compiler stats do not clear the pending submit");
+eq(
+  statsOnly.memoryCompilerStats?.compiledTokens,
+  640,
+  "memory compiler stats are retained for the status display",
+);
 const startedThenStats = reducer(reducer(sent, { type: "event", e: { kind: "turn_started" } as WireEvent }), { type: "event", e: memoryStatsEvent });
 eq(startedThenStats.items.length, 2, "memory compiler stats do not add transcript items after turn start");
 const compilerCitationMessage = {
@@ -142,7 +149,12 @@ const appSource = readFileSync(resolve(here, "../App.tsx"), "utf8");
 const typesSource = readFileSync(resolve(here, "../lib/types.ts"), "utf8");
 const controllerSource = readFileSync(resolve(here, "../lib/useController.ts"), "utf8");
 eq(typesSource.includes('"mcp_surface_ready"'), true, "TypeScript EventKind declares mcp_surface_ready");
-eq(controllerSource.includes('e.kind === "memory_compiler_stats" || e.kind === "mcp_surface_ready"'), true, "reducer handles mcp_surface_ready before optimistic confirmation");
+eq(
+  controllerSource.includes('e.kind === "mcp_surface_ready"') &&
+    controllerSource.includes('e.kind === "memory_compiler_stats"'),
+  true,
+  "reducer handles mcp_surface_ready before optimistic confirmation",
+);
 eq(
   /state\.approval!\.tool === "exit_plan_mode" && allow\) await applyCollaborationMode\("normal"\);/.test(appSource),
   true,

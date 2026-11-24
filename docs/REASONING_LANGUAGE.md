@@ -92,12 +92,12 @@ argument.
 ## Cache Behavior
 
 `auto` is still cache-friendly. When the raw user prompt clearly looks Chinese,
-Reasonix adds the same small transient `<reasoning-language>` block for that
+EduShield adds the same small transient `<reasoning-language>` block for that
 turn; English and ambiguous turns inject nothing and rely on the existing stable
 language policy. Injected reference context such as `@file` contents is ignored
 for this auto decision.
 
-When set to `zh` or `en`, Reasonix always adds a small transient
+When set to `zh` or `en`, EduShield always adds a small transient
 `<reasoning-language>` block to the user turn. In all modes, this does not
 change:
 

@@ -347,7 +347,7 @@ func (t *installSourceTool) pluginPackageAction(req request, pkg pluginpkg.Packa
 	skills, commands, hooks, mcp := pkg.CapabilityCounts()
 	agents := pkg.Inventory().Agents
 	if pkg.ManifestKind != "reasonix" && skills+commands+hooks+mcp+len(agents) == 0 {
-		return action{}, newErr(ErrNoCompatibleCapabilities, "plugin %q has no Reasonix-compatible capabilities; skipped: %v", name, pkg.Compatibility.Skipped)
+		return action{}, newErr(ErrNoCompatibleCapabilities, "plugin %q has no EduShield-compatible capabilities; skipped: %v", name, pkg.Compatibility.Skipped)
 	}
 	agentNames := make([]string, 0, len(agents))
 	for _, agent := range agents {
@@ -383,7 +383,7 @@ func (t *installSourceTool) pluginPackageAction(req request, pkg pluginpkg.Packa
 	}
 	if hooks > 0 {
 		a.RiskLevel = RiskHigh
-		a.RiskReasons = append(a.RiskReasons, "registers shell hooks that execute during Reasonix sessions")
+		a.RiskReasons = append(a.RiskReasons, "registers shell hooks that execute during EduShield sessions")
 	}
 	if mcp > 0 {
 		a.RiskLevel = RiskHigh
@@ -403,7 +403,7 @@ func modeForPlugin(mode string) string {
 
 func (t *installSourceTool) applyInstallPluginPackage(ctx context.Context, req request, act *action) error {
 	if t.reasonixHome == "" {
-		return newErr(ErrSourceUnreadable, "plugin install requires a Reasonix home directory")
+		return newErr(ErrSourceUnreadable, "plugin install requires an EduShield home directory")
 	}
 	if !pluginpkg.IsValidName(act.Name) {
 		return newErr(ErrInvalidManifest, "invalid plugin name %q", act.Name)
@@ -433,7 +433,7 @@ func (t *installSourceTool) applyInstallPluginPackage(ctx context.Context, req r
 	if pkg.ManifestKind != "reasonix" {
 		skills, commands, hooks, mcp := pkg.CapabilityCounts()
 		if skills+commands+hooks+mcp+pkg.AgentCount() == 0 {
-			return newErr(ErrInvalidManifest, "plugin %q no longer has any Reasonix-compatible capabilities", act.Name)
+			return newErr(ErrInvalidManifest, "plugin %q no longer has any EduShield-compatible capabilities", act.Name)
 		}
 	}
 	act.Warnings = append(act.Warnings, warnings...)

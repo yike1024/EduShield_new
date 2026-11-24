@@ -2,7 +2,7 @@
 
 ## Context
 
-Reasonix already has Goal mode and AutoResearch instructions. When a goal looks
+EduShield already has Goal mode and AutoResearch instructions. When a goal looks
 long-running, `activeGoalBlock` injects an AutoResearch protocol that asks the
 model to create `.reasonix/autoresearch/<task-id>/` and maintain files such as
 `task_spec.json`, `progress.json`, `findings.jsonl`, `directions_tried.json`, and
@@ -32,7 +32,7 @@ a host-managed runtime.
   turns.
 - No parallel writable sub-agent redesign in this feature.
 - No network, publish, payment, credential, or destructive-operation bypass.
-  Existing Reasonix gates still apply.
+  Existing EduShield gates still apply.
 
 ## Proposed Architecture
 

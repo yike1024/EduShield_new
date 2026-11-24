@@ -1,4 +1,4 @@
--- Reasonix registry: published skills/MCP servers, their versions, and the
+-- EduShield registry: published skills/MCP servers, their versions, and the
 -- activity/install event log. Apply:
 --   wrangler d1 migrations apply reasonix-registry --local   (or --remote)
 

@@ -1,7 +1,7 @@
 # 子智能体 Profile
 
 子智能体 Profile 是可复用、显式调用的专用智能体，适合代码评审、问题调查、文档整理等
-聚焦任务。每个 Profile 都是带有 `runAs: subagent` 的手动 Skill：Reasonix 会启动隔离的
+聚焦任务。每个 Profile 都是带有 `runAs: subagent` 的手动 Skill：EduShield 会启动隔离的
 子智能体，把 Profile 提示词和任务交给它执行，并且只把最终答案返回父智能体。
 
 桌面端、交互式 CLI 和 Headless CLI 共用这些 Profile。它们直接复用现有 Skill 文件格式和
@@ -22,7 +22,7 @@ reasonix subagent create reviewer \
 
 在 workspace 中，`create` 默认使用 project scope；不在 workspace 中时默认使用 global
 scope。也可以通过 `--scope project` 或 `--scope global` 明确指定。项目级 Profile 存放在
-`.reasonix/skills/<name>/SKILL.md`，全局 Profile 存放在 Reasonix home 的 Skill 目录中，
+`.reasonix/skills/<name>/SKILL.md`，全局 Profile 存放在 EduShield home 的 Skill 目录中，
 具体路径见[配置路径](./CONFIG_PATHS.zh-CN.md)。
 
 提示词可来自 `--prompt`、`--prompt-file PATH`、`--prompt-file -` 或标准输入：
@@ -33,7 +33,7 @@ printf '%s\n' '检查任务，只报告可执行的问题。' | \
 ```
 
 名称可以包含字母、数字、`_`、`-` 和 `.`。如果名称已经被项目级、全局、自定义或内置 Skill
-占用，Reasonix 会拒绝创建，避免覆盖已有内容。
+占用，EduShield 会拒绝创建，避免覆盖已有内容。
 
 ## 调用 Profile
 
@@ -150,4 +150,4 @@ subagent_efforts = { reviewer = "max" }
 
 如果调用时报 Profile 未知或已禁用，请检查 `reasonix subagent list`、当前 `--dir` 和
 `skills.disabled_skills`。如果编辑时报 custom 或 rich Profile，应直接编辑其 `SKILL.md`，
-不要强行经过 Profile 编辑器。Reasonix 在解析有效模型时会拒绝未知模型引用和无效 effort。
+不要强行经过 Profile 编辑器。EduShield 在解析有效模型时会拒绝未知模型引用和无效 effort。
